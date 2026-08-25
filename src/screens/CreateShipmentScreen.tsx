@@ -199,20 +199,38 @@ export default function CreateShipmentScreen() {
   const renderForm = () => (
     <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
-      <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3 mt-2">
+      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
         Customer Details
       </Text>
-      <View className=" border-gray-100 mb-4 gap-3">
+      <View
+        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.03,
+          shadowRadius: 6,
+          elevation: 1,
+        }}
+      >
         <InputField label="Name" value={form.customerName} onChangeText={(v) => updateField('customerName', v)} placeholder="Customer name" icon="user" />
         <InputField label="Phone" value={form.customerPhone} onChangeText={(v) => updateField('customerPhone', v)} placeholder="9876543210" icon="phone" keyboardType="phone-pad" />
         <InputField label="Email" value={form.customerEmail} onChangeText={(v) => updateField('customerEmail', v)} placeholder="customer@email.com" icon="mail" keyboardType="email-address" />
       </View>
 
       {/* Delivery Address */}
-      <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
+      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5">
         Delivery Address
       </Text>
-      <View className=" border border-gray-100 mb-4 gap-3">
+      <View
+        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.03,
+          shadowRadius: 6,
+          elevation: 1,
+        }}
+      >
         <InputField label="Address" value={form.deliveryAddress} onChangeText={(v) => updateField('deliveryAddress', v)} placeholder="Full address" icon="map-pin" multiline />
         <View className="flex-row gap-3">
           <View className="flex-1">
@@ -233,10 +251,19 @@ export default function CreateShipmentScreen() {
       </View>
 
       {/* Package Details */}
-      <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">
+      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5">
         Package Details
       </Text>
-      <View className="  border border-gray-100 mb-4 gap-3">
+      <View
+        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-5 gap-3"
+        style={{
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.03,
+          shadowRadius: 6,
+          elevation: 1,
+        }}
+      >
         <InputField label="Product Name" value={form.productName} onChangeText={(v) => updateField('productName', v)} placeholder="Product description" icon="package" />
         <View className="flex-row gap-3">
           <View className="flex-1">
@@ -259,16 +286,17 @@ export default function CreateShipmentScreen() {
         </View>
 
         {/* Payment Type */}
-        <Text className="text-xs font-semibold text-gray-600 mb-1">Payment Type</Text>
+        <Text className="text-xs font-geist-bold text-gray-700 mb-1">Payment Type</Text>
         <View className="flex-row gap-3">
           {(['prepaid', 'cod'] as const).map((type) => (
             <TouchableOpacity
               key={type}
               onPress={() => updateField('paymentType', type)}
-              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentType === type ? 'bg-purple-900 border-purple-600' : 'bg-white border-gray-300'
+              activeOpacity={0.8}
+              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentType === type ? 'bg-purple-900 border-purple-900 shadow-sm shadow-purple-900/20' : 'bg-white border-gray-200'
                 }`}
             >
-              <Text className={`font-bold ${form.paymentType === type ? 'text-white' : 'text-gray-700'}`}>
+              <Text className={`font-geist-bold text-xs ${form.paymentType === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}
               </Text>
             </TouchableOpacity>
@@ -287,10 +315,10 @@ export default function CreateShipmentScreen() {
         onPress={handleGetRates}
         disabled={loading}
         activeOpacity={0.8}
-        className={`bg-purple-900 py-4 rounded-xl items-center mb-8 ${loading ? 'opacity-70' : ''}`}
-        
+        className={`bg-purple-900 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
+        style={{ elevation: 4 }}
       >
-        <Text className="text-white font-bold text-base">
+        <Text className="text-white font-geist-bold text-sm">
           {loading ? 'Fetching Rates...' : 'Get Shipping Rates'}
         </Text>
       </TouchableOpacity>
@@ -480,10 +508,10 @@ function InputField({
 }) {
   return (
     <View>
-      <Text className="text-xs font-semibold text-gray-600 mb-1">{label}</Text>
+      <Text className="text-xs font-geist-bold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
         {icon && (
-          <View className="absolute left-3 top-3 z-10">
+          <View className="absolute left-3 top-3.5 z-10">
             <Feather name={icon as any} size={16} color="#9ca3af" />
           </View>
         )}
@@ -495,7 +523,7 @@ function InputField({
           keyboardType={keyboardType}
           maxLength={maxLength}
           multiline={multiline}
-          className={`bg-gray-50 border border-gray-200 rounded-lg ${icon ? 'pl-9' : 'pl-3'} pr-3 py-2.5 text-sm font-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-geist-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
         />
       </View>
     </View>

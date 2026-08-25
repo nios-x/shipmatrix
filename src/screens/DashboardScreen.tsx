@@ -31,48 +31,48 @@ function StatusCard({
       colors={["#ffffff", "#f8f7ff"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
-      className="w-full border border-violet-100"
+      className="w-full border border-violet-100/80"
       style={{
         borderRadius: 22,
         overflow: "hidden",
         shadowColor: "#6366f1",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.08,
-        shadowRadius: 16,
-        elevation: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 14,
+        elevation: 3,
       }}
     >
-      <View className="p-5">
+      <View className="p-4">
         {/* Header */}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
             <View className={`h-2.5 w-2.5 rounded-full ${color}`} />
 
-            <Text className="text-[11px] font-bold uppercase tracking-[1.5px] text-gray-500">
+            <Text className="text-[11px] font-geist-bold uppercase tracking-wider text-gray-500">
               {title}
             </Text>
           </View>
 
-          <View className="rounded-full bg-violet-50 px-2.5 py-1">
-            <Text className="text-[9px] font-bold uppercase tracking-wider text-violet-500">
+          <View className="rounded-full bg-violet-50 px-2 py-0.5 border border-violet-100/60">
+            <Text className="text-[9px] font-geist-bold uppercase tracking-wider text-violet-600">
               Status
             </Text>
           </View>
         </View>
 
         {/* Count */}
-        <View className="mt-5 flex-row items-end justify-between">
-          <Text className="text-[44px] font-black leading-[48px] tracking-[-2px] text-gray-950">
+        <View className="mt-4 flex-row items-baseline justify-between">
+          <Text className="text-[36px] font-geist-black leading-none tracking-tight text-gray-950">
             {count}
           </Text>
 
-          <Text className="mb-1 text-[11px] font-medium text-gray-400">
+          <Text className="text-[11px] font-geist-medium text-gray-400">
             Total
           </Text>
         </View>
 
         {/* Progress */}
-        <View className="mt-5 h-1.5 overflow-hidden rounded-full bg-gray-100">
+        <View className="mt-4 h-1.5 overflow-hidden rounded-full bg-gray-100">
           <LinearGradient
             colors={["#8b5cf6", "#6366f1", "#06b6d4"]}
             start={{ x: 0, y: 0 }}
@@ -102,14 +102,14 @@ function QuickAction({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className="items-center gap-3 w-[80px]"
+      className="items-center gap-2 w-[80px]"
     >
       <View
-        className={`w-16 h-16 rounded-3xl items-center justify-center border border-gray-100 ${bgColor}`}
+        className={`w-14 h-14 rounded-2xl items-center justify-center border border-gray-100 ${bgColor} shadow-sm`}
       >
         <Feather name={iconName as any} size={20} color={iconColor} />
       </View>
-      <Text className="text-[11px] font-black text-gray-500 tracking-wider text-center ">
+      <Text className="text-[11px] font-geist-bold text-gray-600 tracking-tight text-center">
         {title}
       </Text>
     </TouchableOpacity>
@@ -140,7 +140,6 @@ export default function DashboardScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Firestore listeners auto-refresh, just add a visual delay
     setTimeout(() => setRefreshing(false), 1000);
   };
 
@@ -151,26 +150,26 @@ export default function DashboardScreen() {
         <View className="flex-row items-center gap-3">
           <Logo size={36} />
           <View>
-            <Text className="text-xl font-black text-gray-900 font-extrabold  ">
+            <Text className="text-xl font-geist-bold text-gray-900 tracking-tight">
               ShipMatrix
             </Text>
           </View>
         </View>
         <TouchableOpacity
           onPress={() => navigation.navigate('Notifications')}
-          className="w-10 h-10 bg-white rounded-full items-center justify-center border border-gray-100"
+          className="w-10 h-10 bg-white rounded-2xl items-center justify-center border border-gray-100 shadow-sm"
         >
           <Feather name="bell" size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
 
       {/* Courier Partners Banner */}
-      <View className="bg-purple-50 border border-purple-100  p-2 mb-6 overflow-hidden">
+      <View className="mx-5 bg-purple-50/70 border border-purple-100 rounded-2xl py-2 px-3 mb-5 overflow-hidden">
         <View className="flex-row items-center justify-evenly">
           {['DELHIVERY', 'XPRESSBEES', 'SHADOWFAX', 'EKART'].map(
             (name, i) => (
               <React.Fragment key={name}>
-                <Text className="font-black text-gray-900 text-xs tracking-tighter">
+                <Text className="font-geist-bold text-gray-800 text-[11px] tracking-wider">
                   {name}
                 </Text>
                 {i < 3 && (
@@ -195,7 +194,7 @@ export default function DashboardScreen() {
       >{/* Status Cards */}
         <View className="gap-3 mb-6">
           {/* Row 1 */}
-          <View className="flex-row gap-5">
+          <View className="flex-row gap-3">
             <View className="flex-1">
               <StatusCard
                 title="Booked"
@@ -235,11 +234,11 @@ export default function DashboardScreen() {
         {/* Quick Actions */}
      <View className="mb-7">
   <View className="mb-4 flex-row items-center justify-between px-1">
-    <Text className="text-xs font-black uppercase tracking-wider text-gray-400">
+    <Text className="text-xs font-geist-bold uppercase tracking-wider text-gray-400">
       Quick Actions
     </Text>
 
-    <Text className="text-[10px] font-bold text-violet-500">
+    <Text className="text-[10px] font-geist-bold text-violet-600 uppercase tracking-wide">
       8 Actions
     </Text>
   </View>

@@ -95,25 +95,25 @@ export default function LoginScreen() {
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="justify-center bg-white p-6 mt-12">
+        <View className="justify-center bg-white p-6 mt-8">
           {view === 'login' && (
             <>
               {/* Header */}
-              <View className="items-center mb-8 mt-4">
-                <View className="bg-purple-100 p-4 rounded-full mb-4">
+              <View className="items-center mb-8 mt-2">
+                <View className="w-14 h-14 bg-purple-50 border border-purple-100 rounded-2xl items-center justify-center mb-3 shadow-xs">
                   <Logo size={32} />
                 </View>
-                <Text className="text-2xl font-bold text-gray-900 text-center w-full">
+                <Text className="text-2xl font-geist-bold text-gray-900 text-center tracking-tight">
                   Welcome Back
                 </Text>
-                <Text className="text-gray-500 mt-2 text-center text-sm">
+                <Text className="text-gray-500 mt-1 text-center font-geist text-sm">
                   Login to manage your shipments
                 </Text>
               </View>
 
               {error ? (
-                <View className="bg-red-50 p-3 rounded-xl mb-4">
-                  <Text className="text-red-600 text-sm font-medium text-center">
+                <View className="bg-rose-50 border border-rose-100 p-3.5 rounded-xl mb-4">
+                  <Text className="text-rose-600 text-sm font-geist-medium text-center">
                     {error}
                   </Text>
                 </View>
@@ -121,12 +121,12 @@ export default function LoginScreen() {
 
               {/* Email Input */}
               <View className="mb-4">
-                <Text className="text-sm font-semibold text-gray-700 mb-1">
+                <Text className="text-xs font-geist-bold text-gray-700 mb-1">
                   Email
                 </Text>
                 <View className="relative">
-                  <View className="absolute left-3 top-3.5 z-10">
-                    <Feather name="mail" size={20} color="#9ca3af" />
+                  <View className="absolute left-3.5 top-3.5 z-10">
+                    <Feather name="mail" size={18} color="#9ca3af" />
                   </View>
                   <TextInput
                     value={email}
@@ -136,19 +136,19 @@ export default function LoginScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="w-full bg-white border border-gray-300 rounded-xl pl-11 pr-4 py-3 font-medium text-gray-900"
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-geist-medium text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
 
               {/* Password Input */}
               <View className="mb-2">
-                <Text className="text-sm font-semibold text-gray-700 mb-1">
+                <Text className="text-xs font-geist-bold text-gray-700 mb-1">
                   Password
                 </Text>
                 <View className="relative">
-                  <View className="absolute left-3 top-3.5 z-10">
-                    <Feather name="lock" size={20} color="#9ca3af" />
+                  <View className="absolute left-3.5 top-3.5 z-10">
+                    <Feather name="lock" size={18} color="#9ca3af" />
                   </View>
                   <TextInput
                     value={password}
@@ -156,15 +156,15 @@ export default function LoginScreen() {
                     placeholder="••••••••"
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={!showPassword}
-                    className="w-full bg-white border border-gray-300 rounded-xl pl-11 pr-12 py-3 font-medium text-gray-900"
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-12 py-3 font-geist-medium text-sm text-gray-900 shadow-sm"
                   />
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3.5"
+                    className="absolute right-3.5 top-3.5"
                   >
                     <Feather
                       name={showPassword ? 'eye-off' : 'eye'}
-                      size={20}
+                      size={18}
                       color="#9ca3af"
                     />
                   </TouchableOpacity>
@@ -174,9 +174,9 @@ export default function LoginScreen() {
               {/* Forgot password */}
               <TouchableOpacity
                 onPress={() => { setError(''); setView('forgot-password'); }}
-                className="self-end mb-2"
+                className="self-end mb-2 pt-1"
               >
-                <Text className="text-sm font-semibold text-purple-600">
+                <Text className="text-xs font-geist-semibold text-purple-600">
                   Forgot Password?
                 </Text>
               </TouchableOpacity>
@@ -185,33 +185,33 @@ export default function LoginScreen() {
 
           {view === 'forgot-password' && (
             <>
-              <View className="items-center mb-8 mt-4">
-                <View className="bg-purple-100 p-4 rounded-full mb-4">
-                  <Feather name="key" size={32} color="#7c3aed" />
+              <View className="items-center mb-8 mt-2">
+                <View className="w-14 h-14 bg-purple-50 border border-purple-100 rounded-2xl items-center justify-center mb-3 shadow-xs">
+                  <Feather name="key" size={26} color="#7c3aed" />
                 </View>
-                <Text className="text-2xl font-bold text-gray-900 text-center">
+                <Text className="text-2xl font-geist-bold text-gray-900 text-center tracking-tight">
                   Reset Password
                 </Text>
-                <Text className="text-gray-500 mt-2 text-center text-sm">
+                <Text className="text-gray-500 mt-1 text-center font-geist text-sm">
                   Enter your email to receive a reset link.
                 </Text>
               </View>
 
               {error ? (
-                <View className="bg-red-50 p-3 rounded-xl mb-4">
-                  <Text className="text-red-600 text-sm font-medium text-center">
+                <View className="bg-rose-50 border border-rose-100 p-3.5 rounded-xl mb-4">
+                  <Text className="text-rose-600 text-sm font-geist-medium text-center">
                     {error}
                   </Text>
                 </View>
               ) : null}
 
               <View className="mb-4">
-                <Text className="text-sm font-semibold text-gray-700 mb-1">
+                <Text className="text-xs font-geist-bold text-gray-700 mb-1">
                   Email Address
                 </Text>
                 <View className="relative">
-                  <View className="absolute left-3 top-3.5 z-10">
-                    <Feather name="mail" size={20} color="#9ca3af" />
+                  <View className="absolute left-3.5 top-3.5 z-10">
+                    <Feather name="mail" size={18} color="#9ca3af" />
                   </View>
                   <TextInput
                     value={email}
@@ -220,7 +220,7 @@ export default function LoginScreen() {
                     placeholderTextColor="#9ca3af"
                     keyboardType="email-address"
                     autoCapitalize="none"
-                    className="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-3 font-medium text-gray-900"
+                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-geist-medium text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
@@ -228,16 +228,16 @@ export default function LoginScreen() {
           )}
 
           {view === 'reset-sent' && (
-            <View className="items-center mb-8 mt-4">
-              <View className="bg-purple-100 p-4 rounded-full mb-4">
-                <Feather name="mail" size={32} color="#7c3aed" />
+            <View className="items-center mb-8 mt-2">
+              <View className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl items-center justify-center mb-3 shadow-xs">
+                <Feather name="mail" size={26} color="#059669" />
               </View>
-              <Text className="text-2xl font-bold text-gray-900 text-center">
+              <Text className="text-2xl font-geist-bold text-gray-900 text-center tracking-tight">
                 Check Your Email
               </Text>
-              <Text className="text-gray-500 mt-2 text-center text-sm">
+              <Text className="text-gray-500 mt-1 text-center font-geist text-sm">
                 We've sent a reset link to{' '}
-                <Text className="font-bold text-gray-800">
+                <Text className="font-geist-bold text-gray-800">
                   {email || 'your email'}
                 </Text>
                 .
@@ -254,10 +254,11 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
             activeOpacity={0.8}
-            className={`w-full bg-purple-900 py-4 rounded-xl flex-row items-center justify-center gap-2 ${loading ? 'opacity-70' : ''
+            className={`w-full bg-purple-900 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
               }`}
+            style={{ elevation: 3 }}
           >
-            <Text className="text-white font-bold text-base">
+            <Text className="text-white font-geist-bold text-sm">
               {loading ? 'Signing in...' : 'Login'}
             </Text>
             {!loading && (
@@ -272,10 +273,11 @@ export default function LoginScreen() {
               onPress={handleForgotPassword}
               disabled={loading}
               activeOpacity={0.8}
-              className={`w-full bg-purple-900 py-4 rounded-xl flex-row items-center justify-center gap-2 ${loading ? 'opacity-70' : ''
+              className={`w-full bg-purple-900 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
                 }`}
+              style={{ elevation: 3 }}
             >
-              <Text className="text-white font-bold">
+              <Text className="text-white font-geist-bold text-sm">
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </Text>
               <Feather name="arrow-right" size={16} color="white" />
@@ -283,9 +285,9 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               onPress={() => { setError(''); setView('login'); }}
-              className="mt-4"
+              className="mt-3.5"
             >
-              <Text className="text-center text-sm font-semibold text-gray-500">
+              <Text className="text-center text-xs font-geist-semibold text-gray-500">
                 Back to Login
               </Text>
             </TouchableOpacity>
@@ -296,19 +298,20 @@ export default function LoginScreen() {
           <TouchableOpacity
             onPress={() => setView('login')}
             activeOpacity={0.8}
-            className="w-full bg-purple-900 py-4 rounded-xl items-center"
+            className="w-full bg-purple-900 py-3.5 rounded-xl items-center shadow-md shadow-purple-900/20"
+            style={{ elevation: 3 }}
           >
-            <Text className="text-white font-bold">Back to Login</Text>
+            <Text className="text-white font-geist-bold text-sm">Back to Login</Text>
           </TouchableOpacity>
         )}
 
         {/* Sign up link */}
-        <View className="flex-row items-center justify-center mt-6">
-          <Text className="text-sm text-gray-600">
+        <View className="flex-row items-center justify-center mt-5">
+          <Text className="text-xs font-geist text-gray-500">
             Don't have an account?{' '}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Signup', {})}>
-            <Text className="font-bold text-purple-600">Sign up</Text>
+            <Text className="font-geist-bold text-xs text-purple-600">Sign up</Text>
           </TouchableOpacity>
         </View>
       </View>

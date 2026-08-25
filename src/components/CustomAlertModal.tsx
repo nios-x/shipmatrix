@@ -41,34 +41,36 @@ export function CustomAlertModal({
     <Modal transparent visible={visible} animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 bg-black/60 items-center justify-center px-6">
         <View
-          className="w-full max-w-sm bg-white rounded-3xl p-6 border border-gray-100"
+          className="w-full max-w-sm bg-white rounded-[28px] p-6 border border-gray-100"
           style={{
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 16 },
-            shadowOpacity: 0.15,
-            shadowRadius: 24,
+            shadowOpacity: 0.12,
+            shadowRadius: 28,
             elevation: 12,
           }}
         >
           {/* Icon Badge */}
-          <View className="items-center mb-4">
+          <View className="items-center mb-3">
             <View
-              className="w-14 h-14 rounded-2xl items-center justify-center mb-1"
+              className="w-14 h-14 rounded-2xl items-center justify-center border border-gray-100/80"
               style={{ backgroundColor: config.iconBg }}
             >
-              <Feather name={config.icon as any} size={28} color={config.iconColor} />
+              <Feather name={config.icon as any} size={26} color={config.iconColor} />
             </View>
           </View>
 
           {/* Title & Message */}
-          <Text className="font-geist-bold text-lg text-gray-900 text-center mb-2 tracking-tight">
+          <Text className="font-geist-bold text-lg text-gray-900 text-center mb-1.5 tracking-tight">
             {title}
           </Text>
           {message ? (
-            <Text className="font-geist text-sm text-gray-500 text-center mb-6 leading-5">
+            <Text className="font-geist text-sm text-gray-500 text-center mb-6 leading-relaxed">
               {message}
             </Text>
-          ) : null}
+          ) : (
+            <View className="mb-4" />
+          )}
 
           {/* Actions */}
           <View className="flex-row gap-3">
@@ -80,7 +82,7 @@ export function CustomAlertModal({
               let textStyle = 'text-white font-geist-bold';
 
               if (isCancel) {
-                btnBg = 'bg-gray-100';
+                btnBg = 'bg-gray-100 border border-gray-200/60';
                 textStyle = 'text-gray-700 font-geist-semibold';
               } else if (isDestructive) {
                 btnBg = 'bg-rose-600';
@@ -94,7 +96,7 @@ export function CustomAlertModal({
                     btn.onPress?.();
                     onClose?.();
                   }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.75}
                   className={`flex-1 py-3.5 rounded-xl items-center justify-center ${btnBg}`}
                 >
                   <Text className={`text-sm ${textStyle}`}>{btn.text}</Text>

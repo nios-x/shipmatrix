@@ -99,56 +99,56 @@ export default function OrdersScreen() {
     return (
       <TouchableOpacity
         activeOpacity={0.7}
-        className="bg-white rounded-2xl p-4 mb-3 border border-gray-100"
+        className="bg-white rounded-2xl p-4 mb-3 border border-gray-100/90"
         style={{
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 6,
-          elevation: 1,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.04,
+          shadowRadius: 8,
+          elevation: 2,
         }}
       >
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-row items-center gap-3">
             <CourierLogo name={item.courier || 'Unknown'} />
             <View>
-              <Text className="font-bold text-gray-900 text-sm">
+              <Text className="font-geist-bold text-gray-900 text-sm">
                 {item.courier || 'Unknown Courier'}
               </Text>
-              <Text className="text-xs text-gray-400 font-medium mt-0.5">
+              <Text className="text-xs text-gray-400 font-geist-medium mt-0.5">
                 AWB: {item.awb || 'N/A'}
               </Text>
             </View>
           </View>
-          <View className={`px-2.5 py-1 rounded-lg ${bgClass}`}>
-            <Text className={`text-[10px] font-bold uppercase ${textClass}`}>
+          <View className={`px-2.5 py-1 rounded-full ${bgClass}`}>
+            <Text className={`text-[10px] font-geist-bold uppercase tracking-wider ${textClass}`}>
               {item.status || 'Unknown'}
             </Text>
           </View>
         </View>
 
-        <View className="flex-row items-center justify-between pt-3 border-t border-gray-50">
+        <View className="flex-row items-center justify-between pt-3 border-t border-gray-100/60">
           <View className="flex-1">
-            <Text className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+            <Text className="text-[10px] text-gray-400 font-geist-bold uppercase tracking-wider">
               Customer
             </Text>
-            <Text className="text-sm font-semibold text-gray-700 mt-0.5" numberOfLines={1}>
+            <Text className="text-sm font-geist-semibold text-gray-800 mt-0.5" numberOfLines={1}>
               {item.customerName || 'N/A'}
             </Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+            <Text className="text-[10px] text-gray-400 font-geist-bold uppercase tracking-wider">
               Product
             </Text>
-            <Text className="text-sm font-semibold text-gray-700 mt-0.5" numberOfLines={1}>
+            <Text className="text-sm font-geist-semibold text-gray-800 mt-0.5" numberOfLines={1}>
               {item.productName || 'N/A'}
             </Text>
           </View>
           <View className="flex-1 items-end">
-            <Text className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">
+            <Text className="text-[10px] text-gray-400 font-geist-bold uppercase tracking-wider">
               Payment
             </Text>
-            <Text className="text-sm font-semibold text-gray-700 mt-0.5">
+            <Text className="text-sm font-geist-semibold text-gray-800 mt-0.5">
               {item.paymentType?.toUpperCase() || 'N/A'}
             </Text>
           </View>
@@ -163,30 +163,30 @@ export default function OrdersScreen() {
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
       {/* Header */}
       <View className="px-5 py-4 flex-row items-center justify-between">
-        <Text className="text-2xl font-black text-gray-900">Orders</Text>
+        <Text className="text-2xl font-geist-bold text-gray-900 tracking-tight">Orders</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('CreateShipment', {})}
           activeOpacity={0.8}
-          className="bg-purple-900 px-4 py-2.5 rounded-xl flex-row items-center gap-2"
-          style={{ elevation: 4 }}
+          className="bg-purple-900 px-4 py-2.5 rounded-xl flex-row items-center gap-2 shadow-md shadow-purple-900/20"
+          style={{ elevation: 3 }}
         >
           <Feather name="plus" size={16} color="white" />
-          <Text className="text-white font-bold text-sm">Ship</Text>
+          <Text className="text-white font-geist-bold text-sm">Ship</Text>
         </TouchableOpacity>
       </View>
 
       {/* Search */}
       <View className="px-5 mb-3">
         <View className="relative">
-          <View className="absolute left-3 top-2.5 z-10">
+          <View className="absolute left-3.5 top-3 z-10">
             <Feather name="search" size={18} color="#9ca3af" />
           </View>
           <TextInput
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search orders, AWB..."
+            placeholder="Search orders, AWB, customer..."
             placeholderTextColor="#9ca3af"
-            className="bg-white border border-gray-100 rounded-xl pl-10 pr-4 py-2.5 text-sm font-medium text-gray-900"
+            className="bg-white border border-gray-200/80 rounded-xl pl-10 pr-4 py-2.5 text-sm font-geist-medium text-gray-900 shadow-sm"
           />
         </View>
       </View>
@@ -202,13 +202,14 @@ export default function OrdersScreen() {
           renderItem={({ item }) => (
             <TouchableOpacity
               onPress={() => setActiveFilter(item)}
+              activeOpacity={0.8}
               className={`px-4 py-2 rounded-full ${activeFilter === item
-                ? 'bg-purple-900'
-                : 'bg-white border border-gray-200'
+                ? 'bg-purple-900 shadow-sm shadow-purple-900/20'
+                : 'bg-white border border-gray-200/80'
                 }`}
             >
               <Text
-                className={`text-xs font-bold ${activeFilter === item ? 'text-white' : 'text-gray-600'
+                className={`text-xs font-geist-bold ${activeFilter === item ? 'text-white' : 'text-gray-600'
                   }`}
               >
                 {item}
@@ -223,7 +224,7 @@ export default function OrdersScreen() {
         data={filteredShipments}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

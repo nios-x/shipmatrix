@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
-import { View, Text } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 import type {
   MainTabParamList,
   HomeStackParamList,
@@ -147,11 +147,12 @@ export default function MainTabNavigator() {
         tabBarLabel: ({ focused, color }) => (
           <Text
             style={{
+              fontFamily: Platform.OS === 'web' ? 'Geist' : (focused ? 'Geist-Bold' : 'Geist-Medium'),
               fontSize: 10,
-              fontWeight: focused ? '900' : '700',
+              fontWeight: focused ? '700' : '600',
               color,
               textTransform: 'uppercase',
-              letterSpacing: 1,
+              letterSpacing: 0.8,
               marginTop: 2,
             }}
           >
@@ -159,18 +160,18 @@ export default function MainTabNavigator() {
           </Text>
         ),
         tabBarActiveTintColor: '#7c3aed',
-        tabBarInactiveTintColor: '#9ca3af',
+        tabBarInactiveTintColor: '#94a3b8',
         tabBarStyle: {
-          backgroundColor: 'rgba(255,255,255,0.95)',
-          borderTopWidth: 0.5,
-          borderTopColor: 'rgba(0,0,0,0.05)',
+          backgroundColor: '#ffffff',
+          borderTopWidth: 1,
+          borderTopColor: '#f1f5f9',
           paddingTop: 6,
           paddingBottom: 8,
           height: 64,
-          elevation: 20,
+          elevation: 8,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.06,
+          shadowOpacity: 0.04,
           shadowRadius: 12,
         },
       })}

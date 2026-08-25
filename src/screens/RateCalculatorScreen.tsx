@@ -58,8 +58,6 @@ export default function RateCalculatorScreen() {
   const [length, setLength] = useState('');
   const [width, setWidth] = useState('');
   const [height, setHeight] = useState('');
-  const [paymentType, setPaymentType] = useState<'prepaid' | 'cod'>('prepaid');
-  const [codAmount, setCodAmount] = useState('');
 
   // Volumetric weight calculation: (L * W * H) / 5000 in kg
   const volumetricWeight = useMemo(() => {
@@ -100,8 +98,6 @@ export default function RateCalculatorScreen() {
     setLength('');
     setWidth('');
     setHeight('');
-    setPaymentType('prepaid');
-    setCodAmount('');
     setRates([]);
     toast.info('Calculator Reset', 'All input fields have been cleared.');
   };
@@ -131,8 +127,8 @@ export default function RateCalculatorScreen() {
         length: length || '10',
         breadth: width || '10',
         height: height || '10',
-        paymentType,
-        codAmount: paymentType === 'cod' ? codAmount || '0' : '0',
+        paymentType: 'prepaid',
+        codAmount: '0',
       });
 
       if (data.success && Array.isArray(data.data)) {
@@ -475,51 +471,6 @@ export default function RateCalculatorScreen() {
               </View>
             )}
 
-            <Divider />
-
-            {/* Payment Section */}
-            <SectionHeader
-              icon="credit-card"
-              title="Payment Mode"
-              subtitle="Select prepaid or cash on delivery"
-            />
-
-            <View className="flex-row gap-3 mb-4">
-              <PaymentTypeButton
-                title="Prepaid"
-                subtitle="Online payment"
-                icon="check-circle"
-                badge="Instant"
-                selected={paymentType === 'prepaid'}
-                onPress={() => setPaymentType('prepaid')}
-              />
-              <PaymentTypeButton
-                title="Cash on Delivery"
-                subtitle="Collect on delivery"
-                icon="dollar-sign"
-                badge="COD"
-                selected={paymentType === 'cod'}
-                onPress={() => setPaymentType('cod')}
-              />
-            </View>
-
-            {paymentType === 'cod' && (
-              <View className="mb-2">
-                <Text className="text-xs font-bold text-slate-700 mb-1.5">COD Amount to Collect (₹)</Text>
-                <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 focus:border-violet-500">
-                  <Text className="text-slate-400 font-bold text-sm mr-1">₹</Text>
-                  <TextInput
-                    value={codAmount}
-                    onChangeText={setCodAmount}
-                    placeholder="e.g. 1500"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="numeric"
-                    className="flex-1 py-3.5 text-sm font-bold text-slate-900"
-                  />
-                </View>
-              </View>
-            )}
-
             {/* Calculate Button */}
             <TouchableOpacity
               onPress={handleCalculate}
@@ -626,8 +577,6 @@ export default function RateCalculatorScreen() {
                     length,
                     breadth: width,
                     height,
-                    paymentType,
-                    codAmount,
                     selectedCarrier: rate.carrier_id,
                   });
                 }}
@@ -711,66 +660,6 @@ function DimensionInput({
   );
 }
 
-function PaymentTypeButton({
-  title,
-  subtitle,
-  icon,
-  badge,
-  selected,
-  onPress,
-}: {
-  title: string;
-  subtitle: string;
-  icon: keyof typeof Feather.glyphMap;
-  badge: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={onPress}
-      className={`flex-1 p-3.5 rounded-2xl border ${
-        selected
-          ? 'bg-violet-50/70 border-violet-600'
-          : 'bg-slate-50 border-slate-200'
-      }`}
-    >
-      <View className="flex-row items-center justify-between mb-2">
-        <View
-          className={`w-8 h-8 rounded-xl items-center justify-center ${
-            selected ? 'bg-violet-600' : 'bg-slate-200'
-          }`}
-        >
-          <Feather name={icon} size={15} color={selected ? '#FFFFFF' : '#64748B'} />
-        </View>
-        <View
-          className={`px-2 py-0.5 rounded-md ${
-            selected ? 'bg-violet-100' : 'bg-slate-200/70'
-          }`}
-        >
-          <Text
-            className={`text-[9px] font-black ${
-              selected ? 'text-violet-700' : 'text-slate-600'
-            }`}
-          >
-            {badge}
-          </Text>
-        </View>
-      </View>
-      <Text
-        className={`text-xs font-bold ${
-          selected ? 'text-violet-950' : 'text-slate-800'
-        }`}
-      >
-        {title}
-      </Text>
-      <Text className="text-[10px] text-slate-400 font-medium mt-0.5">
-        {subtitle}
-      </Text>
-    </TouchableOpacity>
-  );
-}
 
 function FilterTab({
   label,

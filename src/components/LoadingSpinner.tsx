@@ -16,14 +16,14 @@ export function LoadingSpinner({
     <View className="items-center justify-center gap-3">
       <ActivityIndicator size={size} color="#7c3aed" />
       {message && (
-        <Text className="text-sm font-semibold text-gray-500">{message}</Text>
+        <Text className="font-geist-medium text-xs text-gray-500 tracking-wide">{message}</Text>
       )}
     </View>
   );
 
   if (fullScreen) {
     return (
-      <View className="flex-1 items-center justify-center bg-gray-50">
+      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
         {content}
       </View>
     );

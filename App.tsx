@@ -24,22 +24,27 @@ import { toastConfig } from './src/components/ToastConfig';
 
 // Inject Geist font stylesheet dynamically on Web platform
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap';
-  document.head.appendChild(link);
+  if (!document.getElementById('geist-google-font-link')) {
+    const link = document.createElement('link');
+    link.id = 'geist-google-font-link';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&family=Geist+Mono:wght@100..900&display=swap';
+    document.head.appendChild(link);
+  }
 
-  const style = document.createElement('style');
-  style.id = 'geist-global-font-override';
-  style.innerHTML = `
-    * {
-      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-    }
-    [dir="auto"], [dir] [dir="auto"], div, span, p, input, textarea, button, select {
-      font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-    }
-  `;
-  document.head.appendChild(style);
+  if (!document.getElementById('geist-global-font-override')) {
+    const style = document.createElement('style');
+    style.id = 'geist-global-font-override';
+    style.innerHTML = `
+      * {
+        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+      }
+      body, html, #root, [dir="auto"], [dir] [dir="auto"], div, span, p, h1, h2, h3, h4, h5, h6, input, textarea, button, select {
+        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 
 // Enforce Geist as default font on native components
@@ -55,6 +60,7 @@ TextInput.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Geist' : '
 
 export default function App() {
   const [fontsLoaded] = useFonts({
+    Geist: require('./assets/fonts/Geist-Regular.otf'),
     'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
     'Geist-Medium': require('./assets/fonts/Geist-Medium.otf'),
     'Geist-SemiBold': require('./assets/fonts/Geist-SemiBold.otf'),
@@ -62,6 +68,12 @@ export default function App() {
     'Geist-Black': require('./assets/fonts/Geist-Black.otf'),
     'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
     'Geist-Thin': require('./assets/fonts/Geist-Thin.otf'),
+    'Geist-400': Geist_400Regular,
+    'Geist-500': Geist_500Medium,
+    'Geist-600': Geist_600SemiBold,
+    'Geist-700': Geist_700Bold,
+    'Geist-800': Geist_800ExtraBold,
+    'Geist-900': Geist_900Black,
     Geist_400Regular,
     Geist_500Medium,
     Geist_600SemiBold,

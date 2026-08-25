@@ -195,40 +195,40 @@ export default function CreateReverseShipmentScreen() {
             <Field label="Reason" value={form.reason} onChange={(v) => update('reason', v)} placeholder="Customer Return" />
           </View>
 
-          <TouchableOpacity onPress={handleGetRates} disabled={loading} activeOpacity={0.8} className={`bg-purple-900 py-4 rounded-xl items-center mb-8 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 6 }}>
-            <Text className="text-white font-bold text-base">{loading ? 'Fetching Rates...' : 'Get Return Rates'}</Text>
+          <TouchableOpacity onPress={handleGetRates} disabled={loading} activeOpacity={0.8} className={`bg-purple-900 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
+            <Text className="text-white font-geist-bold text-sm">{loading ? 'Fetching Rates...' : 'Get Return Rates'}</Text>
           </TouchableOpacity>
         </ScrollView>
       ) : step === 'rates' ? (
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-4 mt-2">Available ({rates.length})</Text>
+          <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-4 mt-2">Available ({rates.length})</Text>
           {rates.sort((a, b) => a.freight_charge - b.freight_charge).map((rate) => (
-            <TouchableOpacity key={rate.carrier_id} onPress={() => handleBook(rate)} disabled={loading} activeOpacity={0.7} className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 flex-row items-center justify-between" style={{ elevation: 1 }}>
+            <TouchableOpacity key={rate.carrier_id} onPress={() => handleBook(rate)} disabled={loading} activeOpacity={0.7} className="bg-white rounded-2xl p-4 mb-3 border border-gray-100/90 flex-row items-center justify-between shadow-sm" style={{ elevation: 2 }}>
               <View className="flex-row items-center gap-3 flex-1">
                 <CourierLogo name={rate.carrier_name} />
                 <View className="flex-1">
-                  <Text className="font-bold text-gray-900 text-sm">{rate.carrier_name}</Text>
-                  {rate.estimated_days && <Text className="text-xs text-gray-400 mt-0.5">Est. {rate.estimated_days} days</Text>}
+                  <Text className="font-geist-bold text-gray-900 text-sm">{rate.carrier_name}</Text>
+                  {rate.estimated_days && <Text className="text-xs font-geist text-gray-400 mt-0.5">Est. {rate.estimated_days} days</Text>}
                 </View>
               </View>
               <View className="items-end">
-                <Text className="text-lg font-black text-gray-900">₹{rate.freight_charge}</Text>
-                <Text className="text-[10px] font-bold text-purple-600 uppercase">Book</Text>
+                <Text className="text-lg font-geist-bold text-gray-900">₹{rate.freight_charge}</Text>
+                <Text className="text-[10px] font-geist-bold text-purple-600 uppercase">Book</Text>
               </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
       ) : (
         <View className="flex-1 items-center justify-center px-8">
-          <View className="bg-green-100 w-20 h-20 rounded-full items-center justify-center mb-6">
-            <Feather name="check-circle" size={40} color="#16a34a" />
+          <View className="bg-emerald-50 border border-emerald-100 w-20 h-20 rounded-3xl items-center justify-center mb-6">
+            <Feather name="check-circle" size={36} color="#059669" />
           </View>
-          <Text className="text-2xl font-black text-gray-900 mb-2">Return Booked!</Text>
-          <Text className="text-gray-500 text-center mb-1">AWB: {result?.awb}</Text>
-          <Text className="text-gray-500 text-center mb-1">Courier: {result?.courier}</Text>
-          <Text className="text-gray-500 text-center mb-6">Charge: ₹{result?.charge}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-purple-900 px-8 py-4 rounded-xl" style={{ elevation: 4 }}>
-            <Text className="text-white font-bold">Done</Text>
+          <Text className="text-2xl font-geist-bold text-gray-900 mb-2 tracking-tight">Return Booked!</Text>
+          <Text className="text-gray-500 font-geist text-sm text-center mb-1">AWB: {result?.awb}</Text>
+          <Text className="text-gray-500 font-geist text-sm text-center mb-1">Courier: {result?.courier}</Text>
+          <Text className="text-gray-500 font-geist text-sm text-center mb-6">Charge: ₹{result?.charge}</Text>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-purple-900 px-8 py-3.5 rounded-xl shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
+            <Text className="text-white font-geist-bold text-sm">Done</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -242,11 +242,11 @@ function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLen
 }) {
   return (
     <View>
-      <Text className="text-xs font-semibold text-gray-600 mb-1">{label}</Text>
+      <Text className="text-xs font-geist-bold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
-        {icon && <View className="absolute left-3 top-3 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
+        {icon && <View className="absolute left-3 top-3.5 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
         <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline}
-          className={`bg-gray-50 border border-gray-200 rounded-lg ${icon ? 'pl-9' : 'pl-3'} pr-3 py-2.5 text-sm font-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-geist-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
       </View>
     </View>
   );
