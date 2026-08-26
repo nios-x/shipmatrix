@@ -316,7 +316,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         onPress={handleGetRates}
         disabled={loading}
         activeOpacity={0.8}
-        className={`bg-violet-700 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
+        className={`bg-violet-700 py-4 rounded-full items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
         style={{ elevation: 4 }}
       >
         <Text className="text-white font-geist-bold text-sm">
@@ -326,69 +326,184 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     </ScrollView>
   );
 
-  const renderRates = () => (
-    <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-      <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-4 mt-2">
-        Available Couriers ({rates.length})
-      </Text>
+  const renderRates = () => {
+    const cheapestRate = rates.length > 0 ? Math.min(...rates.map((r) => r.freight_charge)) : 0;
+    const fastestDays = rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
 
-      {rates
-        .sort((a, b) => a.freight_charge - b.freight_charge)
-        .map((rate) => (
-          <TouchableOpacity
-            key={rate.carrier_id}
-            onPress={() => handleBookShipment(rate)}
-            disabled={loading}
-            activeOpacity={0.7}
-            className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 flex-row items-center justify-between"
+    return (
+      <ScrollView
+        className="flex-1 px-4"
+        contentContainerStyle={{
+          paddingTop: 12,
+          paddingBottom: Math.max(insets.bottom + 32, 48),
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Route Summary Pill */}
+        <View className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs mb-3.5 flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-1">
+              <Feather name="map-pin" size={12} color="#10B981" />
+              <Text className="text-xs font-black text-slate-800">
+                {form.pickupPincode}
+              </Text>
+            </View>
+            <Feather name="arrow-right" size={12} color="#94A3B8" />
+            <View className="flex-row items-center gap-1">
+              <Feather name="map-pin" size={12} color="#0284C7" />
+              <Text className="text-xs font-black text-slate-800">
+                {form.deliveryPincode}
+              </Text>
+            </View>
+          </View>
+          <View className="bg-slate-100 px-2.5 py-1 rounded-lg">
+            <Text className="text-[11px] font-bold text-slate-700">
+              {form.weight} kg
+            </Text>
+          </View>
+        </View>
 
-          >
-            <View className="flex-row items-center gap-3 flex-1">
-              <CourierLogo name={rate.carrier_name} />
-              <View className="flex-1">
-                <Text className="font-bold text-gray-900 text-sm">{rate.carrier_name}</Text>
-                {rate.estimated_days && (
-                  <Text className="text-xs text-gray-400 mt-0.5">
-                    Est. {rate.estimated_days} days
-                  </Text>
-                )}
+        {rates
+          .slice()
+          .sort((a, b) => a.freight_charge - b.freight_charge)
+          .map((rate) => {
+            const isAir = rate.carrier_name.toLowerCase().includes('air');
+            const isCheapest = rate.freight_charge === cheapestRate;
+            const isFastest = rate.estimated_days === fastestDays;
+
+            return (
+              <View
+                key={rate.carrier_id}
+                className="bg-white rounded-3xl p-5 mb-3.5 border border-slate-100 shadow-xs"
+              >
+                {/* Top Badges */}
+                <View className="flex-row items-center justify-between mb-3.5">
+                  <View className="flex-row items-center gap-2">
+                    <View
+                      className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
+                          ? 'bg-sky-50 border border-sky-100'
+                          : 'bg-slate-100 border border-slate-200'
+                        }`}
+                    >
+                      <Feather
+                        name={isAir ? 'send' : 'truck'}
+                        size={11}
+                        color={isAir ? '#0284C7' : '#475569'}
+                      />
+                      <Text
+                        className={`text-[10px] font-bold ${isAir ? 'text-sky-700' : 'text-slate-700'
+                          }`}
+                      >
+                        {isAir ? 'Air Express' : 'Surface Logistics'}
+                      </Text>
+                    </View>
+
+                    {isCheapest && (
+                      <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                        <Text className="text-[9px] font-black text-emerald-700">
+                          ★ CHEAPEST
+                        </Text>
+                      </View>
+                    )}
+
+                    {isFastest && !isCheapest && (
+                      <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
+                        <Text className="text-[9px] font-black text-violet-700">
+                          ⚡ FASTEST
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View className="flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
+                    <Feather name="shield" size={10} color="#10B981" />
+                    <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
+                  </View>
+                </View>
+
+                {/* Main Courier Info */}
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center flex-1 pr-3">
+                    <View className="w-13 h-13 rounded-2xl bg-slate-50 items-center justify-center p-1.5 border border-slate-100">
+                      <CourierLogo name={rate.carrier_name} />
+                    </View>
+
+                    <View className="ml-3.5 flex-1">
+                      <Text
+                        className="text-sm font-black text-slate-900 tracking-tight"
+                        numberOfLines={1}
+                      >
+                        {rate.carrier_name}
+                      </Text>
+
+                      <View className="flex-row items-center mt-1.5">
+                        <Feather name="clock" size={12} color="#64748B" />
+                        <Text className="text-xs text-slate-500 font-semibold ml-1.5">
+                          Est. {rate.estimated_days || 3} business days
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View className="items-end">
+                    <Text className="text-[9px] font-black text-slate-400 tracking-wider">
+                      ALL-INCLUSIVE
+                    </Text>
+                    <Text className="text-2xl font-black text-slate-950 mt-0.5">
+                      ₹{rate.freight_charge}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Footer CTA */}
+                <View className="mt-4 pt-3.5 border-t border-slate-100 flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-1.5">
+                    <Feather name="check" size={13} color="#10B981" />
+                    <Text className="text-[11px] font-medium text-slate-500">
+                      Free doorstep pickup included
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => handleBookShipment(rate)}
+                    disabled={loading}
+                    activeOpacity={0.8}
+                    className="bg-violet-600 px-4 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm shadow-violet-500/20"
+                  >
+                    <Text className="text-xs font-black text-white">Ship Now</Text>
+                    <Feather name="arrow-right" size={12} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-            <View className="items-end">
-              <Text className="text-lg font-black text-gray-900">₹{rate.freight_charge}</Text>
-              <Text className="text-[10px] font-bold text-purple-600 uppercase">Book Now</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-      <View className="h-8" />
-    </ScrollView>
-  );
+            );
+          })}
+      </ScrollView>
+    );
+  };
 
   const renderBookingSuccess = () => (
     <View className="flex-1 items-center justify-center px-8">
-      <View className="bg-green-100 w-20 h-20 rounded-full items-center justify-center mb-6">
-        <Feather name="check-circle" size={40} color="#16a34a" />
+      <View className="bg-emerald-100 w-20 h-20 rounded-full items-center justify-center mb-6 border border-emerald-200">
+        <Feather name="check-circle" size={40} color="#059669" />
       </View>
-      <Text className="text-2xl font-black text-gray-900 mb-2 text-center">
+      <Text className="text-2xl font-black text-slate-900 mb-2 text-center">
         Shipment Booked!
       </Text>
-      <Text className="text-gray-500 text-center mb-2">
-        AWB: {bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}
+      <Text className="text-slate-500 text-center mb-2 font-medium text-sm">
+        AWB: <Text className="font-mono font-bold text-slate-800">{bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}</Text>
       </Text>
-      <Text className="text-gray-500 text-center mb-1">
-        Courier: {bookingResult?.courier}
+      <Text className="text-slate-500 text-center mb-1 font-medium text-sm">
+        Courier: <Text className="font-bold text-slate-800">{bookingResult?.courier}</Text>
       </Text>
-      <Text className="text-gray-500 text-center mb-6">
-        Charge: ₹{bookingResult?.charge}
+      <Text className="text-slate-500 text-center mb-6 font-medium text-sm">
+        Charge: <Text className="font-bold text-slate-800">₹{bookingResult?.charge}</Text>
       </Text>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         activeOpacity={0.8}
-        className="bg-violet-700 px-8 py-4 rounded-xl"
-        style={{ elevation: 4 }}
+        className="bg-violet-600 px-8 py-3.5 rounded-xl shadow-sm shadow-violet-500/20"
       >
-        <Text className="text-white font-bold">Back to Orders</Text>
+        <Text className="text-white font-black text-sm">Back to Orders</Text>
       </TouchableOpacity>
     </View>
   );
@@ -396,81 +511,84 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-[#f8fafc]"
+      className="flex-1 bg-[#F8FAFC]"
       style={{ paddingTop: insets.top }}
     >
-      {/* Header */}
-      {/* Header */}
-      <View className="px-5 pb-4 pt-10">
-        <View className="flex-row items-center">
+      {/* Top App Bar */}
+      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-3 flex-1">
           <TouchableOpacity
             onPress={() =>
               step === 'form'
                 ? navigation.goBack()
                 : setStep(step === 'rates' ? 'form' : 'rates')
             }
-            className="w-10 h-10 rounded-full bg-white items-center justify-center"
-            style={{ elevation: 2 }}
+            activeOpacity={0.7}
+            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
           >
-            <Feather name="arrow-left" size={20} color="#111827" />
+            <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
-          <View className="flex-1 ml-3">
-            <Text className="text-2xl font-black text-gray-950">
+          <View className="flex-1">
+            <Text className="text-xl font-black text-slate-900 tracking-tight">
               {step === 'form'
                 ? 'Create Shipment'
                 : step === 'rates'
                   ? 'Choose Courier'
                   : 'Shipment Confirmed'}
             </Text>
-
-            <Text className="text-xs text-gray-500 mt-0.5">
+            <Text className="text-xs text-slate-500 font-medium mt-0.5">
               {step === 'form'
                 ? 'Enter shipment details'
                 : step === 'rates'
-                  ? 'Compare rates & delivery times'
+                  ? `${rates.length} courier options available`
                   : 'Your shipment is ready'}
             </Text>
           </View>
         </View>
+      </View>
 
-        {/* Progress */}
-        {step !== 'booking' && (
-          <View className="flex-row items-center mt-5 p-5">
-            {[
-              { label: 'Details', active: step === 'form' },
-              { label: 'Courier', active: step === 'rates' },
-            ].map((item, index) => (
-              <React.Fragment key={item.label}>
-                <View className="flex-row items-center">
-                  <View
-                    className={`w-7 h-7 rounded-full items-center justify-center ${item.active ? 'bg-purple-700' : 'bg-purple-100'
-                      }`}
-                  >
+      {/* Progress Stepper */}
+      {step !== 'booking' && (
+        <View className="flex-row items-center px-5 py-3 bg-white border-b border-slate-100 mb-2">
+          {[
+            { label: 'Details', active: step === 'form', done: step === 'rates' },
+            { label: 'Courier', active: step === 'rates', done: false },
+          ].map((item, index) => (
+            <React.Fragment key={item.label}>
+              <View className="flex-row items-center">
+                <View
+                  className={`w-6 h-6 rounded-full items-center justify-center ${item.active || item.done ? 'bg-violet-600' : 'bg-slate-100'
+                    }`}
+                >
+                  {item.done ? (
+                    <Feather name="check" size={12} color="#FFFFFF" />
+                  ) : (
                     <Text
-                      className={`text-xs font-black ${item.active ? 'text-white' : 'text-purple-700'
+                      className={`text-[10px] font-black ${item.active ? 'text-white' : 'text-slate-500'
                         }`}
                     >
                       {index + 1}
                     </Text>
-                  </View>
-
-                  <Text
-                    className={`ml-2 text-xs font-bold ${item.active ? 'text-gray-900' : 'text-gray-400'
-                      }`}
-                  >
-                    {item.label}
-                  </Text>
+                  )}
                 </View>
 
-                {index === 0 && (
-                  <View className="h-[1px] bg-gray-200 flex-1 mx-4" />
-                )}
-              </React.Fragment>
-            ))}
-          </View>
-        )}
-      </View>
+                <Text
+                  className={`ml-2 text-xs font-bold ${item.active ? 'text-slate-900' : 'text-slate-400'
+                    }`}
+                >
+                  {item.label}
+                </Text>
+              </View>
+
+              {index === 0 && (
+                <View className="h-[1px] bg-slate-200 flex-1 mx-3" />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+      )}
+
       {loading && step !== 'form' ? (
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (

@@ -9,42 +9,122 @@ import { doc, updateDoc } from 'firebase/firestore';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { user } = useUser();
 
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailNotif: true,
+    smsNotif: true,
+    pushNotif: true,
+    autoLabel: false,
+  });
+
+  const toggleSetting = (key: keyof typeof notificationSettings) => {
+    setNotificationSettings((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const settings = [
-    { key: 'emailNotif', label: 'Email Notifications', icon: 'mail' },
-    { key: 'smsNotif', label: 'SMS Notifications', icon: 'message-square' },
-    { key: 'pushNotif', label: 'Push Notifications', icon: 'bell' },
-    { key: 'autoLabel', label: 'Auto-download Labels', icon: 'download' },
+    { key: 'emailNotif' as const, label: 'Email Notifications', icon: 'mail', desc: 'Order status updates & reports' },
+    { key: 'smsNotif' as const, label: 'SMS Notifications', icon: 'message-square', desc: 'Instant delivery alerts' },
+    { key: 'pushNotif' as const, label: 'Push Notifications', icon: 'bell', desc: 'Important shipment updates' },
+    { key: 'autoLabel' as const, label: 'Auto-download Labels', icon: 'download', desc: 'Save shipping labels automatically' },
   ];
 
   return (
-    <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Feather name="arrow-left" size={24} color="#1f2937" />
-        </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900">Settings</Text>
+    <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
+      {/* Top App Bar */}
+      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between mb-4">
+        <View className="flex-row items-center gap-3 flex-1">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
+          >
+            <Feather name="arrow-left" size={20} color="#334155" />
+          </TouchableOpacity>
+
+          <View className="flex-1">
+            <Text className="text-xl font-black text-slate-900 tracking-tight">
+              Settings
+            </Text>
+            <Text className="text-xs text-slate-500 font-medium mt-0.5">
+              Preferences & account configurations
+            </Text>
+          </View>
+        </View>
       </View>
-      <View className="mx-5 bg-white rounded-2xl border border-gray-100" style={{ elevation: 1 }}>
+
+      {/* Notifications Card */}
+      <View className="mx-5 mb-4 bg-white rounded-3xl border border-slate-100 p-2 shadow-xs">
+        <View className="px-4 py-3 border-b border-slate-100 flex-row items-center justify-between">
+          <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+            Notification Preferences
+          </Text>
+        </View>
+
         {settings.map((setting, index) => (
-          <View key={setting.key} className={`px-5 py-4 flex-row items-center justify-between ${index < settings.length - 1 ? 'border-b border-gray-50' : ''}`}>
-            <View className="flex-row items-center gap-3">
-              <Feather name={setting.icon as any} size={20} color="#6b7280" />
-              <Text className="font-semibold text-gray-900">{setting.label}</Text>
+          <View
+            key={setting.key}
+            className={`px-4 py-3.5 flex-row items-center justify-between ${
+              index < settings.length - 1 ? 'border-b border-slate-100' : ''
+            }`}
+          >
+            <View className="flex-row items-center gap-3 flex-1 pr-3">
+              <View className="w-9 h-9 rounded-xl bg-slate-50 border border-slate-100 items-center justify-center">
+                <Feather name={setting.icon as any} size={17} color="#64748B" />
+              </View>
+              <View className="flex-1">
+                <Text className="font-bold text-slate-900 text-sm">
+                  {setting.label}
+                </Text>
+                <Text className="text-xs text-slate-400 font-medium mt-0.5">
+                  {setting.desc}
+                </Text>
+              </View>
             </View>
-            <Switch trackColor={{ true: '#7c3aed', false: '#e5e7eb' }} thumbColor="white" />
+            <Switch
+              value={notificationSettings[setting.key]}
+              onValueChange={() => toggleSetting(setting.key)}
+              trackColor={{ true: '#7C3AED', false: '#E2E8F0' }}
+              thumbColor="#FFFFFF"
+            />
           </View>
         ))}
       </View>
 
-      <View className="mx-5 mt-4 bg-white rounded-2xl border border-gray-100 p-5" style={{ elevation: 1 }}>
-        <Text className="font-bold text-gray-900 mb-2">Account Info</Text>
-        <Text className="text-sm text-gray-500">Email: {user?.email}</Text>
-        <Text className="text-sm text-gray-500">Phone: {user?.phone || 'Not set'}</Text>
-        <Text className="text-sm text-gray-500">Role: {user?.role}</Text>
-        <Text className="text-sm text-gray-500">API Key: {user?.apiKey ? '••••' + user.apiKey.slice(-8) : 'N/A'}</Text>
+      {/* Account Info Card */}
+      <View className="mx-5 bg-white rounded-3xl border border-slate-100 p-4 shadow-xs">
+        <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
+          Account Details
+        </Text>
+
+        <View className="space-y-2.5">
+          <View className="flex-row items-center justify-between py-2 border-b border-slate-100">
+            <Text className="text-xs font-semibold text-slate-500">Email Address</Text>
+            <Text className="text-xs font-bold text-slate-800">{user?.email || 'N/A'}</Text>
+          </View>
+
+          <View className="flex-row items-center justify-between py-2 border-b border-slate-100">
+            <Text className="text-xs font-semibold text-slate-500">Phone Number</Text>
+            <Text className="text-xs font-bold text-slate-800">{user?.phone || 'Not configured'}</Text>
+          </View>
+
+          <View className="flex-row items-center justify-between py-2 border-b border-slate-100">
+            <Text className="text-xs font-semibold text-slate-500">Account Role</Text>
+            <View className="bg-violet-50 px-2.5 py-0.5 rounded-md border border-violet-100">
+              <Text className="text-[11px] font-bold text-violet-700 uppercase">
+                {user?.role || 'User'}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between py-2">
+            <Text className="text-xs font-semibold text-slate-500">API Key</Text>
+            <Text className="text-xs font-mono font-bold text-slate-800">
+              {user?.apiKey ? '••••••••' + user.apiKey.slice(-6) : 'Not Generated'}
+            </Text>
+          </View>
+        </View>
       </View>
     </View>
   );

@@ -172,7 +172,7 @@ export default function AvailableCouriersScreen() {
 
           <View className="flex-1">
             <Text className="text-xl font-black text-slate-900 tracking-tight">
-              Available Couriers
+              Available Courierss
             </Text>
             <Text className="text-xs text-slate-500 font-medium mt-0.5">
               {rates.length > 0

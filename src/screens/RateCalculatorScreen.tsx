@@ -164,18 +164,13 @@ export default function RateCalculatorScreen() {
       style={{ paddingTop: insets.top }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header Bar */}
-      <View className="px-6 pt-5 pb-4 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-1 mr-3">
-          <View className="flex-row items-center gap-2.5">
-            <View className="w-9 h-9 rounded-xl bg-violet-100 items-center justify-center">
-              <Feather name="sliders" size={18} color={ACCENT_PURPLE} />
-            </View>
-            <Text className="text-2xl font-black text-slate-900 tracking-tight">
-              Rate Calculator
-            </Text>
-          </View>
-          <Text className="text-xs text-slate-500 font-medium mt-1 ml-11">
+      {/* Top App Bar */}
+      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+        <View className="flex-1">
+          <Text className="text-xl font-black text-slate-900 tracking-tight">
+            Rate Calculator
+          </Text>
+          <Text className="text-xs text-slate-500 font-medium mt-0.5">
             Real-time multi-courier shipping estimates
           </Text>
         </View>
@@ -183,9 +178,9 @@ export default function RateCalculatorScreen() {
         <TouchableOpacity
           onPress={handleReset}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
+          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
         >
-          <Feather name="rotate-ccw" size={16} color="#64748B" />
+          <Feather name="rotate-ccw" size={16} color={ACCENT_PURPLE} />
         </TouchableOpacity>
       </View>
 
@@ -412,21 +407,19 @@ export default function RateCalculatorScreen() {
           {/* Calculate Button */}
           <TouchableOpacity
             onPress={handleCalculate}
-            disabled={calculating || !canCalculate}
-            activeOpacity={0.85}
-            className={`mt-5 rounded-2xl overflow-hidden  shadow-lg bg-violet-600 shadow-violet-500/25 ${!canCalculate ? 'opacity-60' : ''
+            className={`mt-5 rounded-2xl overflow-hidden  shadow-lg bg-violet-600 shadow-violet-500/25 rounded-full 
               }`}
           >
             <View
               className="py-2 px-6 flex-row items-center justify-center gap-2.5"
             >
               {calculating ? (
-                <Text className="text-white font-black text-base tracking-wide px-5 py-1">
+                <Text className="text-white font-black text-sm tracking-wide px-5 py-1">
                   Scanning Partner Couriers...
                 </Text>
               ) : (
                 <>
-                  <Text className="text-white font-black   text-base tracking-wide py-1">
+                  <Text className="text-white font-black   text-sm tracking-wide py-1">
                     Find Available Couriers
                   </Text>
                 </>

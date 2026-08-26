@@ -96,42 +96,61 @@ export default function WalletScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4">
-        <Text className="text-2xl font-geist-bold text-gray-900 tracking-tight">Wallet</Text>
+    <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
+      {/* Top App Bar */}
+      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between mb-4">
+        <View className="flex-1">
+          <Text className="text-xl font-black text-slate-900 tracking-tight">
+            Wallet
+          </Text>
+          <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage balance & transaction history
+          </Text>
+        </View>
+
+        {/* Right Action Button */}
+        {!showRecharge && (
+          <TouchableOpacity
+            onPress={() => setShowRecharge(true)}
+            activeOpacity={0.8}
+            className="h-10 px-4 rounded-xl bg-violet-600 flex-row items-center gap-1.5 shadow-sm shadow-violet-500/20"
+          >
+            <Feather name="plus" size={15} color="#FFFFFF" />
+            <Text className="text-xs font-black text-white">Add Funds</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Balance Card */}
       <View
-        className="mx-5 mb-5 rounded-3xl p-6 border border-gray-100/80 bg-white"
+        className="mx-5 mb-5 rounded-3xl p-6 border border-slate-100 bg-white"
         style={{
           shadowColor: '#7c3aed',
           shadowOffset: { width: 0, height: 6 },
           shadowOpacity: 0.06,
           shadowRadius: 16,
-          elevation: 3,
+
         }}
       >
-        <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2">
+        <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
           Available Balance
         </Text>
         <View className="flex-row items-baseline mb-4">
-          <Text className="text-sm font-geist-bold text-gray-500 mr-1">₹</Text>
-          <Text className="text-4xl font-geist-black text-gray-900 tracking-tight">
+          <Text className="text-sm font-bold text-slate-500 mr-1">₹</Text>
+          <Text className="text-4xl font-black text-slate-900 tracking-tight">
             {balanceMain}
           </Text>
-          <Text className="text-xl font-geist-bold text-gray-400">.{balanceDec}</Text>
+          <Text className="text-xl font-bold text-slate-400">.{balanceDec}</Text>
         </View>
 
         {!showRecharge ? (
           <TouchableOpacity
             onPress={() => setShowRecharge(true)}
             activeOpacity={0.8}
-            className="bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20"
-            style={{ elevation: 3 }}
+            className="bg-violet-600 py-3.5 rounded-full mt-4 flex-row items-center justify-center gap-2 shadow-sm shadow-violet-500/20"
           >
             <Feather name="zap" size={18} color="white" />
-            <Text className="text-white font-geist-bold text-sm">Recharge Wallet</Text>
+            <Text className="text-white font-black text-sm ">Recharge Wallet</Text>
           </TouchableOpacity>
         ) : (
           <View className="gap-3">
@@ -139,32 +158,41 @@ export default function WalletScreen() {
               value={rechargeAmount}
               onChangeText={setRechargeAmount}
               placeholder="Amount (min ₹500)"
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
-              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-lg font-geist-bold text-gray-900 text-center"
+              className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-lg font-bold text-slate-900 text-center"
             />
             <View className="flex-row gap-2">
               {['500', '1000', '2000', '5000'].map((amt) => (
                 <TouchableOpacity
                   key={amt}
                   onPress={() => setRechargeAmount(amt)}
-                  className={`flex-1 py-2 rounded-xl border items-center ${rechargeAmount === amt ? 'bg-purple-50 border-purple-300' : 'bg-white border-gray-200'}`}
+                  className={`flex-1 py-2 rounded-xl border items-center ${rechargeAmount === amt
+                    ? 'bg-violet-50 border-violet-300'
+                    : 'bg-white border-slate-200'
+                    }`}
                 >
-                  <Text className={`text-xs font-geist-bold ${rechargeAmount === amt ? 'text-purple-700' : 'text-gray-600'}`}>₹{amt}</Text>
+                  <Text
+                    className={`text-xs font-bold ${rechargeAmount === amt ? 'text-violet-700' : 'text-slate-600'
+                      }`}
+                  >
+                    ₹{amt}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
             <View className="flex-row gap-3">
-              <TouchableOpacity onPress={() => setShowRecharge(false)} className="flex-1 bg-gray-100 py-3 rounded-xl items-center">
-                <Text className="font-geist-bold text-gray-600 text-sm">Cancel</Text>
-              </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={handleRecharge}
                 disabled={processing}
                 activeOpacity={0.8}
-                className={`flex-[2] bg-violet-700 py-3 rounded-xl items-center shadow-md shadow-purple-900/20 ${processing ? 'opacity-70' : ''}`}
+                className={`flex-[2] bg-violet-600 py-3 rounded-full items-center shadow-sm shadow-violet-500/20 ${processing ? 'opacity-70' : ''
+                  }`}
               >
-                <Text className="text-white font-geist-bold text-sm">{processing ? 'Processing...' : 'Pay Now'}</Text>
+                <Text className="text-white font-black text-sm">
+                  {processing ? 'Processing...' : 'Pay Now'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -173,7 +201,7 @@ export default function WalletScreen() {
 
       {/* Transactions */}
       <View className="flex-1 mx-5">
-        <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-3">
+        <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">
           Transaction History
         </Text>
 
@@ -185,11 +213,15 @@ export default function WalletScreen() {
             renderItem={renderTransaction}
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 24 }}
+            contentContainerStyle={{
+              paddingBottom: Math.max(insets.bottom + 24, 32),
+            }}
             ListEmptyComponent={
               <View className="items-center py-12">
-                <Feather name="inbox" size={40} color="#d1d5db" />
-                <Text className="text-gray-400 font-geist-medium text-sm mt-3">No transactions yet</Text>
+                <Feather name="inbox" size={40} color="#CBD5E1" />
+                <Text className="text-slate-400 font-medium text-sm mt-3">
+                  No transactions yet
+                </Text>
               </View>
             }
           />

@@ -61,34 +61,56 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-        {/* Profile Header */}
-        <View
-          className="bg-white rounded-3xl p-5 mt-4 mb-4 flex-row items-center gap-4 border border-gray-100/90"
-          style={{
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 8,
-            elevation: 2,
-          }}
+    <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
+      {/* Top App Bar */}
+      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+        <View className="flex-1">
+          <Text className="text-xl font-black text-slate-900 tracking-tight">
+            Profile
+          </Text>
+          <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            Manage your account & services
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Settings')}
+          activeOpacity={0.7}
+          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
         >
-          <View className="w-14 h-14 rounded-2xl bg-violet-700 items-center justify-center shadow-md shadow-purple-900/20">
-            <Text className="font-geist-bold text-xl text-white">
+          <Feather name="settings" size={16} color="#7C3AED" />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        className="flex-1 px-5"
+        contentContainerStyle={{
+          paddingTop: 16,
+          paddingBottom: Math.max(insets.bottom + 24, 36),
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Profile Card */}
+        <View
+          className="bg-white rounded-3xl p-5 mb-4 flex-row items-center gap-4 border border-slate-100 shadow-xs"
+        >
+          <View className="w-14 h-14 rounded-2xl bg-violet-600 items-center justify-center shadow-sm shadow-violet-500/25">
+            <Text className="font-black text-xl text-white">
               {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
             </Text>
           </View>
           <View className="flex-1">
-            <Text className="font-geist-bold text-lg text-gray-900 tracking-tight">
+            <Text className="font-black text-lg text-slate-900 tracking-tight">
               {user?.name || 'User'}
             </Text>
-            <Text className="font-geist text-xs text-gray-500 mt-0.5">
+            <Text className="text-xs text-slate-400 font-medium mt-0.5">
               {user?.email || 'No email'}
             </Text>
             {user?.companyName && (
-              <View className="bg-purple-50 px-2 py-0.5 rounded-md mt-1 self-start border border-purple-100/80">
-                <Text className="font-geist-semibold text-[11px] text-purple-700">{user.companyName}</Text>
+              <View className="bg-violet-50 px-2 py-0.5 rounded-md mt-1 self-start border border-violet-100">
+                <Text className="font-bold text-[11px] text-violet-700">
+                  {user.companyName}
+                </Text>
               </View>
             )}
           </View>
@@ -98,14 +120,7 @@ export default function ProfileScreen() {
         {MENU_SECTIONS.map((section, si) => (
           <View
             key={si}
-            className="bg-white rounded-2xl mb-4 overflow-hidden border border-gray-100/90"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.03,
-              shadowRadius: 6,
-              elevation: 1,
-            }}
+            className="bg-white rounded-3xl mb-4 overflow-hidden border border-slate-100 shadow-xs"
           >
             {section.items.map((item, ii) => {
               const isAdmin = item.highlight;
@@ -117,19 +132,28 @@ export default function ProfileScreen() {
                   key={ii}
                   onPress={() => navigateTo(item.screen)}
                   activeOpacity={0.7}
-                  className={`px-4 py-3.5 flex-row items-center justify-between ${ii < section.items.length - 1 ? 'border-b border-gray-100/70' : ''
-                    }`}
+                  className={`px-4 py-3.5 flex-row items-center justify-between ${
+                    ii < section.items.length - 1 ? 'border-b border-slate-100' : ''
+                  }`}
                 >
                   {isAdmin && (
-                    <View className="absolute left-0 top-1/2 h-8 w-1 bg-red-500 rounded-r-full" style={{ transform: [{ translateY: -16 }] }} />
+                    <View
+                      className="absolute left-0 top-1/2 h-8 w-1 bg-red-500 rounded-r-full"
+                      style={{ transform: [{ translateY: -16 }] }}
+                    />
                   )}
                   <View className="flex-row items-center gap-3.5">
-                    <View className="w-9 h-9 rounded-xl items-center justify-center" style={{ backgroundColor: item.color + '15' }}>
+                    <View
+                      className="w-9 h-9 rounded-xl items-center justify-center"
+                      style={{ backgroundColor: item.color + '15' }}
+                    >
                       <Feather name={item.icon as any} size={18} color={item.color} />
                     </View>
-                    <Text className="font-geist-medium text-gray-900 text-sm">{item.label}</Text>
+                    <Text className="font-bold text-slate-800 text-sm">
+                      {item.label}
+                    </Text>
                   </View>
-                  <Feather name="chevron-right" size={18} color="#cbd5e1" />
+                  <Feather name="chevron-right" size={18} color="#94A3B8" />
                 </TouchableOpacity>
               );
             })}
@@ -143,8 +167,8 @@ export default function ProfileScreen() {
             activeOpacity={0.7}
             className="px-5 py-3.5 flex-row items-center justify-center gap-2 bg-rose-50/40"
           >
-            <Feather name="log-out" size={18} color="#e11d48" />
-            <Text className="font-geist-bold text-rose-600 text-sm">Logout</Text>
+            <Feather name="log-out" size={18} color="#E11D48" />
+            <Text className="font-bold text-rose-600 text-sm">Logout</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
