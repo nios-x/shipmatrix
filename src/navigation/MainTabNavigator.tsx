@@ -2,7 +2,9 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Feather } from '@expo/vector-icons';
-import { View, Text, Platform } from 'react-native';
+import { View, Text, Platform, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import type {
   MainTabParamList,
   HomeStackParamList,
@@ -102,6 +104,40 @@ function ProfileStackNavigator() {
   );
 }
 
+function GlassTabBarBackground() {
+  return (
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        {
+          overflow: 'hidden',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderTopWidth: 1,
+          borderTopColor: 'rgba(255, 255, 255, 0.5)',
+          backgroundColor: Platform.OS === 'web' ? 'rgba(255, 255, 255, 0.35)' : 'transparent',
+          ...(Platform.OS === 'web'
+            ? ({
+                backdropFilter: 'blur(24px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+              } as any)
+            : {}),
+        },
+      ]}
+      pointerEvents="none"
+    >
+      {/* Native Frosted Glass Blur layer */}
+      <BlurView
+        tint="light"
+        intensity={95}
+        blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
+        blurReductionFactor={4}
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
+  );
+}
+
 // ─── Tab Navigator ──────────────────────────────────────
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
@@ -126,56 +162,70 @@ export default function MainTabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarBackground: () => <GlassTabBarBackground />,
         tabBarIcon: ({ focused, color }) => {
           const iconName = TAB_ICON_MAP[route.name] || 'circle';
           return (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <Feather name={iconName} size={22} color={color} />
-              {focused && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -8,
-                    width: 40,
-                    height: 3,
-                    backgroundColor: '#7c3aed',
-                    borderBottomLeftRadius: 4,
-                    borderBottomRightRadius: 4,
-                  }}
-                />
-              )}
+            <View
+              style={{
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 46,
+                height: 30,
+                borderRadius: 15,
+                backgroundColor: focused ? 'rgba(124, 58, 237, 0.12)' : 'transparent',
+                borderWidth: focused ? 1 : 0,
+                borderColor: focused ? 'rgba(124, 58, 237, 0.22)' : 'transparent',
+              }}
+            >
+              <Feather name={iconName} size={18} color={color} />
             </View>
           );
         },
         tabBarLabel: ({ focused, color }) => (
           <Text
             style={{
-              fontFamily: Platform.OS === 'web' ? 'Geist' : (focused ? 'Geist-Bold' : 'Geist-Medium'),
+              fontFamily:
+                Platform.OS === 'web'
+                  ? 'Raleway'
+                  : focused
+                  ? 'Raleway_700Bold'
+                  : 'Raleway_600SemiBold',
               fontSize: 10,
               fontWeight: focused ? '700' : '600',
               color,
               textTransform: 'uppercase',
-              letterSpacing: 0.8,
-              marginTop: 2,
+              letterSpacing: 0.5,
+              marginTop: 1,
             }}
           >
             {TAB_LABEL_MAP[route.name]}
           </Text>
         ),
         tabBarActiveTintColor: '#7c3aed',
-        tabBarInactiveTintColor: '#94a3b8',
+        tabBarInactiveTintColor: '#64748b',
         tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopWidth: 1,
-          borderTopColor: '#f1f5f9',
-          paddingTop: 6,
-          paddingBottom: 8,
-          height: 64,
-          elevation: 8,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.04,
-          shadowRadius: 12,
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 26 : 10,
+          height: Platform.OS === 'ios' ? 88 : 70,
+          shadowColor: '#4f46e5',
+          shadowOffset: { width: 0, height: -8 },
+          shadowOpacity: 0.08,
+          shadowRadius: 18,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
+          justifyContent: 'center',
+          alignItems: 'center',
         },
       })}
     >

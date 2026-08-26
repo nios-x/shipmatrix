@@ -2,31 +2,23 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   initializeAuth,
   getAuth,
-  browserLocalPersistence,
 } from 'firebase/auth';
+// @ts-ignore
+import { getReactNativePersistence } from '@firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { firebaseConfig, firestoreDatabaseId } from './firebase';
 
-// Firebase configuration — same project as the website
-export const firebaseConfig = {
-  projectId: 'gen-lang-client-0372703048',
-  appId: '1:563260211850:web:87ac338a21dec8ed9be373',
-  apiKey: 'AIzaSyDPpSAb-BkkXr5nG3wpUyWV96kEjLyPF78',
-  authDomain: 'gen-lang-client-0372703048.firebaseapp.com',
-  storageBucket: 'gen-lang-client-0372703048.firebasestorage.app',
-  messagingSenderId: '563260211850',
-  measurementId: 'G-0YSPEQW5VY',
-};
-
-export const firestoreDatabaseId = 'ai-studio-6bb82760-6011-4cd2-a03f-d981814aeddd';
+export { firebaseConfig, firestoreDatabaseId };
 
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Web platform authentication with localStorage persistence
+// React Native platform authentication with AsyncStorage persistence
 function getPlatformAuth() {
   try {
     return initializeAuth(app, {
-      persistence: browserLocalPersistence,
+      persistence: getReactNativePersistence(AsyncStorage),
     });
   } catch {
     return getAuth(app);
