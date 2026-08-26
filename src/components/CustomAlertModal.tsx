@@ -78,7 +78,7 @@ export function CustomAlertModal({
               const isCancel = btn.style === 'cancel';
               const isDestructive = btn.style === 'destructive';
 
-              let btnBg = 'bg-purple-900';
+              let btnBg = 'bg-violet-700';
               let textStyle = 'text-white font-geist-bold';
 
               if (isCancel) {

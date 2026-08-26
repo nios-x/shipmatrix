@@ -62,7 +62,7 @@ export default function TrackingScreen() {
             className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-geist-medium text-gray-900 shadow-sm"
             onSubmitEditing={handleTrack}
           />
-          <TouchableOpacity onPress={handleTrack} disabled={tracking} activeOpacity={0.8} className="bg-purple-900 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
+          <TouchableOpacity onPress={handleTrack} disabled={tracking} activeOpacity={0.8} className="bg-violet-700 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
             <Feather name="search" size={20} color="white" />
           </TouchableOpacity>
         </View>
@@ -91,7 +91,7 @@ export default function TrackingScreen() {
         {events.map((event, index) => (
           <View key={index} className="flex-row mb-1">
             <View className="items-center mr-4 w-6">
-              <View className={`w-3.5 h-3.5 rounded-full ${index === 0 ? 'bg-purple-900 shadow-sm shadow-purple-900/40' : 'bg-gray-300'}`} />
+              <View className={`w-3.5 h-3.5 rounded-full ${index === 0 ? 'bg-violet-700 shadow-sm shadow-purple-900/40' : 'bg-gray-300'}`} />
               {index < events.length - 1 && <View className="w-0.5 flex-1 bg-gray-200 mt-1" />}
             </View>
             <View className="flex-1 pb-6">

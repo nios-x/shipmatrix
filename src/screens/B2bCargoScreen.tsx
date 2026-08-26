@@ -47,7 +47,7 @@ export default function B2bCargoScreen() {
               <TextInput value={(form as any)[f.k]} onChangeText={(v) => update(f.k, v)} placeholder={f.p} placeholderTextColor="#9ca3af" keyboardType="number-pad" className="bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 font-geist text-sm text-gray-900" />
             </View>
           ))}
-          <TouchableOpacity onPress={handleSubmit} disabled={loading} className={`bg-purple-900 py-4 rounded-xl items-center mt-2 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
+          <TouchableOpacity onPress={handleSubmit} disabled={loading} className={`bg-violet-700 py-4 rounded-xl items-center mt-2 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
             <Text className="font-geist-bold text-white">{loading ? 'Submitting...' : 'Get B2B Quote'}</Text>
           </TouchableOpacity>
         </View>

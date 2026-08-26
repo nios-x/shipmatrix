@@ -192,7 +192,7 @@ export default function RateCalculatorScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          paddingHorizontal: 14,
           paddingTop: 20,
           paddingBottom: Math.max(insets.bottom + 48, 64),
         }}
@@ -212,7 +212,7 @@ export default function RateCalculatorScreen() {
                   key={route.label}
                   onPress={() => handleApplyPresetRoute(route)}
                   activeOpacity={0.7}
-                  className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${isSelected
+                  className={`px-3.5 py-2 mr-1 rounded-xl border flex-row items-center gap-1.5 ${isSelected
                     ? 'bg-violet-600 border-violet-600 shadow-xs'
                     : 'bg-white border-slate-200'
                     }`}
@@ -349,12 +349,13 @@ export default function RateCalculatorScreen() {
               Standard Box Sizes:
             </Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+
               {BOX_PRESETS.map((box) => (
                 <TouchableOpacity
                   key={box.label}
                   onPress={() => handleApplyBoxPreset(box)}
                   activeOpacity={0.7}
-                  className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl"
+                  className="bg-slate-50 border border-slate-200 px-3 m-1 py-1 rounded-xl"
                 >
                   <Text className="text-[11px] font-bold text-slate-700">{box.label}</Text>
                   <Text className="text-[9px] text-slate-400 font-medium">
@@ -363,6 +364,7 @@ export default function RateCalculatorScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+
           </View>
 
           {/* Dimensions Inputs */}
@@ -412,14 +414,11 @@ export default function RateCalculatorScreen() {
             onPress={handleCalculate}
             disabled={calculating || !canCalculate}
             activeOpacity={0.85}
-            className={`mt-5 rounded-2xl overflow-hidden shadow-lg shadow-violet-500/25 ${!canCalculate ? 'opacity-60' : ''
+            className={`mt-5 rounded-2xl overflow-hidden  shadow-lg bg-violet-600 shadow-violet-500/25 ${!canCalculate ? 'opacity-60' : ''
               }`}
           >
-            <LinearGradient
-              colors={PRIMARY_GRADIENT}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              className="py-4 px-6 flex-row items-center justify-center gap-2.5"
+            <View
+              className="py-2 px-6 flex-row items-center justify-center gap-2.5"
             >
               {calculating ? (
                 <Text className="text-white font-black text-base tracking-wide px-5 py-1">
@@ -427,13 +426,12 @@ export default function RateCalculatorScreen() {
                 </Text>
               ) : (
                 <>
-                  <Text className="text-white font-black text-base tracking-wide py-1">
+                  <Text className="text-white font-black   text-base tracking-wide py-1">
                     Find Available Couriers
                   </Text>
-                  <Feather name="arrow-right" size={18} color="#FFFFFF" />
                 </>
               )}
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         </View>
 

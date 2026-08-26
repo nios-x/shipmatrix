@@ -33,7 +33,7 @@ export default function CourierPerformanceScreen() {
               <Text className="text-xs font-bold text-purple-600">{s.rate}% delivery rate</Text>
             </View>
             <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-              <View className="h-full bg-purple-900 rounded-full" style={{ width: `${s.rate}%` as any }} />
+              <View className="h-full bg-violet-700 rounded-full" style={{ width: `${s.rate}%` as any }} />
             </View>
             <View className="flex-row justify-between mt-2">
               <Text className="text-xs text-gray-400">Total: {s.total}</Text>

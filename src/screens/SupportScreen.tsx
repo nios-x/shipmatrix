@@ -52,7 +52,7 @@ export default function SupportScreen() {
         contentContainerStyle={{ padding: 20, gap: 12 }}
         renderItem={({ item }) => (
           <View className={`max-w-[85%] ${item.role === 'user' ? 'self-end' : 'self-start'}`}>
-            <View className={`px-4 py-3 rounded-2xl ${item.role === 'user' ? 'bg-purple-900 rounded-br-md' : 'bg-white border border-gray-100 rounded-bl-md'}`}>
+            <View className={`px-4 py-3 rounded-2xl ${item.role === 'user' ? 'bg-violet-700 rounded-br-md' : 'bg-white border border-gray-100 rounded-bl-md'}`}>
               <Text className={`text-sm ${item.role === 'user' ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
             </View>
           </View>
@@ -68,7 +68,7 @@ export default function SupportScreen() {
           className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900"
           onSubmitEditing={handleSend}
         />
-        <TouchableOpacity onPress={handleSend} disabled={sending} className="bg-purple-900 w-10 h-10 rounded-xl items-center justify-center">
+        <TouchableOpacity onPress={handleSend} disabled={sending} className="bg-violet-700 w-10 h-10 rounded-xl items-center justify-center">
           <Feather name="send" size={18} color="white" />
         </TouchableOpacity>
       </View>

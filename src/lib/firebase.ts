@@ -1,9 +1,11 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   initializeAuth,
   getAuth,
   browserLocalPersistence,
 } from 'firebase/auth';
+// @ts-ignore
+import { getReactNativePersistence } from '@firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { Platform } from 'react-native';
@@ -22,26 +24,22 @@ const firebaseConfig = {
 
 const firestoreDatabaseId = 'ai-studio-6bb82760-6011-4cd2-a03f-d981814aeddd';
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Cross-platform persistence (AsyncStorage for native, localStorage for web)
 function getPlatformAuth() {
   if (Platform.OS === 'web') {
-    return initializeAuth(app, {
-      persistence: browserLocalPersistence,
-    });
+    try {
+      return initializeAuth(app, {
+        persistence: browserLocalPersistence,
+      });
+    } catch {
+      return getAuth(app);
+    }
   } else {
     try {
-      const authModule: any = require('firebase/auth');
-      if (authModule.getReactNativePersistence) {
-        return initializeAuth(app, {
-          persistence: authModule.getReactNativePersistence(AsyncStorage),
-        });
-      }
-      // @ts-ignore
-      const rnAuth = require('@firebase/auth/dist/rn/index.js');
       return initializeAuth(app, {
-        persistence: rnAuth.getReactNativePersistence(AsyncStorage),
+        persistence: getReactNativePersistence(AsyncStorage),
       });
     } catch {
       return getAuth(app);

@@ -102,7 +102,7 @@ export default function OnboardingScreen() {
           {slides.map((_, i) => (
             <View
               key={i}
-              className={`h-2 rounded-full ${i === currentStep ? 'w-6 bg-purple-900' : 'w-2 bg-gray-300'
+              className={`h-2 rounded-full ${i === currentStep ? 'w-6 bg-violet-700' : 'w-2 bg-gray-300'
                 }`}
             />
           ))}
@@ -122,7 +122,7 @@ export default function OnboardingScreen() {
           <TouchableOpacity
             onPress={handleNext}
             activeOpacity={0.8}
-            className="flex-[2] bg-purple-900 rounded-2xl py-4 flex-row items-center justify-center gap-2"
+            className="flex-[2] bg-violet-700 rounded-2xl py-4 flex-row items-center justify-center gap-2"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 4 },

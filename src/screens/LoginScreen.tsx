@@ -254,7 +254,7 @@ export default function LoginScreen() {
             onPress={handleLogin}
             disabled={loading}
             activeOpacity={0.8}
-            className={`w-full bg-purple-900 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
+            className={`w-full bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
               }`}
             style={{ elevation: 3 }}
           >
@@ -273,7 +273,7 @@ export default function LoginScreen() {
               onPress={handleForgotPassword}
               disabled={loading}
               activeOpacity={0.8}
-              className={`w-full bg-purple-900 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
+              className={`w-full bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
                 }`}
               style={{ elevation: 3 }}
             >
@@ -298,7 +298,7 @@ export default function LoginScreen() {
           <TouchableOpacity
             onPress={() => setView('login')}
             activeOpacity={0.8}
-            className="w-full bg-purple-900 py-3.5 rounded-xl items-center shadow-md shadow-purple-900/20"
+            className="w-full bg-violet-700 py-3.5 rounded-xl items-center shadow-md shadow-purple-900/20"
             style={{ elevation: 3 }}
           >
             <Text className="text-white font-geist-bold text-sm">Back to Login</Text>

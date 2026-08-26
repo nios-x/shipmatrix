@@ -122,7 +122,7 @@ export default function AdminPanelScreen() {
         <FlatList
           data={filteredUsers}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
           }
@@ -149,7 +149,7 @@ export default function AdminPanelScreen() {
         <FlatList
           data={complaints}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
           renderItem={({ item }) => (
             <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
               <Text className="font-bold text-gray-900 text-sm">{item.subject || 'Complaint'}</Text>

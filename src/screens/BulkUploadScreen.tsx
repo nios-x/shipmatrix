@@ -40,7 +40,7 @@ export default function BulkUploadScreen() {
           <Text className="font-geist text-sm text-gray-500 text-center mb-6 leading-5">
             Upload a CSV file with your order details to generate AWBs and book multiple shipments simultaneously.
           </Text>
-          <TouchableOpacity onPress={handlePick} activeOpacity={0.8} className="bg-purple-900 px-8 py-3.5 rounded-xl shadow-lg shadow-purple-500/20" style={{ elevation: 4 }}>
+          <TouchableOpacity onPress={handlePick} activeOpacity={0.8} className="bg-violet-700 px-8 py-3.5 rounded-xl shadow-lg shadow-purple-500/20" style={{ elevation: 4 }}>
             <Text className="font-geist-bold text-white">Select CSV File</Text>
           </TouchableOpacity>
         </View>

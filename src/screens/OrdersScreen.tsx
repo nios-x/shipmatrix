@@ -167,7 +167,7 @@ export default function OrdersScreen() {
         <TouchableOpacity
           onPress={() => navigation.navigate('CreateShipment', {})}
           activeOpacity={0.8}
-          className="bg-purple-900 px-4 py-2.5 rounded-xl flex-row items-center gap-2 shadow-md shadow-purple-900/20"
+          className="bg-violet-700 px-4 py-2.5 rounded-xl flex-row items-center gap-2 shadow-md shadow-purple-900/20"
           style={{ elevation: 3 }}
         >
           <Feather name="plus" size={16} color="white" />
@@ -196,7 +196,7 @@ export default function OrdersScreen() {
         <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 14, gap: 8 }}
           data={FILTER_TABS}
           keyExtractor={(item) => item}
           renderItem={({ item }) => (
@@ -204,7 +204,7 @@ export default function OrdersScreen() {
               onPress={() => setActiveFilter(item)}
               activeOpacity={0.8}
               className={`px-4 py-2 rounded-full ${activeFilter === item
-                ? 'bg-purple-900 shadow-sm shadow-purple-900/20'
+                ? 'bg-violet-700 shadow-sm shadow-purple-900/20'
                 : 'bg-white border border-gray-200/80'
                 }`}
             >
@@ -224,7 +224,7 @@ export default function OrdersScreen() {
         data={filteredShipments}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

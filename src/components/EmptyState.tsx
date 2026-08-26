@@ -37,7 +37,7 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
         <TouchableOpacity
           onPress={onAction}
           activeOpacity={0.8}
-          className="mt-6 bg-purple-900 px-6 py-3 rounded-xl shadow-md shadow-purple-900/20"
+          className="mt-6 bg-violet-700 px-6 py-3 rounded-full shadow-md shadow-purple-900/20"
           style={{ elevation: 3 }}
         >
           <Text className="font-geist-bold text-white text-sm">{actionLabel}</Text>

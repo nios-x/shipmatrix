@@ -18,6 +18,21 @@ import { View, ActivityIndicator } from 'react-native';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+function LoadingScreen() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#FAFAFA',
+      }}
+    >
+      <ActivityIndicator size="large" color="#7c3aed" />
+    </View>
+  );
+}
+
 export default function RootNavigator() {
   const dispatch = useDispatch();
   const { isAuthenticated, isLoading } = useSelector(
@@ -70,25 +85,12 @@ export default function RootNavigator() {
     };
   }, [dispatch]);
 
-  if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#FAFAFA',
-        }}
-      >
-        <ActivityIndicator size="large" color="#7c3aed" />
-      </View>
-    );
-  }
-
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {isAuthenticated ? (
+        {isLoading ? (
+          <Stack.Screen name="Loading" component={LoadingScreen} />
+        ) : isAuthenticated ? (
           <Stack.Screen name="Main" component={MainTabNavigator} />
         ) : (
           <Stack.Screen name="Auth" component={AuthNavigator} />

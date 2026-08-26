@@ -91,6 +91,7 @@ export type ProfileStackParamList = {
 
 // Root navigator
 export type RootStackParamList = {
+  Loading: undefined;
   Auth: undefined;
   Main: undefined;
 };

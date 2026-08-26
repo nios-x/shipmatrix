@@ -127,7 +127,7 @@ export default function WalletScreen() {
           <TouchableOpacity
             onPress={() => setShowRecharge(true)}
             activeOpacity={0.8}
-            className="bg-purple-900 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20"
+            className="bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20"
             style={{ elevation: 3 }}
           >
             <Feather name="zap" size={18} color="white" />
@@ -162,7 +162,7 @@ export default function WalletScreen() {
                 onPress={handleRecharge}
                 disabled={processing}
                 activeOpacity={0.8}
-                className={`flex-[2] bg-purple-900 py-3 rounded-xl items-center shadow-md shadow-purple-900/20 ${processing ? 'opacity-70' : ''}`}
+                className={`flex-[2] bg-violet-700 py-3 rounded-xl items-center shadow-md shadow-purple-900/20 ${processing ? 'opacity-70' : ''}`}
               >
                 <Text className="text-white font-geist-bold text-sm">{processing ? 'Processing...' : 'Pay Now'}</Text>
               </TouchableOpacity>

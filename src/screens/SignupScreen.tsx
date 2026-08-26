@@ -175,12 +175,12 @@ export default function SignupScreen() {
           {/* Step Indicator */}
           <View className="flex-row gap-2 mb-6">
             <View
-              className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-purple-900' : 'bg-gray-200'
+              className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-violet-700' : 'bg-gray-200'
                 }`}
             />
 
             <View
-              className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-purple-900' : 'bg-gray-200'
+              className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-violet-700' : 'bg-gray-200'
                 }`}
             />
           </View>
@@ -414,7 +414,7 @@ export default function SignupScreen() {
                         }
                         activeOpacity={0.8}
                         className={`px-4 py-3 rounded-xl border ${selected
-                          ? 'bg-purple-900 border-purple-600'
+                          ? 'bg-violet-700 border-purple-600'
                           : 'bg-white border-gray-300'
                           }`}
                       >
@@ -454,7 +454,7 @@ export default function SignupScreen() {
                         }
                         activeOpacity={0.8}
                         className={`p-3 rounded-xl border ${selected
-                          ? 'bg-purple-900 border-purple-600'
+                          ? 'bg-violet-700 border-purple-600'
                           : 'bg-white border-gray-300'
                           }`}
                       >
@@ -520,7 +520,7 @@ export default function SignupScreen() {
           <TouchableOpacity
             onPress={handleContinue}
             activeOpacity={0.8}
-            className="w-full bg-purple-900 py-3 rounded-xl flex-row items-center justify-center gap-2"
+            className="w-full bg-violet-700 py-3 rounded-xl flex-row items-center justify-center gap-2"
           >
             <Text className="text-white font-bold text-base">
               Continue
@@ -551,7 +551,7 @@ export default function SignupScreen() {
               onPress={handleSignup}
               disabled={loading}
               activeOpacity={0.8}
-              className={`flex-[2] bg-purple-900 py-3 rounded-xl flex-row items-center justify-center gap-2 ${loading ? 'opacity-70' : ''
+              className={`flex-[2] bg-violet-700 py-3 rounded-xl flex-row items-center justify-center gap-2 ${loading ? 'opacity-70' : ''
                 }`}
             >
               <Text className="text-white font-bold">

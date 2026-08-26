@@ -195,7 +195,7 @@ export default function CreateReverseShipmentScreen() {
             <Field label="Reason" value={form.reason} onChange={(v) => update('reason', v)} placeholder="Customer Return" />
           </View>
 
-          <TouchableOpacity onPress={handleGetRates} disabled={loading} activeOpacity={0.8} className={`bg-purple-900 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
+          <TouchableOpacity onPress={handleGetRates} disabled={loading} activeOpacity={0.8} className={`bg-violet-700 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
             <Text className="text-white font-geist-bold text-sm">{loading ? 'Fetching Rates...' : 'Get Return Rates'}</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -227,7 +227,7 @@ export default function CreateReverseShipmentScreen() {
           <Text className="text-gray-500 font-geist text-sm text-center mb-1">AWB: {result?.awb}</Text>
           <Text className="text-gray-500 font-geist text-sm text-center mb-1">Courier: {result?.courier}</Text>
           <Text className="text-gray-500 font-geist text-sm text-center mb-6">Charge: ₹{result?.charge}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-purple-900 px-8 py-3.5 rounded-xl shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-violet-700 px-8 py-3.5 rounded-xl shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
             <Text className="text-white font-geist-bold text-sm">Done</Text>
           </TouchableOpacity>
         </View>

@@ -194,7 +194,7 @@ export default function AvailableCouriersScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          paddingHorizontal: 14,
           paddingTop: 16,
           paddingBottom: Math.max(insets.bottom + 32, 48),
         }}
@@ -466,27 +466,23 @@ function FilterTab({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${
-        active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
-      }`}
+      className={`px-3.5 py-2 mr-1 rounded-xl border flex-row items-center gap-1.5 ${active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
+        }`}
     >
       <Text
-        className={`text-xs font-bold ${
-          active ? 'text-white' : 'text-slate-600'
-        }`}
+        className={`text-xs font-bold ${active ? 'text-white' : 'text-slate-600'
+          }`}
       >
         {label}
       </Text>
       {typeof count === 'number' && (
         <View
-          className={`px-1.5 py-0.5 rounded-full ${
-            active ? 'bg-white/20' : 'bg-slate-100'
-          }`}
+          className={`px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-slate-100'
+            }`}
         >
           <Text
-            className={`text-[9px] font-black ${
-              active ? 'text-white' : 'text-slate-600'
-            }`}
+            className={`text-[9px] font-black ${active ? 'text-white' : 'text-slate-600'
+              }`}
           >
             {count}
           </Text>
@@ -517,18 +513,16 @@ function EnhancedRateCard({
         shadowOpacity: 0.04,
         shadowRadius: 6,
         shadowOffset: { width: 0, height: 2 },
-        elevation: 2,
       }}
     >
       {/* Top Badges */}
       <View className="flex-row items-center justify-between mb-3.5">
         <View className="flex-row items-center gap-2">
           <View
-            className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${
-              isAir
-                ? 'bg-sky-50 border border-sky-100'
-                : 'bg-slate-100 border border-slate-200'
-            }`}
+            className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
+              ? 'bg-sky-50 border border-sky-100'
+              : 'bg-slate-100 border border-slate-200'
+              }`}
           >
             <Feather
               name={isAir ? 'send' : 'truck'}
@@ -536,9 +530,8 @@ function EnhancedRateCard({
               color={isAir ? '#0284C7' : '#475569'}
             />
             <Text
-              className={`text-[10px] font-bold ${
-                isAir ? 'text-sky-700' : 'text-slate-700'
-              }`}
+              className={`text-[10px] font-bold ${isAir ? 'text-sky-700' : 'text-slate-700'
+                }`}
             >
               {isAir ? 'Air Express' : 'Surface Logistics'}
             </Text>

@@ -30,7 +30,7 @@ export default function ReturnsScreen() {
         <Text className="text-xl font-black text-gray-900 flex-1">Returns</Text>
         <TouchableOpacity
           onPress={() => navigation.navigate('CreateReverseShipment', {})}
-          className="bg-purple-900 px-4 py-2 rounded-xl flex-row items-center gap-1"
+          className="bg-violet-700 px-4 py-2 rounded-xl flex-row items-center gap-1"
         >
           <Feather name="plus" size={14} color="white" />
           <Text className="text-white font-bold text-xs">New Return</Text>
@@ -40,7 +40,7 @@ export default function ReturnsScreen() {
       <FlatList
         data={returns}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
         renderItem={({ item }) => (
           <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>

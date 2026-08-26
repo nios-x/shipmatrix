@@ -30,10 +30,12 @@ interface RateItem {
   estimated_days?: number;
 }
 
-export default function CreateShipmentScreen() {
+export default function CreateShipmentScreen({ navigation: propNavigation, route: propRoute }: any = {}) {
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
-  const route = useRoute<any>();
+  const hookNavigation = useNavigation<any>();
+  const hookRoute = useRoute<any>();
+  const navigation = propNavigation || hookNavigation;
+  const route = propRoute || hookRoute;
   const { user } = useUser();
 
   const [step, setStep] = useState<Step>('form');
@@ -221,13 +223,7 @@ export default function CreateShipmentScreen() {
       </Text>
       <View
         className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 6,
-          elevation: 1,
-        }}
+
       >
         <InputField label="Name" value={form.customerName} onChangeText={(v) => updateField('customerName', v)} placeholder="Customer name" icon="user" />
         <InputField label="Phone" value={form.customerPhone} onChangeText={(v) => updateField('customerPhone', v)} placeholder="9876543210" icon="phone" keyboardType="phone-pad" />
@@ -240,13 +236,7 @@ export default function CreateShipmentScreen() {
       </Text>
       <View
         className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 6,
-          elevation: 1,
-        }}
+
       >
         <InputField label="Address" value={form.deliveryAddress} onChangeText={(v) => updateField('deliveryAddress', v)} placeholder="Full address" icon="map-pin" multiline />
         <View className="flex-row gap-3">
@@ -273,13 +263,7 @@ export default function CreateShipmentScreen() {
       </Text>
       <View
         className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-5 gap-3"
-        style={{
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.03,
-          shadowRadius: 6,
-          elevation: 1,
-        }}
+
       >
         <InputField label="Product Name" value={form.productName} onChangeText={(v) => updateField('productName', v)} placeholder="Product description" icon="package" />
         <View className="flex-row gap-3">
@@ -310,7 +294,7 @@ export default function CreateShipmentScreen() {
               key={type}
               onPress={() => updateField('paymentType', type)}
               activeOpacity={0.8}
-              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentType === type ? 'bg-purple-900 border-purple-900 shadow-sm shadow-purple-900/20' : 'bg-white border-gray-200'
+              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentType === type ? 'bg-violet-700 border-purple-900 shadow-sm shadow-purple-900/20' : 'bg-white border-gray-200'
                 }`}
             >
               <Text className={`font-geist-bold text-xs ${form.paymentType === type ? 'text-white' : 'text-gray-700'}`}>
@@ -332,7 +316,7 @@ export default function CreateShipmentScreen() {
         onPress={handleGetRates}
         disabled={loading}
         activeOpacity={0.8}
-        className={`bg-purple-900 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
+        className={`bg-violet-700 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
         style={{ elevation: 4 }}
       >
         <Text className="text-white font-geist-bold text-sm">
@@ -357,7 +341,7 @@ export default function CreateShipmentScreen() {
             disabled={loading}
             activeOpacity={0.7}
             className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 flex-row items-center justify-between"
-            
+
           >
             <View className="flex-row items-center gap-3 flex-1">
               <CourierLogo name={rate.carrier_name} />
@@ -401,7 +385,7 @@ export default function CreateShipmentScreen() {
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         activeOpacity={0.8}
-        className="bg-purple-900 px-8 py-4 rounded-xl"
+        className="bg-violet-700 px-8 py-4 rounded-xl"
         style={{ elevation: 4 }}
       >
         <Text className="text-white font-bold">Back to Orders</Text>
@@ -416,80 +400,77 @@ export default function CreateShipmentScreen() {
       style={{ paddingTop: insets.top }}
     >
       {/* Header */}
-    {/* Header */}
-<View className="px-5 pb-4 pt-10">
-  <View className="flex-row items-center">
-    <TouchableOpacity
-      onPress={() =>
-        step === 'form'
-          ? navigation.goBack()
-          : setStep(step === 'rates' ? 'form' : 'rates')
-      }
-      className="w-10 h-10 rounded-full bg-white items-center justify-center"
-      style={{ elevation: 2 }}
-    >
-      <Feather name="arrow-left" size={20} color="#111827" />
-    </TouchableOpacity>
+      {/* Header */}
+      <View className="px-5 pb-4 pt-10">
+        <View className="flex-row items-center">
+          <TouchableOpacity
+            onPress={() =>
+              step === 'form'
+                ? navigation.goBack()
+                : setStep(step === 'rates' ? 'form' : 'rates')
+            }
+            className="w-10 h-10 rounded-full bg-white items-center justify-center"
+            style={{ elevation: 2 }}
+          >
+            <Feather name="arrow-left" size={20} color="#111827" />
+          </TouchableOpacity>
 
-    <View className="flex-1 ml-3">
-      <Text className="text-2xl font-black text-gray-950">
-        {step === 'form'
-          ? 'Create Shipment'
-          : step === 'rates'
-            ? 'Choose Courier'
-            : 'Shipment Confirmed'}
-      </Text>
+          <View className="flex-1 ml-3">
+            <Text className="text-2xl font-black text-gray-950">
+              {step === 'form'
+                ? 'Create Shipment'
+                : step === 'rates'
+                  ? 'Choose Courier'
+                  : 'Shipment Confirmed'}
+            </Text>
 
-      <Text className="text-xs text-gray-500 mt-0.5">
-        {step === 'form'
-          ? 'Enter shipment details'
-          : step === 'rates'
-            ? 'Compare rates & delivery times'
-            : 'Your shipment is ready'}
-      </Text>
-    </View>
-  </View>
-
-  {/* Progress */}
-  {step !== 'booking' && (
-    <View className="flex-row items-center mt-5 p-5">
-      {[
-        { label: 'Details', active: step === 'form' },
-        { label: 'Courier', active: step === 'rates' },
-      ].map((item, index) => (
-        <React.Fragment key={item.label}>
-          <View className="flex-row items-center">
-            <View
-              className={`w-7 h-7 rounded-full items-center justify-center ${
-                item.active ? 'bg-purple-700' : 'bg-purple-100'
-              }`}
-            >
-              <Text
-                className={`text-xs font-black ${
-                  item.active ? 'text-white' : 'text-purple-700'
-                }`}
-              >
-                {index + 1}
-              </Text>
-            </View>
-
-            <Text
-              className={`ml-2 text-xs font-bold ${
-                item.active ? 'text-gray-900' : 'text-gray-400'
-              }`}
-            >
-              {item.label}
+            <Text className="text-xs text-gray-500 mt-0.5">
+              {step === 'form'
+                ? 'Enter shipment details'
+                : step === 'rates'
+                  ? 'Compare rates & delivery times'
+                  : 'Your shipment is ready'}
             </Text>
           </View>
+        </View>
 
-          {index === 0 && (
-            <View className="h-[1px] bg-gray-200 flex-1 mx-4" />
-          )}
-        </React.Fragment>
-      ))}
-    </View>
-  )}
-</View>
+        {/* Progress */}
+        {step !== 'booking' && (
+          <View className="flex-row items-center mt-5 p-5">
+            {[
+              { label: 'Details', active: step === 'form' },
+              { label: 'Courier', active: step === 'rates' },
+            ].map((item, index) => (
+              <React.Fragment key={item.label}>
+                <View className="flex-row items-center">
+                  <View
+                    className={`w-7 h-7 rounded-full items-center justify-center ${item.active ? 'bg-purple-700' : 'bg-purple-100'
+                      }`}
+                  >
+                    <Text
+                      className={`text-xs font-black ${item.active ? 'text-white' : 'text-purple-700'
+                        }`}
+                    >
+                      {index + 1}
+                    </Text>
+                  </View>
+
+                  <Text
+                    className={`ml-2 text-xs font-bold ${item.active ? 'text-gray-900' : 'text-gray-400'
+                      }`}
+                  >
+                    {item.label}
+                  </Text>
+                </View>
+
+                {index === 0 && (
+                  <View className="h-[1px] bg-gray-200 flex-1 mx-4" />
+                )}
+              </React.Fragment>
+            ))}
+          </View>
+        )}
+      </View>
       {loading && step !== 'form' ? (
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (
@@ -540,6 +521,7 @@ function InputField({
           keyboardType={keyboardType}
           maxLength={maxLength}
           multiline={multiline}
+          style={{ textAlignVertical: multiline ? 'top' : 'center' }}
           className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-geist-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
         />
       </View>

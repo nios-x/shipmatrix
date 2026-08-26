@@ -30,7 +30,7 @@ export default function NdrScreen() {
       <FlatList
         data={ndrShipments}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
         renderItem={({ item }) => (
           <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
             <View className="flex-row items-center justify-between mb-2">

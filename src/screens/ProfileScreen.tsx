@@ -74,7 +74,7 @@ export default function ProfileScreen() {
             elevation: 2,
           }}
         >
-          <View className="w-14 h-14 rounded-2xl bg-purple-900 items-center justify-center shadow-md shadow-purple-900/20">
+          <View className="w-14 h-14 rounded-2xl bg-violet-700 items-center justify-center shadow-md shadow-purple-900/20">
             <Text className="font-geist-bold text-xl text-white">
               {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
             </Text>
