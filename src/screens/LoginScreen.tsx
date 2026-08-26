@@ -122,7 +122,7 @@ export default function LoginScreen() {
                 <View className="w-14 h-14 bg-purple-50 border border-purple-100 rounded-2xl items-center justify-center mb-3 shadow-xs">
                   <Logo size={32} />
                 </View>
-                <Text className="text-2xl font-raleway text-gray-900 text-center tracking-tight">
+                <Text className="text-2xl font-raleway-bold text-gray-900 text-center tracking-tight">
                   Welcome Back
                 </Text>
                 <Text className="text-gray-500 mt-1 text-center font-raleway text-sm">
@@ -289,7 +289,7 @@ export default function LoginScreen() {
             {/* Divider */}
             <View className="flex-row items-center my-3">
               <View className="flex-1 h-[1px] bg-gray-200" />
-              <Text className="mx-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+              <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
                 OR
               </Text>
               <View className="flex-1 h-[1px] bg-gray-200" />
