@@ -235,7 +235,7 @@ export default function RateCalculatorScreen() {
         </View>
 
         {/* Form Card */}
-        <View className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs mb-6">
+        <View className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xs mb-6">
           <SectionHeader
             icon="map-pin"
             title="Pickup & Delivery Pincodes"
@@ -437,7 +437,7 @@ export default function RateCalculatorScreen() {
 
         {/* Loading Card */}
         {calculating && (
-          <View className="mt-2 bg-white rounded-3xl p-7 border border-slate-100 shadow-sm items-center mb-6">
+          <View className="mt-2 bg-white rounded-3xl p-7 border border-slate-100 items-center mb-6">
             <LoadingSpinner message="Scanning 20+ partner courier APIs..." />
             <Text className="text-xs text-slate-400 text-center mt-3 font-medium">
               Checking Delhivery, Blue Dart, Ekart, Shadowfax & Xpressbees...

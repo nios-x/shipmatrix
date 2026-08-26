@@ -15,13 +15,7 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
     <View className="flex-1 items-center justify-center p-8">
       <View
         className="w-20 h-20 bg-white rounded-3xl border border-gray-100 items-center justify-center mb-5"
-        style={{
-          shadowColor: '#7c3aed',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 2,
-        }}
+
       >
         <Logo size={44} />
       </View>
