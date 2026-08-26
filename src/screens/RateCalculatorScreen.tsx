@@ -14,11 +14,10 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { api } from '../lib/api';
-import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 
-interface RateResult {
+export interface RateResult {
   carrier_id: string;
   carrier_name: string;
   freight_charge: number;
@@ -49,9 +48,6 @@ export default function RateCalculatorScreen() {
   const navigation = useNavigation<any>();
 
   const [calculating, setCalculating] = useState(false);
-  const [rates, setRates] = useState<RateResult[]>([]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'cheapest' | 'fastest' | 'air' | 'surface'>('all');
-
   const [pickupPin, setPickupPin] = useState('');
   const [deliveryPin, setDeliveryPin] = useState('');
   const [weight, setWeight] = useState('');
@@ -98,7 +94,6 @@ export default function RateCalculatorScreen() {
     setLength('');
     setWidth('');
     setHeight('');
-    setRates([]);
     toast.info('Calculator Reset', 'All input fields have been cleared.');
   };
 
@@ -117,7 +112,6 @@ export default function RateCalculatorScreen() {
     }
 
     setCalculating(true);
-    setRates([]);
 
     try {
       const data = await api.post('/api/rates', {
@@ -138,8 +132,16 @@ export default function RateCalculatorScreen() {
           freight_charge: r.freight_charge,
           estimated_days: r.estimated_days || Math.floor(Math.random() * 3) + 2,
         }));
-        setRates(parsedRates);
-        toast.success('Rates Fetched', `Found ${parsedRates.length} courier options.`);
+
+        navigation.navigate('AvailableCouriers', {
+          pickupPin,
+          deliveryPin,
+          weight,
+          length: length || '10',
+          width: width || '10',
+          height: height || '10',
+          rates: parsedRates,
+        });
       } else {
         toast.error('Calculation Failed', data.message || 'Unable to fetch rates for these pincodes.');
       }
@@ -156,33 +158,13 @@ export default function RateCalculatorScreen() {
     deliveryPin.length === 6 &&
     Number(weight) > 0;
 
-  // Filtered and sorted rates
-  const filteredRates = useMemo(() => {
-    let list = [...rates];
-    if (activeFilter === 'air') {
-      list = list.filter((r) => r.carrier_name.toLowerCase().includes('air'));
-    } else if (activeFilter === 'surface') {
-      list = list.filter((r) => !r.carrier_name.toLowerCase().includes('air'));
-    }
-
-    if (activeFilter === 'fastest') {
-      list.sort((a, b) => (a.estimated_days || 99) - (b.estimated_days || 99));
-    } else {
-      list.sort((a, b) => a.freight_charge - b.freight_charge);
-    }
-    return list;
-  }, [rates, activeFilter]);
-
-  const cheapestRate = rates.length > 0 ? Math.min(...rates.map((r) => r.freight_charge)) : 0;
-  const fastestDays = rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
-
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-[#F8FAFC]"
       style={{ paddingTop: insets.top }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header Bar with generous padding */}
+      {/* Header Bar */}
       <View className="px-6 pt-5 pb-4 bg-white border-b border-slate-100 flex-row items-center justify-between">
         <View className="flex-1 mr-3">
           <View className="flex-row items-center gap-2.5">
@@ -230,11 +212,10 @@ export default function RateCalculatorScreen() {
                   key={route.label}
                   onPress={() => handleApplyPresetRoute(route)}
                   activeOpacity={0.7}
-                  className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${
-                    isSelected
-                      ? 'bg-violet-600 border-violet-600 shadow-xs'
-                      : 'bg-white border-slate-200'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${isSelected
+                    ? 'bg-violet-600 border-violet-600 shadow-xs'
+                    : 'bg-white border-slate-200'
+                    }`}
                 >
                   <Feather
                     name="map-pin"
@@ -242,9 +223,8 @@ export default function RateCalculatorScreen() {
                     color={isSelected ? '#FFFFFF' : '#7C3AED'}
                   />
                   <Text
-                    className={`text-xs font-bold ${
-                      isSelected ? 'text-white' : 'text-slate-700'
-                    }`}
+                    className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-700'
+                      }`}
                   >
                     {route.label}
                   </Text>
@@ -254,254 +234,207 @@ export default function RateCalculatorScreen() {
           </ScrollView>
         </View>
 
-        {/* Main Calculator Card */}
-        <View
-          className="bg-white rounded-3xl border border-slate-100 overflow-hidden mb-6"
-          style={{
-            shadowColor: '#4338CA',
-            shadowOpacity: 0.08,
-            shadowRadius: 20,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 4,
-          }}
-        >
-          {/* Card Gradient Header */}
-          <LinearGradient
-            colors={PRIMARY_GRADIENT}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            className="px-6 py-5 flex-row items-center justify-between"
-          >
-            <View className="flex-row items-center p-4">
-              <View className="w-11 h-11 rounded-2xl bg-white/20 items-center justify-center border border-white/25">
-                <Feather name="map-pin" size={20} color="white" />
-              </View>
-              <View className="ml-3.5">
-                <Text className="text-white text-base font-black tracking-tight ">
-                  Shipment Route
-                </Text>
-                <Text className="text-white/80 text-xs mt-0.5">
-                  Enter pickup & delivery pincodes
-                </Text>
-              </View>
-            </View>
-          </LinearGradient>
+        {/* Form Card */}
+        <View className="bg-white rounded-3xl p-6 border border-slate-100 shadow-xs mb-6">
+          <SectionHeader
+            icon="map-pin"
+            title="Pickup & Delivery Pincodes"
+            subtitle="Enter valid 6-digit Indian pincodes"
+          />
 
-          {/* Card Body with Generous Padding */}
-          <View className="p-6">
-            {/* Route Inputs with Swap Button */}
-            <View className="flex-row items-center relative">
-              <View className="flex-1">
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-xs font-bold text-slate-700">Pickup Pincode</Text>
-                  {pickupPin.length === 6 && (
-                    <View className="flex-row items-center gap-1">
-                      <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <Text className="text-[10px] text-emerald-600 font-bold">Valid</Text>
-                    </View>
-                  )}
-                </View>
-                <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-0.5 focus:border-violet-500">
-                  <Feather name="upload-cloud" size={15} color="#94A3B8" />
-                  <TextInput
-                    value={pickupPin}
-                    onChangeText={setPickupPin}
-                    placeholder="e.g. 110001"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    className="flex-1 py-3.5 pl-3 text-sm font-bold text-slate-900"
-                  />
-                </View>
-              </View>
-
-              {/* Swap Button */}
-              <View className="px-3 pt-6 items-center justify-center">
-                <TouchableOpacity
-                  onPress={handleSwapPincodes}
-                  activeOpacity={0.7}
-                  className="w-10 h-10 rounded-full bg-violet-50 border border-violet-100 items-center justify-center shadow-xs"
-                >
-                  <Feather name="repeat" size={15} color={ACCENT_PURPLE} />
-                </TouchableOpacity>
-              </View>
-
-              <View className="flex-1">
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-xs font-bold text-slate-700">Delivery Pincode</Text>
-                  {deliveryPin.length === 6 && (
-                    <View className="flex-row items-center gap-1">
-                      <View className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <Text className="text-[10px] text-emerald-600 font-bold">Valid</Text>
-                    </View>
-                  )}
-                </View>
-                <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 py-0.5 focus:border-violet-500">
-                  <Feather name="download-cloud" size={15} color="#94A3B8" />
-                  <TextInput
-                    value={deliveryPin}
-                    onChangeText={setDeliveryPin}
-                    placeholder="e.g. 400001"
-                    placeholderTextColor="#94A3B8"
-                    keyboardType="number-pad"
-                    maxLength={6}
-                    className="flex-1 py-3.5 pl-3 text-sm font-bold text-slate-900"
-                  />
-                </View>
-              </View>
-            </View>
-
-            <Divider />
-
-            {/* Package Section */}
-            <SectionHeader
-              icon="package"
-              title="Package & Weight"
-              subtitle="Enter actual dead weight & box dimensions"
-            />
-
-            {/* Weight Input & Quick Chips */}
-            <View className="mb-5">
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-xs font-bold text-slate-700">Actual (Dead) Weight</Text>
-                <Text className="text-[11px] text-slate-400 font-medium">Kilograms (kg)</Text>
-              </View>
-
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-2xl px-4 mb-3">
-                <Feather name="anchor" size={15} color="#94A3B8" />
+          {/* Pincodes Input Row */}
+          <View className="flex-row items-center gap-2 mb-6">
+            <View className="flex-1">
+              <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Pickup Pincode</Text>
+              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
+                <Feather name="arrow-up-right" size={14} color="#10B981" />
                 <TextInput
-                  value={weight}
-                  onChangeText={setWeight}
-                  placeholder="e.g. 0.5"
+                  value={pickupPin}
+                  onChangeText={(t) => setPickupPin(t.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="e.g. 110001"
                   placeholderTextColor="#94A3B8"
-                  keyboardType="decimal-pad"
-                  className="flex-1 py-3.5 pl-3 text-sm font-bold text-slate-900"
-                />
-                <View className="bg-slate-200/80 px-2.5 py-1 rounded-lg">
-                  <Text className="text-[10px] font-black text-slate-700">KG</Text>
-                </View>
-              </View>
-
-              {/* Weight Chips */}
-              <View className="flex-row gap-2.5">
-                {WEIGHT_PRESETS.map((preset) => {
-                  const isSelected = weight === preset;
-                  return (
-                    <TouchableOpacity
-                      key={preset}
-                      onPress={() => setWeight(preset)}
-                      activeOpacity={0.7}
-                      className={`flex-1 py-2 rounded-xl border items-center justify-center ${
-                        isSelected
-                          ? 'bg-violet-600 border-violet-600 shadow-xs'
-                          : 'bg-white border-slate-200'
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-bold ${
-                          isSelected ? 'text-white' : 'text-slate-600'
-                        }`}
-                      >
-                        {preset} kg
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Box Presets */}
-            <View className="mb-4">
-              <Text className="text-xs font-bold text-slate-700 mb-2">
-                Box Dimensions (L × W × H in cm)
-              </Text>
-              <View className="flex-row gap-2 mb-3">
-                {BOX_PRESETS.map((box) => (
-                  <TouchableOpacity
-                    key={box.label}
-                    onPress={() => handleApplyBoxPreset(box)}
-                    activeOpacity={0.7}
-                    className="flex-1 py-2 px-1.5 bg-slate-100 rounded-xl items-center justify-center border border-slate-200/70"
-                  >
-                    <Text className="text-[10px] font-bold text-slate-700 text-center" numberOfLines={1}>
-                      {box.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              {/* Dimension Inputs */}
-              <View className="flex-row gap-2.5">
-                <DimensionInput
-                  label="Length (cm)"
-                  value={length}
-                  onChangeText={setLength}
-                  placeholder="10"
-                />
-                <DimensionInput
-                  label="Width (cm)"
-                  value={width}
-                  onChangeText={setWidth}
-                  placeholder="10"
-                />
-                <DimensionInput
-                  label="Height (cm)"
-                  value={height}
-                  onChangeText={setHeight}
-                  placeholder="10"
+                  keyboardType="numeric"
+                  maxLength={6}
+                  className="flex-1 py-3 px-2 text-xs font-bold text-slate-900"
                 />
               </View>
             </View>
 
-            {volumetricWeight > 0 && (
-              <View className="mt-1 p-3 bg-violet-50/60 rounded-2xl border border-violet-100 flex-row items-center justify-between">
-                <View className="flex-row items-center gap-2 flex-1">
-                  <View className="w-7 h-7 rounded-lg bg-violet-100 items-center justify-center">
-                    <Feather name="box" size={13} color={ACCENT_PURPLE} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-slate-800">
-                      Volumetric Weight: {volumetricWeight} kg
-                    </Text>
-                    <Text className="text-[10px] text-slate-500 font-medium">
-                      Chargeable: {chargeableWeight} kg ({isVolumetricHigher ? 'Volumetric applied' : 'Dead weight applied'})
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* Calculate Button */}
             <TouchableOpacity
-              onPress={handleCalculate}
-              disabled={calculating || !canCalculate}
-              activeOpacity={0.85}
-              className={`mt-4 rounded-2xl overflow-hidden shadow-lg shadow-violet-500/25 ${
-                !canCalculate ? 'opacity-60' : ''
-              }`}
+              onPress={handleSwapPincodes}
+              activeOpacity={0.7}
+              className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 items-center justify-center self-end mb-0.5"
             >
-              <LinearGradient
-                colors={!canCalculate ? ['#94A3B8', '#64748B'] : PRIMARY_GRADIENT}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                className="py-4 px-6 flex-row items-center justify-center gap-2.5"
-              >
-                {calculating ? (
-                  <Text className="text-white font-black text-base tracking-wide">
-                    Calculating Rates...
-                  </Text>
-                ) : (
-                  <>
-                    <Feather name="zap" size={18} color="white" />
-                    <Text className="text-white font-black text-base tracking-wide">
-                      Calculate Shipping Rates
-                    </Text>
-                    <Feather name="arrow-right" size={18} color="white" />
-                  </>
-                )}
-              </LinearGradient>
+              <Feather name="repeat" size={14} color={ACCENT_PURPLE} />
             </TouchableOpacity>
+
+            <View className="flex-1">
+              <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Delivery Pincode</Text>
+              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
+                <Feather name="arrow-down-left" size={14} color="#0284C7" />
+                <TextInput
+                  value={deliveryPin}
+                  onChangeText={(t) => setDeliveryPin(t.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="e.g. 400001"
+                  placeholderTextColor="#94A3B8"
+                  keyboardType="numeric"
+                  maxLength={6}
+                  className="flex-1 py-3 px-2 text-xs font-bold text-slate-900"
+                />
+              </View>
+            </View>
           </View>
+
+          <View className="h-[1px] bg-slate-100 w-full mb-6" />
+
+          {/* Weight Section */}
+          <SectionHeader
+            icon="anchor"
+            title="Dead Weight"
+            subtitle="Actual shipment weight in Kilograms"
+          />
+
+          <View className="mb-4">
+            <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Dead Weight (kg)</Text>
+            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
+              <TextInput
+                value={weight}
+                onChangeText={setWeight}
+                placeholder="e.g. 0.5"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numeric"
+                className="flex-1 py-3 text-xs font-bold text-slate-900"
+              />
+              <Text className="text-[11px] font-bold text-slate-400">KG</Text>
+            </View>
+          </View>
+
+          {/* Weight Quick Presets */}
+          <View className="flex-row items-center gap-2 mb-6">
+            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              Presets:
+            </Text>
+            {WEIGHT_PRESETS.map((preset) => (
+              <TouchableOpacity
+                key={preset}
+                onPress={() => setWeight(preset)}
+                activeOpacity={0.7}
+                className={`px-2.5 py-1 rounded-lg border ${weight === preset
+                  ? 'bg-violet-600 border-violet-600'
+                  : 'bg-slate-50 border-slate-200'
+                  }`}
+              >
+                <Text
+                  className={`text-[10px] font-bold ${weight === preset ? 'text-white' : 'text-slate-600'
+                    }`}
+                >
+                  {preset} kg
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View className="h-[1px] bg-slate-100 w-full mb-6" />
+
+          {/* Dimensions Section */}
+          <SectionHeader
+            icon="box"
+            title="Package Dimensions"
+            subtitle="Calculates volumetric weight (L × W × H / 5000)"
+          />
+
+          {/* Box Presets */}
+          <View className="mb-4">
+            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+              Standard Box Sizes:
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+              {BOX_PRESETS.map((box) => (
+                <TouchableOpacity
+                  key={box.label}
+                  onPress={() => handleApplyBoxPreset(box)}
+                  activeOpacity={0.7}
+                  className="bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl"
+                >
+                  <Text className="text-[11px] font-bold text-slate-700">{box.label}</Text>
+                  <Text className="text-[9px] text-slate-400 font-medium">
+                    {box.l}×{box.w}×{box.h} cm
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Dimensions Inputs */}
+          <View className="mb-4">
+            <View className="flex-row gap-2.5">
+              <DimensionInput
+                label="Length (cm)"
+                value={length}
+                onChangeText={setLength}
+                placeholder="10"
+              />
+              <DimensionInput
+                label="Width (cm)"
+                value={width}
+                onChangeText={setWidth}
+                placeholder="10"
+              />
+              <DimensionInput
+                label="Height (cm)"
+                value={height}
+                onChangeText={setHeight}
+                placeholder="10"
+              />
+            </View>
+          </View>
+
+          {volumetricWeight > 0 && (
+            <View className="mt-1 p-3 bg-violet-50/60 rounded-2xl border border-violet-100 flex-row items-center justify-between">
+              <View className="flex-row items-center gap-2 flex-1">
+                <View className="w-7 h-7 rounded-lg bg-violet-100 items-center justify-center">
+                  <Feather name="box" size={13} color={ACCENT_PURPLE} />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-xs font-bold text-slate-800">
+                    Volumetric Weight: {volumetricWeight} kg
+                  </Text>
+                  <Text className="text-[10px] text-slate-500 font-medium">
+                    Chargeable: {chargeableWeight} kg ({isVolumetricHigher ? 'Volumetric applied' : 'Dead weight applied'})
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Calculate Button */}
+          <TouchableOpacity
+            onPress={handleCalculate}
+            disabled={calculating || !canCalculate}
+            activeOpacity={0.85}
+            className={`mt-5 rounded-2xl overflow-hidden shadow-lg shadow-violet-500/25 ${!canCalculate ? 'opacity-60' : ''
+              }`}
+          >
+            <LinearGradient
+              colors={PRIMARY_GRADIENT}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="py-4 px-6 flex-row items-center justify-center gap-2.5"
+            >
+              {calculating ? (
+                <Text className="text-white font-black text-base tracking-wide px-5 py-1">
+                  Scanning Partner Couriers...
+                </Text>
+              ) : (
+                <>
+                  <Text className="text-white font-black text-base tracking-wide py-1">
+                    Find Available Couriers
+                  </Text>
+                  <Feather name="arrow-right" size={18} color="#FFFFFF" />
+                </>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         {/* Loading Card */}
@@ -511,77 +444,6 @@ export default function RateCalculatorScreen() {
             <Text className="text-xs text-slate-400 text-center mt-3 font-medium">
               Checking Delhivery, Blue Dart, Ekart, Shadowfax & Xpressbees...
             </Text>
-          </View>
-        )}
-
-        {/* Results Section */}
-        {rates.length > 0 && (
-          <View className="mb-6">
-            <View className="flex-row items-center justify-between mb-3.5">
-              <View>
-                <Text className="text-base font-black text-slate-900 tracking-tight">
-                  Available Couriers ({filteredRates.length})
-                </Text>
-                <Text className="text-xs text-slate-500 font-medium mt-0.5">
-                  Best price from ₹{cheapestRate} • Fastest {fastestDays} days
-                </Text>
-              </View>
-            </View>
-
-            {/* Filter Tabs */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="mb-4 -mx-1 px-1 flex-row gap-2"
-            >
-              <FilterTab
-                label="All Couriers"
-                count={rates.length}
-                active={activeFilter === 'all'}
-                onPress={() => setActiveFilter('all')}
-              />
-              <FilterTab
-                label="Cheapest"
-                active={activeFilter === 'cheapest'}
-                onPress={() => setActiveFilter('cheapest')}
-              />
-              <FilterTab
-                label="Fastest"
-                active={activeFilter === 'fastest'}
-                onPress={() => setActiveFilter('fastest')}
-              />
-              <FilterTab
-                label="Air Express"
-                active={activeFilter === 'air'}
-                onPress={() => setActiveFilter('air')}
-              />
-              <FilterTab
-                label="Surface"
-                active={activeFilter === 'surface'}
-                onPress={() => setActiveFilter('surface')}
-              />
-            </ScrollView>
-
-            {/* Rate Cards */}
-            {filteredRates.map((rate) => (
-              <EnhancedRateCard
-                key={rate.carrier_id}
-                rate={rate}
-                isCheapest={rate.freight_charge === cheapestRate}
-                isFastest={rate.estimated_days === fastestDays}
-                onBook={() => {
-                  navigation.navigate('CreateShipment', {
-                    pickupPincode: pickupPin,
-                    deliveryPincode: deliveryPin,
-                    weight,
-                    length,
-                    breadth: width,
-                    height,
-                    selectedCarrier: rate.carrier_id,
-                  });
-                }}
-              />
-            ))}
           </View>
         )}
 
@@ -660,176 +522,6 @@ function DimensionInput({
   );
 }
 
-
-function FilterTab({
-  label,
-  count,
-  active,
-  onPress,
-}: {
-  label: string;
-  count?: number;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.7}
-      className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${
-        active
-          ? 'bg-slate-900 border-slate-900'
-          : 'bg-white border-slate-200'
-      }`}
-    >
-      <Text
-        className={`text-xs font-bold ${
-          active ? 'text-white' : 'text-slate-600'
-        }`}
-      >
-        {label}
-      </Text>
-      {typeof count === 'number' && (
-        <View
-          className={`px-1.5 py-0.5 rounded-full ${
-            active ? 'bg-white/20' : 'bg-slate-100'
-          }`}
-        >
-          <Text
-            className={`text-[9px] font-black ${
-              active ? 'text-white' : 'text-slate-600'
-            }`}
-          >
-            {count}
-          </Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-}
-
-function EnhancedRateCard({
-  rate,
-  isCheapest,
-  isFastest,
-  onBook,
-}: {
-  rate: RateResult;
-  isCheapest: boolean;
-  isFastest: boolean;
-  onBook: () => void;
-}) {
-  const isAir = rate.carrier_name.toLowerCase().includes('air');
-
-  return (
-    <View
-      className="bg-white rounded-3xl p-5 mb-4 border border-slate-100"
-      style={{
-        shadowColor: '#0F172A',
-        shadowOpacity: 0.05,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 2,
-      }}
-    >
-      {/* Top Badges */}
-      <View className="flex-row items-center justify-between mb-3.5">
-        <View className="flex-row items-center gap-2">
-          <View
-            className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${
-              isAir ? 'bg-sky-50 border border-sky-100' : 'bg-slate-100 border border-slate-200'
-            }`}
-          >
-            <Feather
-              name={isAir ? 'send' : 'truck'}
-              size={11}
-              color={isAir ? '#0284C7' : '#475569'}
-            />
-            <Text
-              className={`text-[10px] font-bold ${
-                isAir ? 'text-sky-700' : 'text-slate-700'
-              }`}
-            >
-              {isAir ? 'Air Express' : 'Surface Logistics'}
-            </Text>
-          </View>
-
-          {isCheapest && (
-            <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-              <Text className="text-[9px] font-black text-emerald-700">
-                ★ CHEAPEST
-              </Text>
-            </View>
-          )}
-
-          {isFastest && !isCheapest && (
-            <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
-              <Text className="text-[9px] font-black text-violet-700">
-                ⚡ FASTEST
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View className="flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
-          <Feather name="shield" size={10} color="#10B981" />
-          <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
-        </View>
-      </View>
-
-      {/* Main Courier Info */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center flex-1 pr-3">
-          <View className="w-13 h-13 rounded-2xl bg-slate-50 items-center justify-center p-1.5 border border-slate-100">
-            <CourierLogo name={rate.carrier_name} />
-          </View>
-
-          <View className="ml-3.5 flex-1">
-            <Text className="text-sm font-black text-slate-900 tracking-tight" numberOfLines={1}>
-              {rate.carrier_name}
-            </Text>
-
-            <View className="flex-row items-center mt-1.5">
-              <Feather name="clock" size={12} color="#64748B" />
-              <Text className="text-xs text-slate-500 font-semibold ml-1.5">
-                Est. {rate.estimated_days || 3} business days
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View className="items-end">
-          <Text className="text-[9px] font-black text-slate-400 tracking-wider">
-            ALL-INCLUSIVE
-          </Text>
-          <Text className="text-2xl font-black text-slate-950 mt-0.5">
-            ₹{rate.freight_charge}
-          </Text>
-        </View>
-      </View>
-
-      {/* Footer CTA */}
-      <View className="mt-4 pt-3.5 border-t border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-1.5">
-          <Feather name="check" size={13} color="#10B981" />
-          <Text className="text-[11px] font-medium text-slate-500">
-            Free doorstep pickup included
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={onBook}
-          activeOpacity={0.7}
-          className="bg-violet-50 px-4 py-2 rounded-xl border border-violet-200 flex-row items-center gap-1.5"
-        >
-          <Text className="text-xs font-black text-violet-700">Ship Now</Text>
-          <Feather name="arrow-right" size={12} color={ACCENT_PURPLE} />
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-}
-
 function FeatureCard({
   icon,
   title,
@@ -857,8 +549,4 @@ function FeatureCard({
       </View>
     </View>
   );
-}
-
-function Divider() {
-  return <View className="h-px bg-slate-100 my-6" />;
 }

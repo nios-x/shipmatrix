@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../lib/firebase';
 import { api } from '../lib/api';
@@ -33,6 +33,7 @@ interface RateItem {
 export default function CreateShipmentScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const route = useRoute<any>();
   const { user } = useUser();
 
   const [step, setStep] = useState<Step>('form');
@@ -60,6 +61,22 @@ export default function CreateShipmentScreen() {
     codAmount: '',
     orderId: '',
   });
+
+  useEffect(() => {
+    if (route.params) {
+      const p = route.params;
+      setForm((prev) => ({
+        ...prev,
+        pickupPincode: p.pickupPincode || prev.pickupPincode,
+        deliveryPincode: p.deliveryPincode || prev.deliveryPincode,
+        weight: p.weight ? String(p.weight) : prev.weight,
+        length: p.length ? String(p.length) : prev.length,
+        breadth: (p.breadth || p.width) ? String(p.breadth || p.width) : prev.breadth,
+        height: p.height ? String(p.height) : prev.height,
+        orderId: p.orderId || prev.orderId,
+      }));
+    }
+  }, [route.params]);
 
   const updateField = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));

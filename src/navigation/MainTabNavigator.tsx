@@ -18,6 +18,7 @@ import OrdersScreen from '../screens/OrdersScreen';
 import CreateShipmentScreen from '../screens/CreateShipmentScreen';
 import CreateReverseShipmentScreen from '../screens/CreateReverseShipmentScreen';
 import RateCalculatorScreen from '../screens/RateCalculatorScreen';
+import AvailableCouriersScreen from '../screens/AvailableCouriersScreen';
 import WalletScreen from '../screens/WalletScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import TrackingScreen from '../screens/TrackingScreen';
@@ -50,6 +51,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Channels" component={ChannelsScreen} />
       <HomeStack.Screen name="Ndr" component={NdrScreen} />
       <HomeStack.Screen name="WeightDiscrepancy" component={WeightDiscrepancyScreen} />
+      <HomeStack.Screen name="AvailableCouriers" component={AvailableCouriersScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -70,6 +72,7 @@ function RatesStackNavigator() {
   return (
     <RatesStack.Navigator screenOptions={{ headerShown: false }}>
       <RatesStack.Screen name="RateCalculator" component={RateCalculatorScreen} />
+      <RatesStack.Screen name="AvailableCouriers" component={AvailableCouriersScreen} />
     </RatesStack.Navigator>
   );
 }

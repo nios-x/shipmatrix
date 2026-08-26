@@ -31,18 +31,45 @@ export type HomeStackParamList = {
   Channels: undefined;
   Ndr: undefined;
   WeightDiscrepancy: undefined;
+  AvailableCouriers: {
+    pickupPin: string;
+    deliveryPin: string;
+    weight: string;
+    length?: string;
+    width?: string;
+    height?: string;
+    rates?: any[];
+  };
 };
 
 // Orders stack
 export type OrdersStackParamList = {
   Orders: undefined;
-  CreateShipment: { orderId?: string };
+  CreateShipment: {
+    orderId?: string;
+    pickupPincode?: string;
+    deliveryPincode?: string;
+    weight?: string;
+    length?: string;
+    breadth?: string;
+    height?: string;
+    selectedCarrier?: string;
+  };
   CreateReverseShipment: { shipmentId?: string };
 };
 
 // Rates stack
 export type RatesStackParamList = {
   RateCalculator: undefined;
+  AvailableCouriers: {
+    pickupPin: string;
+    deliveryPin: string;
+    weight: string;
+    length?: string;
+    width?: string;
+    height?: string;
+    rates?: any[];
+  };
 };
 
 // Wallet stack
