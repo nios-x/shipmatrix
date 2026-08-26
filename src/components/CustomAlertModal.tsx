@@ -61,11 +61,11 @@ export function CustomAlertModal({
           </View>
 
           {/* Title & Message */}
-          <Text className="font-geist-bold text-lg text-gray-900 text-center mb-1.5 tracking-tight">
+          <Text className="font-raleway-bold text-lg text-gray-900 text-center mb-1.5 tracking-tight">
             {title}
           </Text>
           {message ? (
-            <Text className="font-geist text-sm text-gray-500 text-center mb-6 leading-relaxed">
+            <Text className="font-raleway text-sm text-gray-500 text-center mb-6 leading-relaxed">
               {message}
             </Text>
           ) : (
@@ -79,14 +79,14 @@ export function CustomAlertModal({
               const isDestructive = btn.style === 'destructive';
 
               let btnBg = 'bg-violet-700';
-              let textStyle = 'text-white font-geist-bold';
+              let textStyle = 'text-white font-raleway-bold';
 
               if (isCancel) {
                 btnBg = 'bg-gray-100 border border-gray-200/60';
-                textStyle = 'text-gray-700 font-geist-semibold';
+                textStyle = 'text-gray-700 font-raleway-semibold';
               } else if (isDestructive) {
                 btnBg = 'bg-rose-600';
-                textStyle = 'text-white font-geist-bold';
+                textStyle = 'text-white font-raleway-bold';
               }
 
               return (

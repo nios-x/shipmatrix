@@ -49,7 +49,7 @@ export default function TrackingScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-xl bg-white border border-gray-100 items-center justify-center shadow-xs">
           <Feather name="arrow-left" size={20} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-geist-bold text-gray-900 tracking-tight">Track Shipment</Text>
+        <Text className="text-xl font-raleway-bold text-gray-900 tracking-tight">Track Shipment</Text>
       </View>
 
       <View className="px-5 mb-4">
@@ -59,7 +59,7 @@ export default function TrackingScreen() {
             onChangeText={setAwb}
             placeholder="Enter AWB number"
             placeholderTextColor="#9ca3af"
-            className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-geist-medium text-gray-900 shadow-sm"
+            className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-raleway text-gray-900 shadow-sm"
             onSubmitEditing={handleTrack}
           />
           <TouchableOpacity onPress={handleTrack} disabled={tracking} activeOpacity={0.8} className="bg-violet-700 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
@@ -71,17 +71,17 @@ export default function TrackingScreen() {
       {tracking && <LoadingSpinner message="Tracking shipment..." />}
       {error ? (
         <View className="mx-5 bg-rose-50 border border-rose-100 p-4 rounded-2xl mb-4">
-          <Text className="text-rose-600 text-sm font-geist-medium text-center">{error}</Text>
+          <Text className="text-rose-600 text-sm font-raleway text-center">{error}</Text>
         </View>
       ) : null}
 
       {shipmentInfo && (
         <View className="mx-5 bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 shadow-sm" style={{ elevation: 2 }}>
-          <Text className="font-geist-bold text-gray-900 text-base">{shipmentInfo.courier || 'Courier'}</Text>
-          <Text className="text-xs font-geist text-gray-400 mt-0.5">AWB: {awb}</Text>
+          <Text className="font-raleway-bold text-gray-900 text-base">{shipmentInfo.courier || 'Courier'}</Text>
+          <Text className="text-xs font-raleway text-gray-400 mt-0.5">AWB: {awb}</Text>
           {shipmentInfo.current_status && (
             <View className="bg-purple-50 border border-purple-100 px-3 py-1 rounded-full mt-2.5 self-start">
-              <Text className="text-xs font-geist-bold text-purple-700 uppercase tracking-wider">{shipmentInfo.current_status}</Text>
+              <Text className="text-xs font-raleway-bold text-purple-700 uppercase tracking-wider">{shipmentInfo.current_status}</Text>
             </View>
           )}
         </View>
@@ -95,10 +95,10 @@ export default function TrackingScreen() {
               {index < events.length - 1 && <View className="w-0.5 flex-1 bg-gray-200 mt-1" />}
             </View>
             <View className="flex-1 pb-6">
-              <Text className="font-geist-bold text-gray-900 text-sm">{event.status}</Text>
-              {event.location && <Text className="text-xs font-geist text-gray-500 mt-0.5">{event.location}</Text>}
-              {event.timestamp && <Text className="text-xs font-geist text-gray-400 mt-0.5">{event.timestamp}</Text>}
-              {event.description && <Text className="text-xs font-geist text-gray-400 mt-0.5">{event.description}</Text>}
+              <Text className="font-raleway-bold text-gray-900 text-sm">{event.status}</Text>
+              {event.location && <Text className="text-xs font-raleway text-gray-500 mt-0.5">{event.location}</Text>}
+              {event.timestamp && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{event.timestamp}</Text>}
+              {event.description && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{event.description}</Text>}
             </View>
           </View>
         ))}

@@ -218,7 +218,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   const renderForm = () => (
     <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
-      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
+      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
         Customer Details
       </Text>
       <View
@@ -231,7 +231,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Delivery Address */}
-      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5">
         Delivery Address
       </Text>
       <View
@@ -258,7 +258,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Package Details */}
-      <Text className="text-xs font-geist-bold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5">
         Package Details
       </Text>
       <View
@@ -287,7 +287,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         </View>
 
         {/* Payment Type */}
-        <Text className="text-xs font-geist-bold text-gray-700 mb-1">Payment Type</Text>
+        <Text className="text-xs font-raleway-bold text-gray-700 mb-1">Payment Type</Text>
         <View className="flex-row gap-3">
           {(['prepaid', 'cod'] as const).map((type) => (
             <TouchableOpacity
@@ -297,7 +297,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
               className={`flex-1 py-3 rounded-xl border items-center ${form.paymentType === type ? 'bg-violet-700 border-purple-900 shadow-sm shadow-purple-900/20' : 'bg-white border-gray-200'
                 }`}
             >
-              <Text className={`font-geist-bold text-xs ${form.paymentType === type ? 'text-white' : 'text-gray-700'}`}>
+              <Text className={`font-raleway-bold text-xs ${form.paymentType === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}
               </Text>
             </TouchableOpacity>
@@ -319,7 +319,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className={`bg-violet-700 py-4 rounded-full items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
         style={{ elevation: 4 }}
       >
-        <Text className="text-white font-geist-bold text-sm">
+        <Text className="text-white font-raleway-bold text-sm">
           {loading ? 'Fetching Rates...' : 'Get Shipping Rates'}
         </Text>
       </TouchableOpacity>
@@ -381,8 +381,8 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                   <View className="flex-row items-center gap-2">
                     <View
                       className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
-                          ? 'bg-sky-50 border border-sky-100'
-                          : 'bg-slate-100 border border-slate-200'
+                        ? 'bg-sky-50 border border-sky-100'
+                        : 'bg-slate-100 border border-slate-200'
                         }`}
                     >
                       <Feather
@@ -624,7 +624,7 @@ function InputField({
 }) {
   return (
     <View>
-      <Text className="text-xs font-geist-bold text-gray-700 mb-1">{label}</Text>
+      <Text className="text-xs font-raleway-bold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
         {icon && (
           <View className="absolute left-3 top-3.5 z-10">
@@ -640,7 +640,7 @@ function InputField({
           maxLength={maxLength}
           multiline={multiline}
           style={{ textAlignVertical: multiline ? 'top' : 'center' }}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-geist-medium text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-raleway text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
         />
       </View>
     </View>

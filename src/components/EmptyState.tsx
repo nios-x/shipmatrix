@@ -19,11 +19,11 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
       >
         <Logo size={44} />
       </View>
-      <Text className="font-geist-bold text-lg text-gray-900 mb-1.5 text-center tracking-tight">
+      <Text className="font-raleway-bold text-lg text-gray-900 mb-1.5 text-center tracking-tight">
         {title}
       </Text>
       {subtitle ? (
-        <Text className="font-geist text-sm text-gray-500 text-center leading-relaxed max-w-xs">
+        <Text className="font-raleway text-sm text-gray-500 text-center leading-relaxed max-w-xs">
           {subtitle}
         </Text>
       ) : null}
@@ -34,7 +34,7 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
           className="mt-6 bg-violet-700 px-6 py-3 rounded-full shadow-md shadow-purple-900/20"
           style={{ elevation: 3 }}
         >
-          <Text className="font-geist-bold text-white text-sm">{actionLabel}</Text>
+          <Text className="font-raleway-bold text-white text-sm">{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </View>

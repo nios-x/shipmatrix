@@ -6,13 +6,16 @@ import Toast from 'react-native-toast-message';
 import { View, ActivityIndicator, Text, TextInput, Platform } from 'react-native';
 import {
   useFonts,
-  Geist_400Regular,
-  Geist_500Medium,
-  Geist_600SemiBold,
-  Geist_700Bold,
-  Geist_800ExtraBold,
-  Geist_900Black,
-} from '@expo-google-fonts/geist';
+  Raleway_100Thin,
+  Raleway_200ExtraLight,
+  Raleway_300Light,
+  Raleway_400Regular,
+  Raleway_500Medium,
+  Raleway_600SemiBold,
+  Raleway_700Bold,
+  Raleway_800ExtraBold,
+  Raleway_900Black,
+} from '@expo-google-fonts/raleway';
 
 import { store } from './src/store';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -22,58 +25,70 @@ import './global.css';
 import { PortalHost } from '@rn-primitives/portal';
 import { toastConfig } from './src/components/ToastConfig';
 
-// Inject Geist font stylesheet dynamically on Web platform
+// Inject Raleway font stylesheet dynamically on Web platform
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  if (!document.getElementById('geist-google-font-link')) {
+  if (!document.getElementById('raleway-google-font-link')) {
     const link = document.createElement('link');
-    link.id = 'geist-google-font-link';
+    link.id = 'raleway-google-font-link';
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Geist:wght@100;200;300;400;500;600;700;800;900&family=Geist+Mono:wght@100..900&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap';
     document.head.appendChild(link);
   }
 
-  if (!document.getElementById('geist-global-font-override')) {
+  if (!document.getElementById('raleway-global-font-override')) {
     const style = document.createElement('style');
-    style.id = 'geist-global-font-override';
+    style.id = 'raleway-global-font-override';
     style.innerHTML = `
       * {
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
       }
       body, html, #root, [dir="auto"], [dir] [dir="auto"], div, span, p, h1, h2, h3, h4, h5, h6, input, textarea, button, select {
-        font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
       }
     `;
     document.head.appendChild(style);
   }
 }
 
-// Enforce Geist as default font on native components
+// Enforce Raleway as default font on native components
 // @ts-ignore
 if (Text.defaultProps == null) Text.defaultProps = {};
 // @ts-ignore
-Text.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Regular' };
+Text.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Raleway' : 'Raleway_400Regular' };
 
 // @ts-ignore
 if (TextInput.defaultProps == null) TextInput.defaultProps = {};
 // @ts-ignore
-TextInput.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Regular' };
+TextInput.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Raleway' : 'Raleway_400Regular' };
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    Geist: require('./assets/fonts/Geist-Regular.otf'),
-    'Geist-Regular': require('./assets/fonts/Geist-Regular.otf'),
-    'Geist-Medium': require('./assets/fonts/Geist-Medium.otf'),
-    'Geist-SemiBold': require('./assets/fonts/Geist-SemiBold.otf'),
-    'Geist-Bold': require('./assets/fonts/Geist-Bold.otf'),
-    'Geist-Black': require('./assets/fonts/Geist-Black.otf'),
-    'Geist-Light': require('./assets/fonts/Geist-Light.otf'),
-    'Geist-Thin': require('./assets/fonts/Geist-Thin.otf'),
-    Geist_400Regular,
-    Geist_500Medium,
-    Geist_600SemiBold,
-    Geist_700Bold,
-    Geist_800ExtraBold,
-    Geist_900Black,
+    Raleway_100Thin,
+    Raleway_200ExtraLight,
+    Raleway_300Light,
+    Raleway_400Regular,
+    Raleway_500Medium,
+    Raleway_600SemiBold,
+    Raleway_700Bold,
+    Raleway_800ExtraBold,
+    Raleway_900Black,
+    Raleway: Raleway_400Regular,
+    'Raleway-Regular': Raleway_400Regular,
+    'Raleway-Medium': Raleway_500Medium,
+    'Raleway-SemiBold': Raleway_600SemiBold,
+    'Raleway-Bold': Raleway_700Bold,
+    'Raleway-ExtraBold': Raleway_800ExtraBold,
+    'Raleway-Black': Raleway_900Black,
+    'Raleway-Light': Raleway_300Light,
+    'Raleway-Thin': Raleway_100Thin,
+    // Keep Geist aliases mapped to Raleway for backwards compatibility
+    'Geist-Regular': Raleway_400Regular,
+    'Geist-Medium': Raleway_500Medium,
+    'Geist-SemiBold': Raleway_600SemiBold,
+    'Geist-Bold': Raleway_700Bold,
+    'Geist-Black': Raleway_900Black,
+    'Geist-Light': Raleway_300Light,
+    'Geist-Thin': Raleway_100Thin,
   });
 
   if (!fontsLoaded && Platform.OS !== 'web') {

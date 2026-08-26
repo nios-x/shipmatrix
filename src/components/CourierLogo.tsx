@@ -77,7 +77,7 @@ export function CourierLogo({ name }: CourierLogoProps) {
         elevation: 1,
       }}
     >
-      <Text className="font-geist-bold text-white text-xs tracking-wider">
+      <Text className="font-raleway-bold text-white text-xs tracking-wider">
         {name ? name.charAt(0).toUpperCase() : 'C'}
       </Text>
     </View>

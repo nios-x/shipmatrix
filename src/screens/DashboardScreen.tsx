@@ -254,13 +254,13 @@ function StatusCard({
           <View className="flex-row items-center gap-2">
             <View className={`h-2.5 w-2.5 rounded-full ${color}`} />
 
-            <Text className="text-[11px] font-geist-bold uppercase tracking-wider text-gray-500">
+            <Text className="text-[11px] font-raleway-bold uppercase tracking-wider text-gray-500">
               {title}
             </Text>
           </View>
 
           <View className="rounded-full bg-violet-50 px-2 py-0.5 border border-violet-100/60">
-            <Text className="text-[9px] font-geist-bold uppercase tracking-wider text-violet-600">
+            <Text className="text-[9px] font-raleway-bold uppercase tracking-wider text-violet-600">
               Status
             </Text>
           </View>
@@ -268,11 +268,11 @@ function StatusCard({
 
         {/* Count */}
         <View className="mt-4 flex-row items-baseline justify-between">
-          <Text className="text-[36px] font-geist-black leading-none tracking-tight text-gray-950">
+          <Text className="text-[36px] font-raleway-black leading-none tracking-tight text-gray-950">
             {count}
           </Text>
 
-          <Text className="text-[11px] font-geist-medium text-gray-400">
+          <Text className="text-[11px] font-raleway text-gray-400">
             Total
           </Text>
         </View>

@@ -16,7 +16,7 @@ export function LoadingSpinner({
     <View className="items-center justify-center gap-3">
       <ActivityIndicator size={size} color="#7c3aed" />
       {message && (
-        <Text className="font-geist-medium text-xs text-gray-500 tracking-wide">{message}</Text>
+        <Text className="font-raleway text-xs text-gray-500 tracking-wide">{message}</Text>
       )}
     </View>
   );

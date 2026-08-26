@@ -20,10 +20,10 @@ export const toastConfig = {
       </View>
       <View className="flex-1">
         {text1 ? (
-          <Text className="font-geist-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
+          <Text className="font-raleway-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
         ) : null}
         {text2 ? (
-          <Text className="font-geist text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
+          <Text className="font-raleway text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
         ) : null}
       </View>
     </View>
@@ -45,10 +45,10 @@ export const toastConfig = {
       </View>
       <View className="flex-1">
         {text1 ? (
-          <Text className="font-geist-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
+          <Text className="font-raleway-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
         ) : null}
         {text2 ? (
-          <Text className="font-geist text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
+          <Text className="font-raleway text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
         ) : null}
       </View>
     </View>
@@ -70,10 +70,10 @@ export const toastConfig = {
       </View>
       <View className="flex-1">
         {text1 ? (
-          <Text className="font-geist-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
+          <Text className="font-raleway-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
         ) : null}
         {text2 ? (
-          <Text className="font-geist text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
+          <Text className="font-raleway text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
         ) : null}
       </View>
     </View>
@@ -95,10 +95,10 @@ export const toastConfig = {
       </View>
       <View className="flex-1">
         {text1 ? (
-          <Text className="font-geist-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
+          <Text className="font-raleway-bold text-gray-900 text-sm tracking-tight">{text1}</Text>
         ) : null}
         {text2 ? (
-          <Text className="font-geist text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
+          <Text className="font-raleway text-gray-500 text-xs mt-0.5 leading-4">{text2}</Text>
         ) : null}
       </View>
     </View>

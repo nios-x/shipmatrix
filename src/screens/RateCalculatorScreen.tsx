@@ -167,10 +167,10 @@ export default function RateCalculatorScreen() {
       {/* Top App Bar */}
       <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
         <View className="flex-1">
-          <Text className="text-xl font-black text-slate-900 tracking-tight">
+          <Text className="text-xl font-black  text-slate-900 tracking-tight ">
             Rate Calculator
           </Text>
-          <Text className="text-xs text-slate-500 font-medium mt-0.5">
+          <Text className="text-xs text-slate-500 font-medium  mt-0.5">
             Real-time multi-courier shipping estimates
           </Text>
         </View>

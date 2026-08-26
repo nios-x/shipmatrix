@@ -80,15 +80,15 @@ export default function WalletScreen() {
             <Feather name={isCredit ? 'arrow-down-left' : 'arrow-up-right'} size={18} color={isCredit ? '#059669' : '#e11d48'} />
           </View>
           <View className="flex-1">
-            <Text className="text-sm font-geist-semibold text-gray-900" numberOfLines={1}>
+            <Text className="text-sm font-raleway-semibold text-gray-900" numberOfLines={1}>
               {item.description || (isCredit ? 'Wallet Recharge' : 'Shipment Charge')}
             </Text>
-            <Text className="text-xs font-geist text-gray-400 mt-0.5">
+            <Text className="text-xs font-raleway text-gray-400 mt-0.5">
               {item.createdAt?.toDate?.()?.toLocaleDateString?.() || 'N/A'}
             </Text>
           </View>
         </View>
-        <Text className={`text-sm font-geist-bold ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
+        <Text className={`text-sm font-raleway-bold ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
           {isCredit ? '+' : '-'}₹{item.amount?.toFixed(2)}
         </Text>
       </View>

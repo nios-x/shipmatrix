@@ -7,6 +7,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,6 +20,8 @@ import {
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
+import { GoogleIcon } from '../components/GoogleIcon';
+import { signInWithGoogle } from '../lib/googleAuth';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -26,6 +29,22 @@ export default function SignupScreen() {
   const navigation = useNavigation<Nav>();
 
   const [step, setStep] = useState(1);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setError('');
+    setGoogleLoading(true);
+    try {
+      const res = await signInWithGoogle();
+      if (!res.success && res.error && res.error !== 'Sign in cancelled') {
+        setError(res.error);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Google sign in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const [formData, setFormData] = useState({
     name: '',
@@ -161,7 +180,7 @@ export default function SignupScreen() {
               <Logo size={32} />
             </View>
 
-            <Text className="text-2xl font-bold text-gray-900 text-center">
+            <Text className="text-2xl font-raleway font-bold text-gray-900 text-center">
               Create Account
             </Text>
 
@@ -201,6 +220,34 @@ export default function SignupScreen() {
           {/* STEP 1 */}
           {step === 1 ? (
             <>
+              {/* Google Sign-In Button */}
+              <TouchableOpacity
+                onPress={handleGoogleSignIn}
+                disabled={googleLoading}
+                activeOpacity={0.8}
+                className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs mb-4"
+              >
+                {googleLoading ? (
+                  <ActivityIndicator size="small" color="#7c3aed" />
+                ) : (
+                  <>
+                    <GoogleIcon size={18} />
+                    <Text className="text-gray-800 font-raleway-bold text-xs">
+                      Sign up with Google
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View className="flex-row items-center mb-5">
+                <View className="flex-1 h-[1px] bg-gray-200" />
+                <Text className="mx-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                  OR SIGN UP WITH EMAIL
+                </Text>
+                <View className="flex-1 h-[1px] bg-gray-200" />
+              </View>
+
               {/* Full Name */}
               <View className="mb-4">
                 <Text className="text-sm font-semibold text-gray-700 mb-1">

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -27,6 +27,7 @@
     --ring: 240 5.9% 10%;
     --radius: 0.5rem;
   }
+
   .dark:root {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -60,22 +61,82 @@ body,
 div,
 span,
 p,
-h1, h2, h3, h4, h5, h6,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
 input,
 textarea,
 button,
 select,
 * {
-  font-family: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
 }
 
-/* Ensure Geist font weights on web work seamlessly for all utility classes */
-.font-thin, .font-geist-thin { font-family: 'Geist', sans-serif !important; font-weight: 100 !important; }
-.font-extralight { font-family: 'Geist', sans-serif !important; font-weight: 200 !important; }
-.font-light, .font-geist-light { font-family: 'Geist', sans-serif !important; font-weight: 300 !important; }
-.font-normal, .font-geist, .font-geist-regular, .font-regular, .font-sans { font-family: 'Geist', sans-serif !important; font-weight: 400 !important; }
-.font-medium, .font-geist-medium { font-family: 'Geist', sans-serif !important; font-weight: 500 !important; }
-.font-semibold, .font-geist-semibold { font-family: 'Geist', sans-serif !important; font-weight: 600 !important; }
-.font-bold, .font-geist-bold { font-family: 'Geist', sans-serif !important; font-weight: 700 !important; }
-.font-extrabold { font-family: 'Geist', sans-serif !important; font-weight: 800 !important; }
-.font-black, .font-geist-black { font-family: 'Geist', sans-serif !important; font-weight: 900 !important; }
+/* Ensure Raleway font weights on web work seamlessly for all utility classes */
+.font-thin,
+.font-raleway-thin,
+.font-geist-thin {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 100 !important;
+}
+
+.font-extralight,
+.font-raleway-extralight {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 200 !important;
+}
+
+.font-light,
+.font-raleway-light,
+.font-geist-light {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 300 !important;
+}
+
+.font-normal,
+.font-raleway,
+.font-raleway-regular,
+.font-geist,
+.font-geist-regular,
+.font-regular,
+.font-sans {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 400 !important;
+}
+
+.font-medium,
+.font-raleway,
+.font-geist-medium {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.font-semibold,
+.font-raleway-semibold,
+.font-geist-semibold {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 600 !important;
+}
+
+.font-bold,
+.font-raleway-bold,
+.font-geist-bold {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 700 !important;
+}
+
+.font-extrabold,
+.font-raleway-extrabold {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 800 !important;
+}
+
+.font-black,
+.font-raleway-black,
+.font-geist-black {
+  font-family: 'Raleway', sans-serif !important;
+  font-weight: 900 !important;
+}
