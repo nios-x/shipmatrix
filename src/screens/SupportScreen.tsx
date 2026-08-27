@@ -11,6 +11,11 @@ interface Message {
   content: string;
 }
 
+// Monotonic counter rather than Date.now(): two messages appended in the same
+// millisecond would otherwise collide as React keys.
+let messageCounter = 0;
+const nextId = (prefix: string) => `${prefix}-${++messageCounter}`;
+
 export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -21,17 +26,43 @@ export default function SupportScreen() {
   const [sending, setSending] = useState(false);
 
   const handleSend = async () => {
-    if (!input.trim() || sending) return;
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input.trim() };
-    setMessages((prev) => [...prev, userMsg]);
+    const text = input.trim();
+    if (!text || sending) return;
+
+    // Snapshot the transcript before appending, so the history sent to the
+    // server excludes the message being asked about.
+    const priorMessages = messages;
+    setMessages((prev) => [...prev, { id: nextId('u'), role: 'user', content: text }]);
     setInput('');
     setSending(true);
 
     try {
-      const data = await api.post('/api/support/chat', { message: userMsg.content });
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: data.reply || 'Sorry, I could not process that.' }]);
+      const data = await api.post('/api/support/chat', {
+        message: text,
+        // The Gemini-backed endpoint expects 'user'/'model' roles.
+        history: priorMessages.map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          content: m.content,
+        })),
+      });
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId('a'),
+          role: 'assistant',
+          content: data.reply || 'Sorry, I could not process that.',
+        },
+      ]);
     } catch {
-      setMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Something went wrong. Please try again.' }]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: nextId('a'),
+          role: 'assistant',
+          content:
+            'Something went wrong. Please try again, or email support@shipmatrix.in for help.',
+        },
+      ]);
     } finally {
       setSending(false);
     }

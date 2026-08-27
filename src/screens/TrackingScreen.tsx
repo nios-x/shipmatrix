@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -23,25 +23,41 @@ export default function TrackingScreen() {
   const [shipmentInfo, setShipmentInfo] = useState<any>(null);
   const [error, setError] = useState('');
 
-  const handleTrack = async () => {
-    if (!awb.trim()) return;
-    setTracking(true);
-    setError('');
-    setEvents([]);
-    try {
-      const data = await api.get(`/api/public/track/${awb.trim()}`);
-      if (data.success && data.tracking) {
-        setEvents(data.tracking.events || []);
-        setShipmentInfo(data.tracking);
-      } else {
-        setError(data.error || 'No tracking info found');
+  const handleTrack = useCallback(
+    async (value?: string) => {
+      const target = (value ?? awb).trim();
+      if (!target) return;
+      setTracking(true);
+      setError('');
+      setEvents([]);
+      setShipmentInfo(null);
+      try {
+        const data = await api.get(`/api/public/track/${target}`);
+        if (data.success && data.tracking) {
+          setEvents(data.tracking.events || []);
+          setShipmentInfo(data.tracking);
+        } else {
+          setError(data.error || 'No tracking info found');
+        }
+      } catch (err: any) {
+        setError(err.message || 'Tracking failed');
+      } finally {
+        setTracking(false);
       }
-    } catch (err: any) {
-      setError(err.message || 'Tracking failed');
-    } finally {
-      setTracking(false);
-    }
-  };
+    },
+    [awb]
+  );
+
+  // Track straight away when opened from an order row, so the user doesn't
+  // have to tap search on an AWB that was already chosen for them. `awb` is
+  // already seeded from the param, so only the fetch needs triggering here.
+  const initialAwb = route.params?.awb;
+  useEffect(() => {
+    if (initialAwb) handleTrack(initialAwb);
+    // Keyed on the param alone — depending on `handleTrack` would re-fetch on
+    // every keystroke, since it closes over the editable `awb` field.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialAwb]);
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
@@ -60,9 +76,9 @@ export default function TrackingScreen() {
             placeholder="Enter AWB number"
             placeholderTextColor="#9ca3af"
             className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-raleway text-gray-900 shadow-sm"
-            onSubmitEditing={handleTrack}
+            onSubmitEditing={() => handleTrack()}
           />
-          <TouchableOpacity onPress={handleTrack} disabled={tracking} activeOpacity={0.8} className="bg-violet-700 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
+          <TouchableOpacity onPress={() => handleTrack()} disabled={tracking} activeOpacity={0.8} className="bg-violet-700 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
             <Feather name="search" size={20} color="white" />
           </TouchableOpacity>
         </View>

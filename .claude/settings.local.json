@@ -1,5 +1,15 @@
 {
-  "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop.",
+  "permissions": {
+    "allow": [
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && echo \"=== paymentMethod usages ===\" && grep -rn \"paymentMethod\" src/ | head -40)",
+      "Read(//c/Users/HP/Desktop/New-shipmatrix/**)",
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && echo \"=== status literals ===\" && grep -rno \"status === '[A-Za-z_ ]*'\" src/screens/ | sort | uniq -c | sort -rn | head -30)",
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && echo \"=== shipment doc write in CreateShipment ===\" && sed -n '500,560p' src/screens/CreateShipment.tsx)",
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && echo \"=== web create-shipment endpoint + surrounding ===\" && sed -n '470,502p' src/screens/CreateShipment.tsx && echo \"=== ALL /api endpoints in web ===\" && grep -rho \"/api/[a-zA-Z0-9/_-]*\" src/ | sort -u)",
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && grep -n \"create-shipment\" server.ts | head -20)",
+      "Bash(cd \"c:/Users/HP/Desktop/New-shipmatrix\" && sed -n '2533,2600p' server.ts)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -26,5 +36,6 @@
         ]
       }
     ]
-  }
+  },
+  "description": "Impeccable design detector: immediate-tier checks after Edit/Write on UI files, full-rule deep pass on Stop."
 }

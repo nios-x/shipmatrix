@@ -17,6 +17,10 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { CourierLogo } from '../components/CourierLogo';
 import { toast } from '../lib/alert';
+import { api } from '../lib/api';
+import { auth, db } from '../lib/firebase';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { isNdr, isRto } from '../lib/shipments';
 
 export default function NdrScreen() {
   const insets = useSafeAreaInsets();
@@ -29,10 +33,7 @@ export default function NdrScreen() {
   const [reattemptInstructions, setReattemptInstructions] = useState('');
   const [reattemptDate, setReattemptDate] = useState('Tomorrow');
 
-  const ndrShipments = shipments.filter((s) => {
-    const st = (s.status || '').toUpperCase();
-    return ['NDR', 'UNDELIVERED', 'EXCEPTION', 'OUT FOR DELIVERY', 'ATTEMPTED'].includes(st);
-  });
+  const ndrShipments = shipments.filter((s) => isNdr(s) || isRto(s));
 
   const handleCallCustomer = (phone: string) => {
     if (!phone) {
@@ -50,9 +51,36 @@ export default function NdrScreen() {
     setReattemptModalVisible(true);
   };
 
-  const handleConfirmReattempt = () => {
-    setReattemptModalVisible(false);
-    toast.success('Re-attempt Requested', `Courier will re-attempt delivery for AWB ${selectedShipment?.awb || 'N/A'}.`);
+  const [actioning, setActioning] = useState(false);
+
+  /**
+   * Records a re-attempt request against the shipment. There is no courier-side
+   * re-attempt API, so the instructions are stored on the shipment for the ops
+   * team to action — the same place the admin panel reads them from.
+   */
+  const handleConfirmReattempt = async () => {
+    if (!selectedShipment || !auth.currentUser) return;
+    setActioning(true);
+    try {
+      await updateDoc(
+        doc(db, `users/${auth.currentUser.uid}/shipments`, selectedShipment.id),
+        {
+          ndrAction: 'reattempt',
+          ndrInstructions: reattemptInstructions,
+          ndrPreferredDate: reattemptDate,
+          ndrRequestedAt: serverTimestamp(),
+        }
+      );
+      setReattemptModalVisible(false);
+      toast.success(
+        'Re-attempt Requested',
+        `Delivery re-attempt requested for AWB ${selectedShipment.awb || 'N/A'}.`
+      );
+    } catch {
+      toast.error('Error', 'Could not submit the re-attempt request.');
+    } finally {
+      setActioning(false);
+    }
   };
 
   const handleRequestRTO = (item: any) => {
@@ -64,7 +92,25 @@ export default function NdrScreen() {
         {
           text: 'Request RTO',
           style: 'destructive',
-          onPress: () => toast.success('RTO Initiated', `Return to Origin initiated for AWB ${item.awb}.`),
+          onPress: async () => {
+            if (!item.awb) {
+              toast.warning('No AWB', 'This shipment has no AWB to return.');
+              return;
+            }
+            setActioning(true);
+            try {
+              const res = await api.post('/api/v1/shipments/mark-rto', { awb: item.awb });
+              if (res.success) {
+                toast.success('RTO Initiated', `Return to Origin initiated for AWB ${item.awb}.`);
+              } else {
+                toast.error('RTO Failed', res.message || 'Could not initiate the return.');
+              }
+            } catch (e: any) {
+              toast.error('RTO Failed', e.message || 'Could not initiate the return.');
+            } finally {
+              setActioning(false);
+            }
+          },
         },
       ]
     );
@@ -192,10 +238,15 @@ export default function NdrScreen() {
               <View className="flex-row gap-2.5 pt-3.5">
                 <TouchableOpacity
                   onPress={() => handleRequestRTO(item)}
+                  disabled={actioning || isRto(item)}
                   activeOpacity={0.8}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-50 border border-rose-100 items-center justify-center"
+                  className={`flex-1 py-2.5 rounded-xl bg-rose-50 border border-rose-100 items-center justify-center ${
+                    actioning || isRto(item) ? 'opacity-50' : ''
+                  }`}
                 >
-                  <Text className="text-xs font-black text-rose-700">Request RTO</Text>
+                  <Text className="text-xs font-black text-rose-700">
+                    {isRto(item) ? 'RTO Started' : 'Request RTO'}
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -269,9 +320,14 @@ export default function NdrScreen() {
 
               <TouchableOpacity
                 onPress={handleConfirmReattempt}
-                className="flex-1 py-3 rounded-xl bg-violet-600 items-center shadow-sm shadow-violet-500/20"
+                disabled={actioning}
+                className={`flex-1 py-3 rounded-xl bg-violet-600 items-center shadow-sm shadow-violet-500/20 ${
+                  actioning ? 'opacity-70' : ''
+                }`}
               >
-                <Text className="text-xs font-black text-white">Confirm Re-attempt</Text>
+                <Text className="text-xs font-black text-white">
+                  {actioning ? 'Submitting…' : 'Confirm Re-attempt'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

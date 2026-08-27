@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,17 @@ import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
 import { useShipments } from '../lib/useShipments';
 import { Logo } from '../components/Logo';
+import { api } from '../lib/api';
+import { useNotifications } from '../lib/useNotifications';
+import {
+  realShipments,
+  isBooked,
+  isInTransit,
+  isDelivered,
+  isNdr,
+  isRto,
+  isActive,
+} from '../lib/shipments';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Dashboard'>;
 
@@ -329,27 +340,33 @@ export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
   const { user } = useUser();
-  const { shipments, loading } = useShipments();
+  const { shipments } = useShipments();
+  const { unreadCount } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
 
-  const statusCounts = {
-    booked: shipments.filter((s) => s.status?.toUpperCase() === 'BOOKED').length,
-    inTransit: shipments.filter((s) =>
-      ['IN TRANSIT', 'IN_TRANSIT', 'SHIPPED', 'PICKUP DONE', 'PICKED UP'].includes(
-        (s.status || '').toUpperCase()
-      )
-    ).length,
-    delivered: shipments.filter((s) => s.status?.toUpperCase() === 'DELIVERED').length,
-    ndr: shipments.filter((s) =>
-      ['NDR', 'RTO', 'EXCEPTION', 'UNDELIVERED'].includes(
-        (s.status || '').toUpperCase()
-      )
-    ).length,
-  };
+  const statusCounts = useMemo(() => {
+    const real = realShipments(shipments);
+    return {
+      booked: real.filter(isBooked).length,
+      inTransit: real.filter(isInTransit).length,
+      delivered: real.filter(isDelivered).length,
+      ndr: real.filter((s) => isNdr(s) || isRto(s)).length,
+    };
+  }, [shipments]);
 
+  /** Refreshes tracking for in-flight shipments; the listener updates the UI. */
   const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    try {
+      const active = shipments.filter((s) => s.awb && isActive(s)).slice(0, 20);
+      await Promise.all(
+        active.map((s) =>
+          api.post(`/api/v1/shipments/sync/${s.awb}`, { courier: s.courier }).catch(() => null)
+        )
+      );
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   return (
@@ -374,6 +391,13 @@ export default function DashboardScreen() {
           className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
         >
           <Feather name="bell" size={17} color="#7C3AED" />
+          {unreadCount > 0 && (
+            <View className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 items-center justify-center border-2 border-white">
+              <Text className="text-[9px] font-black text-white">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
 

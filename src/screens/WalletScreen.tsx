@@ -15,6 +15,8 @@ import { api } from '../lib/api';
 import { auth } from '../lib/firebase';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import RazorpayCheckout from '../lib/razorpay';
+import { formatDate } from '../lib/shipments';
 import type { Transaction } from '../types';
 
 export default function WalletScreen() {
@@ -28,16 +30,43 @@ export default function WalletScreen() {
   const balanceStr = (user?.walletBalance || 0).toFixed(2);
   const [balanceMain, balanceDec] = balanceStr.split('.');
 
+  /**
+   * Verifies a payment server-side. The server credits the wallet, so the
+   * balance arrives back through the `useUser` snapshot rather than being set
+   * locally.
+   */
+  const verifyPayment = async (payload: {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+    amount: number;
+  }) => {
+    const verifyRes = await api.post('/api/razorpay/verify', {
+      razorpay_order_id: payload.razorpay_order_id,
+      razorpay_payment_id: payload.razorpay_payment_id,
+      razorpay_signature: payload.razorpay_signature,
+      sim_amount: payload.amount,
+      sim_user: auth.currentUser?.uid,
+    });
+
+    if (verifyRes.success) {
+      toast.success('Recharge Successful!', `₹${payload.amount} has been added to your wallet.`);
+      setShowRecharge(false);
+    } else {
+      toast.error('Payment Error', verifyRes.error || 'Payment verification failed.');
+    }
+  };
+
   const handleRecharge = async () => {
     const amount = Number(rechargeAmount);
-    if (amount < 500) {
+    if (!(amount >= 500)) {
       toast.warning('Minimum Amount', 'Minimum recharge amount is ₹500');
       return;
     }
 
     setProcessing(true);
     try {
-      const res = await api.post('/api/razorpay/create-order', {
+      const order = await api.post('/api/razorpay/create-order', {
         amount,
         customer_id: user?.id,
         customer_name: user?.name,
@@ -45,27 +74,46 @@ export default function WalletScreen() {
         customer_phone: user?.phone,
       });
 
-      if (res.sandbox) {
-        // Simulate payment in sandbox mode
-        const verifyRes = await api.post('/api/razorpay/verify', {
-          razorpay_order_id: res.order_id,
+      // Sandbox mode: the server has no live keys, so settle immediately.
+      if (order.sandbox) {
+        await verifyPayment({
+          razorpay_order_id: order.order_id,
           razorpay_payment_id: `pay_sim_${Date.now()}`,
           razorpay_signature: 'simulated_signature',
-          sim_amount: amount,
-          sim_user: auth.currentUser?.uid,
+          amount,
         });
-
-        if (verifyRes.success) {
-          toast.success('Recharge Successful!', `₹${amount} has been added to your wallet.`);
-          setShowRecharge(false);
-        } else {
-          toast.error('Payment Error', 'Payment verification failed');
-        }
-      } else {
-        toast.info('Razorpay Mode', 'Production payments connect to Razorpay Checkout.');
+        return;
       }
+
+      const payment = await RazorpayCheckout.open({
+        key: order.key,
+        // Razorpay works in paise; the server already converted the amount.
+        amount: order.amount,
+        currency: order.currency || 'INR',
+        order_id: order.order_id,
+        name: 'ShipMatrix Wallet',
+        description: 'Wallet Recharge',
+        prefill: {
+          name: user?.name || '',
+          email: user?.email || '',
+          contact: user?.phone || '',
+        },
+        theme: { color: '#7C3AED' },
+      });
+
+      await verifyPayment({
+        razorpay_order_id: payment.razorpay_order_id || order.order_id,
+        razorpay_payment_id: payment.razorpay_payment_id,
+        razorpay_signature: payment.razorpay_signature,
+        amount,
+      });
     } catch (err: any) {
-      toast.error('Recharge Error', err.message || 'Recharge failed');
+      // The checkout sheet rejects with `code`/`description` when dismissed.
+      if (err?.code === 0 || /cancel/i.test(err?.description || '')) {
+        toast.info('Payment Cancelled', 'No amount has been charged.');
+      } else {
+        toast.error('Recharge Error', err?.description || err?.message || 'Recharge failed');
+      }
     } finally {
       setProcessing(false);
     }
@@ -84,7 +132,7 @@ export default function WalletScreen() {
               {item.description || (isCredit ? 'Wallet Recharge' : 'Shipment Charge')}
             </Text>
             <Text className="text-xs font-raleway text-gray-400 mt-0.5">
-              {item.createdAt?.toDate?.()?.toLocaleDateString?.() || 'N/A'}
+              {formatDate(item.createdAt)}
             </Text>
           </View>
         </View>

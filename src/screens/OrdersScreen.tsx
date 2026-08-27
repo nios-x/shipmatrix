@@ -16,6 +16,19 @@ import { useShipments } from '../lib/useShipments';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
+import {
+  isCod,
+  codValue,
+  normalizeStatus,
+  isBooked,
+  isInTransit,
+  isDelivered,
+  isNdr,
+  isRto,
+  isCancelled,
+  isActive,
+} from '../lib/shipments';
+import { api } from '../lib/api';
 import type { Shipment } from '../types';
 
 type Nav = NativeStackNavigationProp<OrdersStackParamList, 'Orders'>;
@@ -46,7 +59,31 @@ const FILTER_TABS = [
 ];
 
 function getStatusColor(status: string) {
-  return STATUS_COLORS[status?.toUpperCase()] || STATUS_COLORS.DEFAULT;
+  return STATUS_COLORS[normalizeStatus({ status })] || STATUS_COLORS.DEFAULT;
+}
+
+/**
+ * Tabs group the courier status vocabulary rather than matching it literally —
+ * 'Booked' covers 'Ready to Pickup'/'Pending', 'In Transit' covers 'Picked Up'
+ * and 'Out for Delivery', and so on.
+ */
+function matchesTab(shipment: Shipment, tab: string): boolean {
+  switch (tab) {
+    case 'Booked':
+      return isBooked(shipment);
+    case 'In Transit':
+      return isInTransit(shipment);
+    case 'Delivered':
+      return isDelivered(shipment);
+    case 'NDR':
+      return isNdr(shipment);
+    case 'RTO':
+      return isRto(shipment);
+    case 'Cancelled':
+      return isCancelled(shipment);
+    default:
+      return normalizeStatus(shipment) === tab.toUpperCase();
+  }
 }
 
 const ACCENT_PURPLE = '#7C3AED';
@@ -110,14 +147,7 @@ export default function OrdersScreen() {
     };
     FILTER_TABS.forEach((tab) => {
       if (tab === 'All') return;
-      counts[tab] = shipments.filter((s) => {
-        const status = (s.status || '').toUpperCase();
-        const filter = tab.toUpperCase();
-        if (filter === 'IN TRANSIT') {
-          return ['IN TRANSIT', 'IN_TRANSIT', 'SHIPPED', 'PICKUP DONE', 'PICKED UP'].includes(status);
-        }
-        return status === filter;
-      }).length;
+      counts[tab] = shipments.filter((s) => matchesTab(s, tab)).length;
     });
     return counts;
   }, [shipments]);
@@ -127,14 +157,7 @@ export default function OrdersScreen() {
 
     // Filter by status tab
     if (activeFilter !== 'All') {
-      filtered = filtered.filter((s) => {
-        const status = (s.status || '').toUpperCase();
-        const filter = activeFilter.toUpperCase();
-        if (filter === 'IN TRANSIT') {
-          return ['IN TRANSIT', 'IN_TRANSIT', 'SHIPPED', 'PICKUP DONE', 'PICKED UP'].includes(status);
-        }
-        return status === filter;
-      });
+      filtered = filtered.filter((s) => matchesTab(s, activeFilter));
     }
 
     // Filter by search
@@ -152,9 +175,29 @@ export default function OrdersScreen() {
     return filtered;
   }, [shipments, searchQuery, activeFilter]);
 
-  const onRefresh = () => {
+  /**
+   * Pulls fresh tracking for every in-flight shipment. The Firestore listener
+   * pushes the updated rows back automatically, so nothing is set locally here.
+   */
+  const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
+    try {
+      const active = shipments.filter((s) => s.awb && isActive(s));
+      // Bounded concurrency — a large account would otherwise fire hundreds of
+      // requests at once and get rate-limited.
+      const BATCH = 5;
+      for (let i = 0; i < active.length; i += BATCH) {
+        await Promise.all(
+          active.slice(i, i + BATCH).map((s) =>
+            api
+              .post(`/api/v1/shipments/sync/${s.awb}`, { courier: s.courier })
+              .catch(() => null)
+          )
+        );
+      }
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const renderItem = ({ item }: { item: Shipment }) => {
@@ -207,7 +250,7 @@ export default function OrdersScreen() {
               Payment
             </Text>
             <Text className="text-sm font-semibold text-slate-800 mt-0.5">
-              {item.paymentType?.toUpperCase() || 'N/A'}
+              {isCod(item) ? `COD ₹${codValue(item)}` : 'PREPAID'}
             </Text>
           </View>
         </View>

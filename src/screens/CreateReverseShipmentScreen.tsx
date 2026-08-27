@@ -19,6 +19,10 @@ import { useUser } from '../lib/useUser';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { usePincode } from '../lib/usePincode';
+import { courierEndpoint, isWarehouseComplete, generateOrderId, EMPTY_WAREHOUSE } from '../lib/shipments';
+import { WarehouseForm } from '../components/WarehouseForm';
+import type { WarehouseData } from '../types';
 
 type Step = 'form' | 'rates' | 'success';
 
@@ -38,34 +42,53 @@ export default function CreateReverseShipmentScreen() {
   const [rates, setRates] = useState<RateItem[]>([]);
   const [result, setResult] = useState<any>(null);
 
+  // On a reverse shipment the roles invert: the *customer* is the pickup point
+  // and the warehouse is the destination. The server still reads the customer
+  // side from the flat `address`/`city`/`state`/`pincode` fields, and the
+  // warehouse from the `return*` fields.
   const [form, setForm] = useState({
     customerName: '',
     customerPhone: '',
-    pickupAddress: '',
-    pickupCity: '',
-    pickupState: '',
-    pickupPincode: '',
-    deliveryPincode: '',
+    customerEmail: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
     weight: '',
     length: '',
     breadth: '',
     height: '',
     productName: '',
+    orderValue: '',
+    orderId: '',
     reason: 'Customer Return',
   });
+
+  // Defaults to the saved warehouse; an edit takes over as an override so the
+  // profile value can load in without an effect racing the user's typing.
+  const [warehouseEdit, setWarehouseEdit] = useState<WarehouseData | null>(null);
+  const warehouse: WarehouseData =
+    warehouseEdit ?? { ...EMPTY_WAREHOUSE, ...(user?.warehouseData || {}) };
+
+  // The customer's city/state resolve from their pincode; derived so a typed
+  // value always takes precedence.
+  const { info: pickupInfo } = usePincode(form.pincode);
+  const city = form.city || pickupInfo?.city || '';
+  const state = form.state || pickupInfo?.state || '';
 
   const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleGetRates = async () => {
-    if (!form.pickupPincode || !form.deliveryPincode || !form.weight) {
-      toast.warning('Missing Info', 'Fill pickup pincode, delivery pincode, and weight.');
+    if (!form.pincode || !warehouse.pincode || !form.weight) {
+      toast.warning('Missing Info', "Fill the customer's pincode, your warehouse pincode, and weight.");
       return;
     }
     setLoading(true);
     try {
       const data = await api.post('/api/rates', {
-        pickupPincode: form.pickupPincode,
-        deliveryPincode: form.deliveryPincode,
+        // Reverse leg: collected from the customer, delivered to the warehouse.
+        pickupPincode: form.pincode,
+        deliveryPincode: warehouse.pincode,
         weight: form.weight,
         length: form.length || '10',
         breadth: form.breadth || '10',
@@ -98,45 +121,95 @@ export default function CreateReverseShipmentScreen() {
       toast.error('Insufficient Balance', `Need ₹${rate.freight_charge}, have ₹${(user?.walletBalance || 0).toFixed(2)}`);
       return;
     }
+    if (!isWarehouseComplete(warehouse)) {
+      toast.error(
+        'Return Address Required',
+        'Add a complete warehouse address (name, phone, address, city, state, pincode) before booking a return.'
+      );
+      return;
+    }
+
     setLoading(true);
     try {
-      const courierMap: Record<string, string> = {
-        delhivery: 'delhivery', delhivery_surface: 'delhivery', ekart: 'ekart',
-        xpressbees: 'xpressbees', xpressbees_air: 'xpressbees',
-        shadowfax: 'shadowfax', shadowfax_360: 'shadowfax_360',
-      };
-      const baseCourier = courierMap[rate.carrier_id] || rate.carrier_id;
+      const finalOrderId = form.orderId || generateOrderId('RET');
+      const orderValue = parseFloat(form.orderValue) || 1;
 
-      const res = await api.post(`/api/${baseCourier}/create-shipment`, {
-        ...form,
+      const res = await api.post(`/api/${courierEndpoint(rate.carrier_id)}/create-shipment`, {
+        orderId: finalOrderId,
+        customerName: form.customerName,
+        customerEmail: form.customerEmail,
+        customerPhone: form.customerPhone,
+        // Customer side — the courier collects from here.
+        address: form.address,
+        city,
+        state: state || city,
+        pincode: form.pincode,
+        pickupPincode: form.pincode,
+        pickupLocationName: form.customerName,
+        pickupCity: city,
+        pickupState: state || city,
+        pickupPhone: form.customerPhone,
+        pickupAddress: form.address,
+        // Warehouse side — the return is delivered back here.
+        returnLocationName: warehouse.name,
+        returnPhone: warehouse.phone,
+        returnAddress: warehouse.address,
+        returnPincode: warehouse.pincode,
+        returnCity: warehouse.city,
+        returnState: warehouse.state,
+        weight: parseFloat(form.weight) || 0.5,
+        length: parseFloat(form.length) || 10,
+        breadth: parseFloat(form.breadth) || 10,
+        height: parseFloat(form.height) || 10,
+        paymentMethod: 'prepaid',
+        orderValue,
+        productName: form.productName || 'Return Item',
+        courier: rate.carrier_id,
+        courierName: rate.carrier_name,
         isReverse: true,
-        courier: rate.carrier_name,
-        carrier_id: rate.carrier_id,
-        freight_charge: rate.freight_charge,
-        userId: uid,
-        paymentType: 'prepaid',
       });
 
       if (res.success || res.awb) {
+        const awb = res.awb || res.tracking_id || '';
         await addDoc(collection(db, `users/${uid}/shipments`), {
-          ...form,
-          awb: res.awb || res.tracking_id,
+          userId: uid,
+          source: 'mobile',
+          orderId: finalOrderId,
+          customerName: form.customerName,
+          customerEmail: form.customerEmail,
+          customerPhone: form.customerPhone,
+          address: form.address,
+          city,
+          state: state || city,
+          pincode: form.pincode,
+          weight: parseFloat(form.weight) || 0.5,
+          length: parseFloat(form.length) || 10,
+          breadth: parseFloat(form.breadth) || 10,
+          height: parseFloat(form.height) || 10,
+          productName: form.productName || 'Return Item',
+          paymentMethod: 'Prepaid',
+          orderValue,
+          returnReason: form.reason,
+          awb,
           courier: rate.carrier_name,
+          courierName: rate.carrier_name,
           carrierId: rate.carrier_id,
-          status: 'BOOKED',
+          status: 'Ready to Pickup',
           isReverse: true,
+          amount: rate.freight_charge,
           freightCharge: rate.freight_charge,
+          labelUrl: res.labelUrl || res.label_url || res.label || '',
           createdAt: serverTimestamp(),
         });
         await updateDoc(doc(db, 'users', uid), { walletBalance: increment(-rate.freight_charge) });
         await addDoc(collection(db, `users/${uid}/transactions`), {
           type: 'debit',
           amount: rate.freight_charge,
-          description: `Reverse shipment - ${rate.carrier_name} - AWB: ${res.awb || res.tracking_id}`,
+          description: `Reverse shipment - ${rate.carrier_name} - AWB: ${awb}`,
           createdAt: serverTimestamp(),
         });
-        toast.success('Return Booked!', `AWB: ${res.awb || res.tracking_id}`);
-        setResult({ awb: res.awb || res.tracking_id, courier: rate.carrier_name, charge: rate.freight_charge });
+        toast.success('Return Booked!', `AWB: ${awb}`);
+        setResult({ awb, courier: rate.carrier_name, charge: rate.freight_charge });
         setStep('success');
       } else {
         toast.error('Failed', res.error || 'Could not book reverse shipment.');
@@ -168,19 +241,32 @@ export default function CreateReverseShipmentScreen() {
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (
         <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3 mt-2">Customer / Pickup</Text>
+          <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3 mt-2">
+            Collect From Customer
+          </Text>
           <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
             <Field label="Customer Name" value={form.customerName} onChange={(v) => update('customerName', v)} placeholder="Name" icon="user" />
             <Field label="Phone" value={form.customerPhone} onChange={(v) => update('customerPhone', v)} placeholder="9876543210" icon="phone" keyboardType="phone-pad" />
-            <Field label="Pickup Address" value={form.pickupAddress} onChange={(v) => update('pickupAddress', v)} placeholder="Full address" icon="map-pin" multiline />
+            <Field label="Pickup Address" value={form.address} onChange={(v) => update('address', v)} placeholder="Full address" icon="map-pin" multiline />
+            <Field label="Pickup Pincode" value={form.pincode} onChange={(v) => update('pincode', v)} placeholder="400001" keyboardType="number-pad" maxLength={6} />
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="City" value={form.pickupCity} onChange={(v) => update('pickupCity', v)} placeholder="City" /></View>
-              <View className="flex-1"><Field label="State" value={form.pickupState} onChange={(v) => update('pickupState', v)} placeholder="State" /></View>
+              <View className="flex-1"><Field label="City" value={city} onChange={(v) => update('city', v)} placeholder="City" /></View>
+              <View className="flex-1"><Field label="State" value={state} onChange={(v) => update('state', v)} placeholder="State" /></View>
             </View>
-            <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="Pickup Pin" value={form.pickupPincode} onChange={(v) => update('pickupPincode', v)} placeholder="400001" keyboardType="number-pad" maxLength={6} /></View>
-              <View className="flex-1"><Field label="Return To Pin" value={form.deliveryPincode} onChange={(v) => update('deliveryPincode', v)} placeholder="110001" keyboardType="number-pad" maxLength={6} /></View>
-            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between mb-3">
+            <Text className="text-sm font-black text-gray-400 uppercase tracking-wider">
+              Return To Warehouse
+            </Text>
+            {!isWarehouseComplete(warehouse) && (
+              <View className="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
+                <Text className="text-[9px] font-black text-amber-700">REQUIRED</Text>
+              </View>
+            )}
+          </View>
+          <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4" style={{ elevation: 1 }}>
+            <WarehouseForm value={warehouse} onChange={setWarehouseEdit} />
           </View>
 
           <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">Package</Text>
@@ -188,9 +274,12 @@ export default function CreateReverseShipmentScreen() {
             <Field label="Product" value={form.productName} onChange={(v) => update('productName', v)} placeholder="Product name" icon="package" />
             <View className="flex-row gap-3">
               <View className="flex-1"><Field label="Weight (kg)" value={form.weight} onChange={(v) => update('weight', v)} placeholder="0.5" keyboardType="decimal-pad" /></View>
-              <View className="flex-1"><Field label="L" value={form.length} onChange={(v) => update('length', v)} placeholder="10" keyboardType="number-pad" /></View>
-              <View className="flex-1"><Field label="W" value={form.breadth} onChange={(v) => update('breadth', v)} placeholder="10" keyboardType="number-pad" /></View>
-              <View className="flex-1"><Field label="H" value={form.height} onChange={(v) => update('height', v)} placeholder="10" keyboardType="number-pad" /></View>
+              <View className="flex-1"><Field label="Value (₹)" value={form.orderValue} onChange={(v) => update('orderValue', v)} placeholder="500" keyboardType="number-pad" /></View>
+            </View>
+            <View className="flex-row gap-3">
+              <View className="flex-1"><Field label="L (cm)" value={form.length} onChange={(v) => update('length', v)} placeholder="10" keyboardType="number-pad" /></View>
+              <View className="flex-1"><Field label="W (cm)" value={form.breadth} onChange={(v) => update('breadth', v)} placeholder="10" keyboardType="number-pad" /></View>
+              <View className="flex-1"><Field label="H (cm)" value={form.height} onChange={(v) => update('height', v)} placeholder="10" keyboardType="number-pad" /></View>
             </View>
             <Field label="Reason" value={form.reason} onChange={(v) => update('reason', v)} placeholder="Customer Return" />
           </View>
