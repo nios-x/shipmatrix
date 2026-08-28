@@ -3,6 +3,13 @@ import { auth } from './firebase';
 // Base URL for the ShipMatrix API server
 const API_BASE_URL = 'https://www.shipmatrix.in';
 
+/**
+ * Payments run on their own service (see the `shipmatrix-server` project),
+ * because they need the Cashfree secret key and Firebase Admin. Point this at
+ * that deployment; it can share a host with the main API or stand alone.
+ */
+export const PAYMENTS_BASE_URL = 'https://payments.shipmatrix.in';
+
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: any;

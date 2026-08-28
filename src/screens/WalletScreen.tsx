@@ -11,13 +11,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
 import { useTransactions } from '../lib/useTransactions';
-import { api } from '../lib/api';
-import { auth } from '../lib/firebase';
+import { api, PAYMENTS_BASE_URL } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
-// Razorpay is parked while Cashfree is the active gateway. Keep this import
-// and the branch below in sync if you switch back.
-// import RazorpayCheckout from '../lib/razorpay';
 import { openCashfreeCheckout, CashfreeError } from '../lib/cashfree';
 import { formatDate } from '../lib/shipments';
 import type { Transaction } from '../types';
@@ -34,19 +30,18 @@ export default function WalletScreen() {
   const [balanceMain, balanceDec] = balanceStr.split('.');
 
   /**
-   * Confirms a payment server-side. The server checks the order with Cashfree
-   * and credits the wallet, so the new balance arrives back through the
-   * `useUser` snapshot rather than being set locally.
+   * Confirms a payment server-side. The server asks Cashfree directly and
+   * credits the wallet, so the new balance arrives back through the `useUser`
+   * snapshot rather than being set locally. The client never reports an amount.
    */
-  const verifyPayment = async (orderId: string, amount: number) => {
-    const verifyRes = await api.post('/api/cashfree/verify', {
+  const verifyPayment = async (orderId: string) => {
+    const verifyRes = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/verify`, {
       order_id: orderId,
-      sim_amount: amount,
-      sim_user: auth.currentUser?.uid,
     });
 
     if (verifyRes.success) {
-      toast.success('Recharge Successful!', `₹${amount} has been added to your wallet.`);
+      const credited = verifyRes.amount != null ? `₹${verifyRes.amount}` : 'Your payment';
+      toast.success('Recharge Successful!', `${credited} has been added to your wallet.`);
       setShowRecharge(false);
     } else {
       toast.error('Payment Error', verifyRes.error || 'Payment verification failed.');
@@ -63,20 +58,14 @@ export default function WalletScreen() {
     setProcessing(true);
     try {
       // The server holds the Cashfree secret and returns `payment_session_id`
-      // plus `order_id` from Cashfree's Create Order API.
-      const order = await api.post('/api/cashfree/create-order', {
+      // plus `order_id` from Cashfree's Create Order API. It re-validates the
+      // amount, so this value is a request rather than an instruction.
+      const order = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/create-order`, {
         amount,
-        customer_id: user?.id,
         customer_name: user?.name,
         customer_email: user?.email,
         customer_phone: user?.phone,
       });
-
-      // Sandbox mode: the server has no live keys, so settle immediately.
-      if (order.sandbox) {
-        await verifyPayment(order.order_id, amount);
-        return;
-      }
 
       const payment = await openCashfreeCheckout({
         paymentSessionId: order.payment_session_id,
@@ -84,7 +73,7 @@ export default function WalletScreen() {
         environment: order.environment === 'PRODUCTION' ? 'PRODUCTION' : 'SANDBOX',
       });
 
-      await verifyPayment(payment.orderId, amount);
+      await verifyPayment(payment.orderId);
     } catch (err: any) {
       if (err instanceof CashfreeError && err.cancelled) {
         toast.info('Payment Cancelled', 'No amount has been charged.');
@@ -95,38 +84,6 @@ export default function WalletScreen() {
       setProcessing(false);
     }
   };
-
-  /* ---------------------------------------------------------------------
-   * Razorpay flow, parked while Cashfree is live. Restore by swapping the
-   * import above and replacing the two functions above with this block.
-   *
-   * const verifyPayment = async (payload: {
-   *   razorpay_order_id: string;
-   *   razorpay_payment_id: string;
-   *   razorpay_signature: string;
-   *   amount: number;
-   * }) => {
-   *   const verifyRes = await api.post('/api/razorpay/verify', {
-   *     razorpay_order_id: payload.razorpay_order_id,
-   *     razorpay_payment_id: payload.razorpay_payment_id,
-   *     razorpay_signature: payload.razorpay_signature,
-   *     sim_amount: payload.amount,
-   *     sim_user: auth.currentUser?.uid,
-   *   });
-   *   ...
-   * };
-   *
-   * const payment = await RazorpayCheckout.open({
-   *   key: order.key,
-   *   amount: order.amount,      // paise; the server already converted
-   *   currency: order.currency || 'INR',
-   *   order_id: order.order_id,
-   *   name: 'ShipMatrix Wallet',
-   *   description: 'Wallet Recharge',
-   *   prefill: { name: user?.name, email: user?.email, contact: user?.phone },
-   *   theme: { color: '#7C3AED' },
-   * });
-   * ------------------------------------------------------------------- */
 
   const renderTransaction = ({ item }: { item: Transaction }) => {
     const isCredit = item.type === 'credit';
