@@ -407,8 +407,22 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
               key={type}
               onPress={() => updateField('paymentMethod', type)}
               activeOpacity={0.8}
-              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentMethod === type ? 'bg-violet-700 border-purple-900 shadow-sm shadow-purple-900/20' : 'bg-white border-gray-200'
+              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentMethod === type ? 'bg-violet-700 border-purple-900' : 'bg-white border-gray-200'
                 }`}
+              // Shadow lives in `style`, not `className`: NativeWind's interop
+              // drops the React Navigation context when a touchable's className
+              // is a conditional template literal containing shadow utilities.
+              style={
+                form.paymentMethod === type
+                  ? {
+                      shadowColor: '#4C1D95',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 2,
+                      elevation: 2,
+                    }
+                  : undefined
+              }
             >
               <Text className={`font-raleway-bold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}

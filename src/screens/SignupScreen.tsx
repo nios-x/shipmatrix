@@ -21,7 +21,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
-import { signInWithGoogle } from '../lib/googleAuth';
+import { useGoogleSignIn } from '../lib/googleAuth';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -31,11 +31,13 @@ export default function SignupScreen() {
   const [step, setStep] = useState(1);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const { signIn: googleSignIn } = useGoogleSignIn();
+
   const handleGoogleSignIn = async () => {
     setError('');
     setGoogleLoading(true);
     try {
-      const res = await signInWithGoogle();
+      const res = await googleSignIn();
       if (!res.success && res.error && res.error !== 'Sign in cancelled') {
         setError(res.error);
       }

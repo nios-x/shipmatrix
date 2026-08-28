@@ -31,7 +31,12 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-web-browser"
+    ],
+    "scheme": [
+      "shipmatrix",
+      "com.shipmatrix.app"
     ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",

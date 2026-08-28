@@ -7,18 +7,9 @@ import {
 import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
-// Firebase configuration — same project as the website
-export const firebaseConfig = {
-  projectId: 'gen-lang-client-0372703048',
-  appId: '1:563260211850:web:87ac338a21dec8ed9be373',
-  apiKey: 'AIzaSyDPpSAb-BkkXr5nG3wpUyWV96kEjLyPF78',
-  authDomain: 'gen-lang-client-0372703048.firebaseapp.com',
-  storageBucket: 'gen-lang-client-0372703048.firebasestorage.app',
-  messagingSenderId: '563260211850',
-  measurementId: 'G-0YSPEQW5VY',
-};
+import { firebaseConfig, firestoreDatabaseId } from './firebase-config';
 
-export const firestoreDatabaseId = 'ai-studio-6bb82760-6011-4cd2-a03f-d981814aeddd';
+export { firebaseConfig, firestoreDatabaseId };
 
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
