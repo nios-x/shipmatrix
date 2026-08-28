@@ -7,12 +7,15 @@ import { useUser } from '../lib/useUser';
 import { auth } from '../lib/firebase';
 import { CustomAlertModal } from '../components/CustomAlertModal';
 import { toast } from '../lib/alert';
+import type { MainTabParamList } from '../navigation/types';
 
 interface MenuItem {
   icon: string;
   label: string;
   color: string;
   screen: string;
+  /** Set when the screen lives in another tab's stack, not in ProfileStack. */
+  tab?: keyof MainTabParamList;
   highlight?: boolean;
 }
 
@@ -24,14 +27,13 @@ const MENU_SECTIONS: { items: MenuItem[] }[] = [
   },
   {
     items: [
-      { icon: 'user', label: 'Account Settings', color: '#3b82f6', screen: 'Settings' },
-      { icon: 'credit-card', label: 'Billing & Invoices', color: '#22c55e', screen: 'Billing' },
-      { icon: 'dollar-sign', label: 'COD Remittance', color: '#10b981', screen: 'CodRemittance' },
-      { icon: 'bell', label: 'Notifications', color: '#ec4899', screen: 'Notifications' },
-      { icon: 'settings', label: 'Settings / Preferences', color: '#6b7280', screen: 'Settings' },
+      { icon: 'settings', label: 'Settings & Preferences', color: '#3b82f6', screen: 'Settings' },
+      { icon: 'bell', label: 'Notifications', color: '#ec4899', screen: 'Notifications', tab: 'HomeTab' },
+      { icon: 'credit-card', label: 'Billing & Invoices', color: '#22c55e', screen: 'Billing', tab: 'WalletTab' },
+      { icon: 'dollar-sign', label: 'COD Remittance', color: '#10b981', screen: 'CodRemittance', tab: 'WalletTab' },
+      { icon: 'rotate-ccw', label: 'Returns', color: '#06b6d4', screen: 'Returns' },
       { icon: 'help-circle', label: 'Help & Support', color: '#8b5cf6', screen: 'Support' },
       { icon: 'code', label: 'API Documentation', color: '#f59e0b', screen: 'ApiDocs' },
-      { icon: 'rotate-ccw', label: 'Returns', color: '#06b6d4', screen: 'Returns' },
     ],
   },
 ];
@@ -52,11 +54,13 @@ export default function ProfileScreen() {
     }
   };
 
-  const navigateTo = (screen: string) => {
-    try {
-      navigation.navigate(screen);
-    } catch {
-      toast.info('Coming Soon', 'This feature is under active development.');
+  // Screens outside ProfileStack must be addressed through their own tab —
+  // a bare navigate() by name never reaches a sibling stack.
+  const navigateTo = (item: MenuItem) => {
+    if (item.tab) {
+      navigation.navigate(item.tab, { screen: item.screen });
+    } else {
+      navigation.navigate(item.screen);
     }
   };
 
@@ -130,7 +134,7 @@ export default function ProfileScreen() {
               return (
                 <TouchableOpacity
                   key={ii}
-                  onPress={() => navigateTo(item.screen)}
+                  onPress={() => navigateTo(item)}
                   activeOpacity={0.7}
                   className={`px-4 py-3.5 flex-row items-center justify-between ${
                     ii < section.items.length - 1 ? 'border-b border-slate-100' : ''

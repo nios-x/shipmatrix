@@ -22,8 +22,12 @@ WebBrowser.maybeCompleteAuthSession();
 // The native clients cannot be exercised from Expo Go: Expo Go owns the `exp://`
 // scheme, so the OAuth redirect comes back to Expo Go's launcher instead of this
 // app. Native Google sign-in requires a development build.
+//
+// Find these under Google Cloud Console > project-191165632248 > APIs & Services
+// > Credentials. Enabling the Google provider in Firebase Auth auto-creates the
+// web client; the Android and iOS ones you add yourself.
 const GOOGLE_WEB_CLIENT_ID =
-  '563260211850-8g6o316bsp25nsvo14m4d42m662t4khv.apps.googleusercontent.com';
+  '191165632248-7r60afl92omlfo8gogn4s4bq0v72o8ri.apps.googleusercontent.com';
 const GOOGLE_ANDROID_CLIENT_ID = 'YOUR_ANDROID_CLIENT_ID.apps.googleusercontent.com';
 const GOOGLE_IOS_CLIENT_ID = 'YOUR_IOS_CLIENT_ID.apps.googleusercontent.com';
 

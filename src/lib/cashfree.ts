@@ -19,6 +19,9 @@ export {
  * Web never reaches this file — `cashfree.web.ts` shadows it, because the SDK
  * cannot be bundled for web at all.
  */
+import { NativeModules as _DIAG_NM } from 'react-native';
+console.log('CFDIAG keys=' + Object.keys(_DIAG_NM).filter((k) => /cash/i.test(k)).join(',') + ' has=' + String(!!_DIAG_NM.CashfreePgApi) + ' total=' + Object.keys(_DIAG_NM).length);
+
 function loadSdk(): { service: any; contract: any } | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports

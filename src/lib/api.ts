@@ -7,15 +7,32 @@ const API_BASE_URL = 'https://www.shipmatrix.in';
  * Payments run on their own service (see the `shipmatrix-server` project),
  * because they need the Cashfree secret key and Firebase Admin. Point this at
  * that deployment; it can share a host with the main API or stand alone.
+ *
+ * `EXPO_PUBLIC_PAYMENTS_URL` overrides it — set it in `.env` to reach the
+ * server running on your machine (e.g. `http://192.168.1.5:8080`) while the
+ * production host is not yet deployed. Expo inlines `EXPO_PUBLIC_*` at bundle
+ * time, so changing it needs a restart with `--clear`.
  */
-export const PAYMENTS_BASE_URL = 'https://payments.shipmatrix.in';
+const DEFAULT_PAYMENTS_BASE_URL = 'https://payments.shipmatrix.in';
+
+export const PAYMENTS_BASE_URL = (
+  process.env.EXPO_PUBLIC_PAYMENTS_URL || DEFAULT_PAYMENTS_BASE_URL
+).replace(/\/+$/, '');
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
   body?: any;
   headers?: Record<string, string>;
   skipAuth?: boolean;
+  timeoutMs?: number;
 }
+
+/**
+ * Without this, a host that drops packets rather than refusing the connection
+ * leaves `fetch` pending forever, and any `finally` that resets a "processing"
+ * flag never runs — the UI sticks on a spinner with no way out.
+ */
+const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * Centralized API client for ShipMatrix.
@@ -29,7 +46,13 @@ async function apiRequest<T = any>(
   endpoint: string,
   options: ApiOptions = {}
 ): Promise<T> {
-  const { method = 'GET', body, headers = {}, skipAuth = false } = options;
+  const {
+    method = 'GET',
+    body,
+    headers = {},
+    skipAuth = false,
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+  } = options;
 
   // Build full URL
   const url = endpoint.startsWith('http')
@@ -62,7 +85,25 @@ async function apiRequest<T = any>(
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, config);
+  // The timer is cleared as soon as the headers land, not after the body is
+  // read, so streamed responses (the PDF path below) are not cut off mid-download.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(url, { ...config, signal: controller.signal });
+  } catch (e: any) {
+    if (e?.name === 'AbortError') {
+      throw new ApiError(
+        `Request timed out after ${Math.round(timeoutMs / 1000)}s. Check that ${url} is reachable.`,
+        0
+      );
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   // Handle non-JSON responses (e.g., PDF downloads)
   const contentType = response.headers.get('content-type');

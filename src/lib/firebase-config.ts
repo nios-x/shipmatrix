@@ -6,15 +6,17 @@
 // specifier resolves back to firebase.native.ts itself and the re-export
 // getters recurse infinitely ("Maximum call stack size exceeded").
 
-// Firebase configuration — same project as the website
+// Firebase configuration
 export const firebaseConfig = {
-  projectId: 'gen-lang-client-0372703048',
-  appId: '1:563260211850:web:87ac338a21dec8ed9be373',
-  apiKey: 'AIzaSyDPpSAb-BkkXr5nG3wpUyWV96kEjLyPF78',
-  authDomain: 'gen-lang-client-0372703048.firebaseapp.com',
-  storageBucket: 'gen-lang-client-0372703048.firebasestorage.app',
-  messagingSenderId: '563260211850',
-  measurementId: 'G-0YSPEQW5VY',
+  projectId: 'abcdef-28f0d',
+  appId: '1:191165632248:web:e768361e3e07634d3cb50d',
+  apiKey: 'AIzaSyDSNiwYsc8n3SZqoaUYcG100MFDhWkjGdI',
+  authDomain: 'abcdef-28f0d.firebaseapp.com',
+  storageBucket: 'abcdef-28f0d.firebasestorage.app',
+  messagingSenderId: '191165632248',
+  measurementId: 'G-FD6EZ1R06P',
 };
 
-export const firestoreDatabaseId = 'ai-studio-6bb82760-6011-4cd2-a03f-d981814aeddd';
+// Must match FIRESTORE_DATABASE_ID on the payments server, or the two will
+// read and write different databases without either of them erroring.
+export const firestoreDatabaseId = '(default)';
