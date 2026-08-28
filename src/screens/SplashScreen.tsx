@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing } from 'react-native';
+import { View, Text, Animated, Easing, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
@@ -7,6 +7,16 @@ import { Logo } from '../components/Logo';
 import { safeGetItem } from '../lib/storage';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Splash'>;
+
+// Brand tokens, matched to the mark and the app chrome.
+const VIOLET = '#7C3AED';
+const CYAN = '#22D3EE';
+const INK = '#1E293B';
+const MUTED = '#64748B';
+
+// Numeric fontWeight does not synthesise against a custom family on Android —
+// the weight has to come from the family name itself.
+const face = (native: string) => ({ fontFamily: Platform.OS === 'web' ? 'Raleway' : native });
 
 export default function SplashScreen() {
   const navigation = useNavigation<Nav>();
@@ -40,6 +50,7 @@ export default function SplashScreen() {
       toValue: 1,
       duration: 800,
       delay: 300,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
 
@@ -48,6 +59,7 @@ export default function SplashScreen() {
       toValue: 1,
       duration: 1000,
       delay: 500,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
 
@@ -104,24 +116,39 @@ export default function SplashScreen() {
 
       {/* Brand name */}
       <Animated.View
-        style={{ opacity: textOpacity, flexDirection: 'row', alignItems: 'center' }}
+        style={{
+          opacity: textOpacity,
+          flexDirection: 'row',
+          alignItems: 'center',
+          transform: [
+            {
+              // Rides the same fade, so the lockup settles as one motion.
+              translateY: textOpacity.interpolate({
+                inputRange: [0, 1],
+                outputRange: [12, 0],
+              }),
+            },
+          ],
+        }}
       >
         <Text
           style={{
+            ...face('Raleway_900Black'),
             fontSize: 40,
             fontWeight: '900',
-            color: '#1e293b',
-            letterSpacing: -1,
+            color: INK,
+            letterSpacing: -1.2,
           }}
         >
           Ship
         </Text>
         <Text
           style={{
+            ...face('Raleway_900Black'),
             fontSize: 40,
             fontWeight: '900',
-            color: '#1E40AF',
-            letterSpacing: -1,
+            color: VIOLET,
+            letterSpacing: -1.2,
           }}
         >
           Matrix
@@ -131,14 +158,17 @@ export default function SplashScreen() {
       {/* Tagline */}
       <Animated.Text
         style={{
+          ...face('Raleway_500Medium'),
           opacity: taglineOpacity,
           position: 'absolute',
           bottom: 100,
           textAlign: 'center',
-          color: '#64748b',
+          color: MUTED,
+          fontSize: 13,
           fontWeight: '500',
-          paddingHorizontal: 16,
-          letterSpacing: 0.5,
+          paddingHorizontal: 32,
+          lineHeight: 20,
+          letterSpacing: 0.3,
         }}
       >
         It's time to escape the matrix of logistics.
@@ -158,7 +188,7 @@ export default function SplashScreen() {
           style={{
             width: 10,
             height: 10,
-            backgroundColor: '#1E40AF',
+            backgroundColor: VIOLET,
             borderRadius: 5,
             transform: [{ scale: dot1Scale }],
           }}
@@ -167,7 +197,7 @@ export default function SplashScreen() {
           style={{
             width: 8,
             height: 8,
-            backgroundColor: 'rgba(30,64,175,0.8)',
+            backgroundColor: 'rgba(124,58,237,0.75)',
             borderRadius: 4,
             transform: [{ scale: dot2Scale }],
           }}
@@ -176,7 +206,7 @@ export default function SplashScreen() {
           style={{
             width: 6,
             height: 6,
-            backgroundColor: '#0D9488',
+            backgroundColor: CYAN,
             borderRadius: 3,
             transform: [{ scale: dot3Scale }],
           }}

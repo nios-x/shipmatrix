@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { exchangeCodeAsync } from 'expo-auth-session';
 import {
   GoogleAuthProvider,
   signInWithCredential,
@@ -98,9 +99,9 @@ async function signInWithGoogleWeb(): Promise<GoogleSignInResult> {
  * Google sign-in for both web and native.
  *
  * On native this runs the authorization-code flow with PKCE: `useAuthRequest`
- * selects the platform's native client id, redirects to
- * `com.shipmatrix.app:/oauthredirect`, and exchanges the code for tokens
- * automatically — no client secret and no implicit grant involved.
+ * selects the platform's native client id and redirects to
+ * `com.shipmatrix.app:/oauthredirect` — no client secret and no implicit
+ * grant involved. We trade the returned code for tokens ourselves; see below.
  */
 export function useGoogleSignIn() {
   const [request, , promptAsync] = Google.useAuthRequest({
@@ -109,6 +110,10 @@ export function useGoogleSignIn() {
     iosClientId: GOOGLE_IOS_CLIENT_ID,
     scopes: ['openid', 'profile', 'email'],
     selectAccount: true,
+    // The hook can exchange the code itself, but it resolves that exchange into
+    // its `response` value one render *after* `promptAsync()` settles, and the
+    // authorization code is single-use. Opt out so the exchange below owns it.
+    shouldAutoExchangeCode: false,
   });
 
   const signIn = useCallback(async (): Promise<GoogleSignInResult> => {
@@ -139,15 +144,30 @@ export function useGoogleSignIn() {
         return { success: false, error: 'Authentication could not be completed.' };
       }
 
-      // With auto code exchange the tokens arrive on `authentication`.
-      const idToken = result.authentication?.idToken ?? (result.params?.id_token as string);
-      const accessToken = result.authentication?.accessToken ?? (result.params?.access_token as string);
+      // The native flow resolves with an authorization code, never with tokens.
+      // Trade it for an ID token using the exact client id, redirect uri and PKCE
+      // verifier this request was built with — Google rejects any mismatch.
+      const code = result.params?.code;
+      if (!code) {
+        return { success: false, error: 'Google did not return an authorization code.' };
+      }
 
-      if (!idToken) {
+      const tokens = await exchangeCodeAsync(
+        {
+          clientId: request.clientId,
+          redirectUri: request.redirectUri,
+          scopes: request.scopes,
+          code,
+          extraParams: { code_verifier: request.codeVerifier ?? '' },
+        },
+        Google.discovery
+      );
+
+      if (!tokens.idToken) {
         return { success: false, error: 'Google did not return an ID token.' };
       }
 
-      return await completeFirebaseSignIn(idToken, accessToken);
+      return await completeFirebaseSignIn(tokens.idToken, tokens.accessToken);
     } catch (err: any) {
       if (err?.code === 'auth/popup-closed-by-user') {
         return { success: false, error: 'Sign in cancelled' };

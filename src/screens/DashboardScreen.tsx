@@ -373,13 +373,13 @@ export default function DashboardScreen() {
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
       <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row items-center gap-2.5">
           <Logo size={34} />
           <View>
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
+            <Text className="text-[19px] leading-[22px] font-raleway-black text-slate-900 tracking-tight">
               ShipMatrix
             </Text>
-            <Text className="text-[11px] text-slate-500 font-medium">
+            <Text className="text-[11px] leading-[15px] font-raleway-medium text-slate-500">
               Multi-Courier Logistics Platform
             </Text>
           </View>

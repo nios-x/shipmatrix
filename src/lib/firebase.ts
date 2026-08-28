@@ -33,4 +33,5 @@ export const db = initializeFirestore(
   firestoreDatabaseId
 );
 
+
 export const storage = getStorage(app);

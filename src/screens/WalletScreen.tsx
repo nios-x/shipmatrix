@@ -18,6 +18,9 @@ import { openCashfreeCheckout, CashfreeError } from '../lib/cashfree';
 import { formatDate } from '../lib/shipments';
 import type { Transaction } from '../types';
 
+/** Backoff between verify polls while Cashfree reports the order as ACTIVE. */
+const VERIFY_RETRY_DELAYS_MS = [1500, 3000, 5000, 8000];
+
 export default function WalletScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useUser();
@@ -35,16 +38,32 @@ export default function WalletScreen() {
    * snapshot rather than being set locally. The client never reports an amount.
    */
   const verifyPayment = async (orderId: string) => {
-    const verifyRes = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/verify`, {
-      order_id: orderId,
-    });
+    // Cashfree is often still settling when the SDK hands control back, which
+    // reads as ACTIVE rather than PAID. Believing that first answer tells
+    // someone whose money has already left their account that nothing
+    // happened, so the non-terminal state is retried before it is reported.
+    for (let attempt = 0; ; attempt++) {
+      const verifyRes = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/verify`, {
+        order_id: orderId,
+      });
 
-    if (verifyRes.success) {
-      const credited = verifyRes.amount != null ? `₹${verifyRes.amount}` : 'Your payment';
-      toast.success('Recharge Successful!', `${credited} has been added to your wallet.`);
-      setShowRecharge(false);
-    } else {
-      toast.error('Payment Error', verifyRes.error || 'Payment verification failed.');
+      if (verifyRes.success) {
+        const credited = verifyRes.amount != null ? `₹${verifyRes.amount}` : 'Your payment';
+        toast.success('Recharge Successful!', `${credited} has been added to your wallet.`);
+        setShowRecharge(false);
+        return;
+      }
+
+      const stillSettling = verifyRes.order_status === 'ACTIVE';
+      if (!stillSettling || attempt >= VERIFY_RETRY_DELAYS_MS.length) {
+        toast.error(
+          stillSettling ? 'Payment Pending' : 'Payment Error',
+          verifyRes.error || 'Payment verification failed.'
+        );
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, VERIFY_RETRY_DELAYS_MS[attempt]));
     }
   };
 

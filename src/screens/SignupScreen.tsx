@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { auth, db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { useGoogleSignIn } from '../lib/googleAuth';
+import { sendOtp, verifyOtp } from '../lib/otp';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -63,6 +64,17 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // Step 3: proof that the address the account will be created under is one
+  // this person can actually read.
+  const [otpCode, setOtpCode] = useState('');
+  const [resendIn, setResendIn] = useState(0);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const id = setTimeout(() => setResendIn((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [resendIn]);
+
   const updateField = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -91,7 +103,14 @@ export default function SignupScreen() {
     setStep(2);
   };
 
-  const handleSignup = async () => {
+  /**
+   * Step 2 no longer creates the account: it emails a code first.
+   *
+   * The Firebase user is only created once that code comes back verified, so a
+   * mistyped address fails here rather than becoming an account nobody can
+   * recover.
+   */
+  const handleSendOtp = async () => {
     setError('');
 
     if (!formData.companyName.trim()) {
@@ -101,6 +120,50 @@ export default function SignupScreen() {
 
     setLoading(true);
 
+    try {
+      const { resendAfterSeconds } = await sendOtp(formData.email, 'signup');
+      setOtpCode('');
+      setResendIn(resendAfterSeconds);
+      setStep(3);
+    } catch (err: any) {
+      setError(err?.message || 'Could not send the verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendIn > 0) return;
+    setError('');
+
+    try {
+      const { resendAfterSeconds } = await sendOtp(formData.email, 'signup');
+      setResendIn(resendAfterSeconds);
+    } catch (err: any) {
+      setError(err?.message || 'Could not resend the code.');
+    }
+  };
+
+  const handleVerifyAndSignup = async () => {
+    setError('');
+
+    if (!otpCode.trim()) {
+      setError('Enter the code we emailed you');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await verifyOtp(formData.email, otpCode, 'signup');
+      await createAccount();
+    } catch (err: any) {
+      setError(err?.message || 'Verification failed');
+      setLoading(false);
+    }
+  };
+
+  const createAccount = async () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -189,7 +252,9 @@ export default function SignupScreen() {
             <Text className="text-gray-500 mt-1 text-center font-raleway text-sm">
               {step === 1
                 ? 'Create your account to manage shipments'
-                : 'Tell us a little about your business'}
+                : step === 2
+                  ? 'Tell us a little about your business'
+                  : `Enter the code we sent to ${formData.email.trim()}`}
             </Text>
           </View>
 
@@ -204,10 +269,15 @@ export default function SignupScreen() {
               className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-violet-700' : 'bg-gray-200'
                 }`}
             />
+
+            <View
+              className={`flex-1 h-1 rounded-full ${step >= 3 ? 'bg-violet-700' : 'bg-gray-200'
+                }`}
+            />
           </View>
 
           <Text className="text-center text-xs font-raleway-bold text-gray-400 mb-5">
-            STEP {step} OF 2
+            STEP {step} OF 3
           </Text>
 
           {/* Error */}
@@ -219,8 +289,48 @@ export default function SignupScreen() {
             </View>
           ) : null}
 
-          {/* STEP 1 */}
-          {step === 1 ? (
+          {/* STEP 3 — email verification */}
+          {step === 3 ? (
+            <View>
+              <Text className="text-gray-700 font-raleway-semibold text-sm mb-2">
+                Verification code
+              </Text>
+
+              <TextInput
+                value={otpCode}
+                onChangeText={(text) => {
+                  // The server accepts digits only; strip anything a keyboard
+                  // or a paste from the email might add.
+                  setOtpCode(text.replace(/[^0-9]/g, ''));
+                  setError('');
+                }}
+                placeholder="000000"
+                placeholderTextColor="#9ca3af"
+                keyboardType="number-pad"
+                maxLength={6}
+                autoFocus
+                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-raleway-bold text-2xl text-center tracking-[8px] text-gray-900 shadow-sm"
+              />
+
+              <Text className="text-gray-500 font-raleway text-xs text-center mt-3">
+                The code expires in 10 minutes.
+              </Text>
+
+              <TouchableOpacity
+                onPress={handleResendOtp}
+                disabled={resendIn > 0}
+                activeOpacity={0.7}
+                className="mt-4 py-2"
+              >
+                <Text
+                  className={`text-center font-raleway-semibold text-sm ${resendIn > 0 ? 'text-gray-400' : 'text-violet-700'
+                    }`}
+                >
+                  {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : step === 1 ? (
             <>
               {/* Google Sign-In Button */}
               <TouchableOpacity
@@ -565,7 +675,43 @@ export default function SignupScreen() {
 
       {/* Bottom Action Bar */}
       <View className="px-6 pt-4 pb-6 bg-white border-t border-gray-100">
-        {step === 1 ? (
+        {step === 3 ? (
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              onPress={() => {
+                setError('');
+                setStep(2);
+              }}
+              activeOpacity={0.8}
+              className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center justify-center"
+            >
+              <Text className="text-gray-700 font-raleway-bold text-sm">
+                Back
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleVerifyAndSignup}
+              disabled={loading}
+              activeOpacity={0.8}
+              className={`flex-[2] bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
+                }`}
+              style={{ elevation: 3 }}
+            >
+              <Text className="text-white font-raleway-bold text-sm">
+                {loading ? 'Verifying...' : 'Verify & Create Account'}
+              </Text>
+
+              {!loading && (
+                <Feather
+                  name="check"
+                  size={17}
+                  color="white"
+                />
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : step === 1 ? (
           <TouchableOpacity
             onPress={handleContinue}
             activeOpacity={0.8}
@@ -598,7 +744,7 @@ export default function SignupScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleSignup}
+              onPress={handleSendOtp}
               disabled={loading}
               activeOpacity={0.8}
               className={`flex-[2] bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
@@ -607,13 +753,13 @@ export default function SignupScreen() {
             >
               <Text className="text-white font-raleway-bold text-sm">
                 {loading
-                  ? 'Creating Account...'
-                  : 'Create Account'}
+                  ? 'Sending code...'
+                  : 'Continue'}
               </Text>
 
               {!loading && (
                 <Feather
-                  name="check"
+                  name="arrow-right"
                   size={17}
                   color="white"
                 />

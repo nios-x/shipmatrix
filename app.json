@@ -28,7 +28,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash.png",
-          "backgroundColor": "#ffffff"
+          "imageWidth": 100,
+          "resizeMode": "contain",
+          "backgroundColor": "#FAFAFA"
         }
       ],
       "expo-secure-store",
@@ -51,7 +53,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundImage": "./assets/adaptive-icon-background.png",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png",
+        "backgroundColor": "#4C1D95"
       },
       "package": "com.shipmatrix.app"
     }

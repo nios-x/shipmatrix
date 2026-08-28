@@ -19,9 +19,6 @@ export {
  * Web never reaches this file — `cashfree.web.ts` shadows it, because the SDK
  * cannot be bundled for web at all.
  */
-import { NativeModules as _DIAG_NM } from 'react-native';
-console.log('CFDIAG keys=' + Object.keys(_DIAG_NM).filter((k) => /cash/i.test(k)).join(',') + ' has=' + String(!!_DIAG_NM.CashfreePgApi) + ' total=' + Object.keys(_DIAG_NM).length);
-
 function loadSdk(): { service: any; contract: any } | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -77,7 +74,7 @@ export function openCashfreeCheckout(
   if (!sdk) return Promise.reject(new CashfreeError(UNAVAILABLE_MESSAGE));
 
   const { CFPaymentGatewayService } = sdk.service;
-  const { CFSession, CFEnvironment, CFWebCheckoutPayment, CFWebThemeBuilder } = sdk.contract;
+  const { CFSession, CFEnvironment } = sdk.contract;
 
   return new Promise<CashfreeCheckoutResult>((resolve, reject) => {
     let settled = false;
@@ -109,12 +106,13 @@ export function openCashfreeCheckout(
         options.environment === 'PRODUCTION' ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX
       );
 
-      const theme = new CFWebThemeBuilder()
-        .setNavigationBarBackgroundColor('#7C3AED')
-        .setNavigationBarTextColor('#FFFFFF')
-        .build();
-
-      CFPaymentGatewayService.doPayment(new CFWebCheckoutPayment(session, theme));
+      // doPayment() is the *drop* checkout entry point: it parses its argument as a
+      // CFDropCheckoutPayment, which requires a "components" array. Handing it a web
+      // checkout throws "No value for components" inside the SDK, and that catch block
+      // only prints the stack — no callback ever fires, so the caller waits forever.
+      // Web checkout has its own method and builds the payment natively from the
+      // session alone, which is why no theme is passed here.
+      CFPaymentGatewayService.doWebPayment(session);
     } catch (e: any) {
       finish(() => reject(toCashfreeError(e)));
     }
