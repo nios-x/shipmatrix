@@ -14,6 +14,7 @@ import type {
 // Screens
 import DashboardScreen from '../screens/DashboardScreen';
 import OrdersScreen from '../screens/OrdersScreen';
+import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import CreateShipmentScreen from '../screens/CreateShipmentScreen';
 import CreateReverseShipmentScreen from '../screens/CreateReverseShipmentScreen';
 import RateCalculatorScreen from '../screens/RateCalculatorScreen';
@@ -60,6 +61,10 @@ function OrdersStackNavigator() {
   return (
     <OrdersStack.Navigator screenOptions={{ headerShown: false }}>
       <OrdersStack.Screen name="Orders" component={OrdersScreen} />
+      <OrdersStack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+      {/* Also registered in the Home stack; both entry points need their own
+          copy so each tab keeps an independent back stack. */}
+      <OrdersStack.Screen name="Tracking" component={TrackingScreen} />
       <OrdersStack.Screen name="CreateShipment" component={CreateShipmentScreen} />
       <OrdersStack.Screen name="CreateReverseShipment" component={CreateReverseShipmentScreen} />
     </OrdersStack.Navigator>

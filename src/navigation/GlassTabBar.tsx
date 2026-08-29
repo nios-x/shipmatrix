@@ -24,6 +24,12 @@ const BAR_RADIUS = 26;
 const BAR_MARGIN = 14;
 const INDICATOR_INSET = 6;
 
+// The bar is positioned absolutely, so it draws *over* screen content rather
+// than shrinking it. Every screen inside the tab navigator therefore has to
+// reserve BAR_HEIGHT (plus its safe-area inset) at the bottom of its scroll
+// content, or its last element ends up under the bar — which is how primary
+// actions such as "Get Shipping Rates" became permanently untappable.
+
 const TAB_ICON_MAP: Record<string, keyof typeof Feather.glyphMap> = {
   HomeTab: 'home',
   OrdersTab: 'package',

@@ -23,6 +23,7 @@ import { usePincode } from '../lib/usePincode';
 import { courierEndpoint, isWarehouseComplete, generateOrderId, EMPTY_WAREHOUSE } from '../lib/shipments';
 import { WarehouseForm } from '../components/WarehouseForm';
 import type { WarehouseData } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Step = 'form' | 'rates' | 'success';
 
@@ -240,7 +241,7 @@ export default function CreateReverseShipmentScreen() {
       {loading && step !== 'form' ? (
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (
-        <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3 mt-2">
             Collect From Customer
           </Text>
@@ -289,7 +290,7 @@ export default function CreateReverseShipmentScreen() {
           </TouchableOpacity>
         </ScrollView>
       ) : step === 'rates' ? (
-        <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
           <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-4 mt-2">Available ({rates.length})</Text>
           {rates.sort((a, b) => a.freight_charge - b.freight_charge).map((rate) => (
             <TouchableOpacity key={rate.carrier_id} onPress={() => handleBook(rate)} disabled={loading} activeOpacity={0.7} className="bg-white rounded-2xl p-4 mb-3 border border-gray-100/90 flex-row items-center justify-between shadow-sm" style={{ elevation: 2 }}>

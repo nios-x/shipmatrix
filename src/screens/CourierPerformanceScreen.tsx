@@ -8,6 +8,7 @@ import { CourierLogo } from '../components/CourierLogo';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { realShipments, isDelivered, isNdr, isRto, deliveryDays } from '../lib/shipments';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 interface CourierStat {
   name: string;
@@ -128,7 +129,7 @@ export default function CourierPerformanceScreen() {
       ) : (
         <ScrollView
           className="flex-1 px-5"
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Overall summary */}

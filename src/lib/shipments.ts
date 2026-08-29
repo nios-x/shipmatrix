@@ -38,6 +38,32 @@ export function normalizeStatus(shipment: Pick<Shipment, 'status'>): string {
 }
 
 /**
+ * Status pill colours, as a "<background> <text>" pair of Tailwind classes.
+ * Lives here so the list and the detail screen cannot drift apart.
+ */
+const STATUS_COLORS: Record<string, string> = {
+  BOOKED: 'bg-blue-100 text-blue-700',
+  'IN TRANSIT': 'bg-amber-100 text-amber-700',
+  IN_TRANSIT: 'bg-amber-100 text-amber-700',
+  SHIPPED: 'bg-amber-100 text-amber-700',
+  DELIVERED: 'bg-green-100 text-green-700',
+  CANCELLED: 'bg-gray-100 text-gray-600',
+  NDR: 'bg-red-100 text-red-700',
+  RTO: 'bg-red-100 text-red-700',
+  EXCEPTION: 'bg-orange-100 text-orange-700',
+  'PICKUP DONE': 'bg-cyan-100 text-cyan-700',
+  'PICKED UP': 'bg-cyan-100 text-cyan-700',
+  DEFAULT: 'bg-gray-100 text-gray-600',
+};
+
+/** Returns `[backgroundClass, textClass]` for a shipment's status pill. */
+export function statusPillClasses(shipment: Pick<Shipment, 'status'>): [string, string] {
+  const pair = STATUS_COLORS[normalizeStatus(shipment)] || STATUS_COLORS.DEFAULT;
+  const [bg, text] = pair.split(' ');
+  return [bg!, text!];
+}
+
+/**
  * Status vocabulary. The server's sync job (`/api/v1/shipments/sync-all`) polls
  * shipments whose status is one of Pending / Processing / New / Ready to Pickup
  * / Picked Up / In Transit / Out for Delivery, so a newly booked shipment must

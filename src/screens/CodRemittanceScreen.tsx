@@ -29,6 +29,7 @@ import {
   destinationLabel,
 } from '../lib/shipments';
 import type { Shipment } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Tab = 'pending' | 'settled' | 'bank';
 
@@ -251,7 +252,7 @@ export default function CodRemittanceScreen() {
         <FlatList
           data={rows}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + 20 }}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
           showsVerticalScrollIndicator={false}
           renderItem={renderRow}
           ListEmptyComponent={

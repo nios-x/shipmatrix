@@ -10,6 +10,7 @@ import { toast } from '../lib/alert';
 import { WarehouseForm } from '../components/WarehouseForm';
 import { isWarehouseComplete, EMPTY_WAREHOUSE } from '../lib/shipments';
 import type { WarehouseData } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -103,7 +104,7 @@ export default function SettingsScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

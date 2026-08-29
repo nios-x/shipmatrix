@@ -30,15 +30,12 @@ import {
 } from '../lib/shipments';
 import { WarehouseForm } from '../components/WarehouseForm';
 import type { WarehouseData } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
+import { parseRates, type RateResult } from '../lib/rates';
 
 type Step = 'form' | 'rates' | 'booking';
 
-interface RateItem {
-  carrier_id: string;
-  carrier_name: string;
-  freight_charge: number;
-  estimated_days?: number;
-}
+type RateItem = RateResult;
 
 export default function CreateShipmentScreen({ navigation: propNavigation, route: propRoute }: any = {}) {
   const insets = useSafeAreaInsets();
@@ -151,14 +148,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       });
 
       if (data.success && Array.isArray(data.data)) {
-        setRates(
-          data.data.map((r: any) => ({
-            carrier_id: r.carrier_id,
-            carrier_name: r.carrier_name || r.carrier_id,
-            freight_charge: r.freight_charge,
-            estimated_days: r.estimated_days,
-          }))
-        );
+        setRates(parseRates(data.data));
         setStep('rates');
       } else {
         toast.error('Error', 'Could not fetch rates. Please try again.');
@@ -309,7 +299,11 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   };
 
   const renderForm = () => (
-    <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      className="flex-1 px-5"
+      contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
       <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
         Customer Details
@@ -467,7 +461,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className="flex-1 px-4"
         contentContainerStyle={{
           paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
       >

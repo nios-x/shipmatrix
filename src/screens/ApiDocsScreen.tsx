@@ -6,6 +6,7 @@ import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
 import * as Clipboard from 'expo-clipboard';
 import { toast } from '../lib/alert';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 const API_BASE = 'https://www.shipmatrix.in/api/v1';
 
@@ -60,7 +61,7 @@ export default function ApiDocsScreen() {
       <ScrollView
         className="flex-1 px-5"
         contentContainerStyle={{
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
       >

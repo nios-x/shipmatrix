@@ -8,6 +8,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatDateTime } from '../lib/shipments';
 import type { Notification } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 const FILTERS = [
   'All',
@@ -182,7 +183,7 @@ export default function NotificationsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
         ListEmptyComponent={

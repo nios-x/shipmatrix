@@ -17,6 +17,7 @@ import { toast } from '../lib/alert';
 import { openCashfreeCheckout, CashfreeError } from '../lib/cashfree';
 import { formatDate } from '../lib/shipments';
 import type { Transaction } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 /** Backoff between verify polls while Cashfree reports the order as ACTIVE. */
 const VERIFY_RETRY_DELAYS_MS = [1500, 3000, 5000, 8000];
@@ -247,7 +248,7 @@ export default function WalletScreen() {
             keyExtractor={(item) => item.id}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{
-              paddingBottom: Math.max(insets.bottom + 24, 32),
+              paddingBottom: insets.bottom + BAR_HEIGHT + 24,
             }}
             ListEmptyComponent={
               <View className="items-center py-12">

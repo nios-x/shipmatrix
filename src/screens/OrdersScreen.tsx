@@ -20,6 +20,7 @@ import {
   isCod,
   codValue,
   normalizeStatus,
+  statusPillClasses,
   isBooked,
   isInTransit,
   isDelivered,
@@ -30,23 +31,9 @@ import {
 } from '../lib/shipments';
 import { api } from '../lib/api';
 import type { Shipment } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Nav = NativeStackNavigationProp<OrdersStackParamList, 'Orders'>;
-
-const STATUS_COLORS: Record<string, string> = {
-  BOOKED: 'bg-blue-100 text-blue-700',
-  'IN TRANSIT': 'bg-amber-100 text-amber-700',
-  IN_TRANSIT: 'bg-amber-100 text-amber-700',
-  SHIPPED: 'bg-amber-100 text-amber-700',
-  DELIVERED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-gray-100 text-gray-600',
-  NDR: 'bg-red-100 text-red-700',
-  RTO: 'bg-red-100 text-red-700',
-  EXCEPTION: 'bg-orange-100 text-orange-700',
-  'PICKUP DONE': 'bg-cyan-100 text-cyan-700',
-  'PICKED UP': 'bg-cyan-100 text-cyan-700',
-  DEFAULT: 'bg-gray-100 text-gray-600',
-};
 
 const FILTER_TABS = [
   'All',
@@ -57,10 +44,6 @@ const FILTER_TABS = [
   'RTO',
   'Cancelled',
 ];
-
-function getStatusColor(status: string) {
-  return STATUS_COLORS[normalizeStatus({ status })] || STATUS_COLORS.DEFAULT;
-}
 
 /**
  * Tabs group the courier status vocabulary rather than matching it literally —
@@ -201,12 +184,12 @@ export default function OrdersScreen() {
   };
 
   const renderItem = ({ item }: { item: Shipment }) => {
-    const statusColor = getStatusColor(item.status || '');
-    const [bgClass, textClass] = statusColor.split(' ');
+    const [bgClass, textClass] = statusPillClasses(item);
 
     return (
       <TouchableOpacity
         activeOpacity={0.7}
+        onPress={() => navigation.navigate('OrderDetails', { shipmentId: item.id })}
         className="bg-white rounded-2xl p-4 mb-3 border border-slate-100 shadow-xs"
       >
         <View className="flex-row items-center justify-between mb-3">
@@ -336,7 +319,7 @@ export default function OrdersScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{
           paddingHorizontal: 14,
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={

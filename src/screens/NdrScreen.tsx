@@ -21,6 +21,7 @@ import { api } from '../lib/api';
 import { auth, db } from '../lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { isNdr, isRto } from '../lib/shipments';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function NdrScreen() {
   const insets = useSafeAreaInsets();
@@ -176,7 +177,7 @@ export default function NdrScreen() {
       <FlatList
         data={ndrShipments}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         renderItem={({ item }: { item: any }) => {
           const ndrReason = item.ndr_reason || item.exception_reason || 'Customer contact number unreachable / Door locked';
 

@@ -5,6 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 interface TrackEvent {
   status: string;
@@ -103,7 +104,7 @@ export default function TrackingScreen() {
         </View>
       )}
 
-      <ScrollView className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
         {events.map((event, index) => (
           <View key={index} className="flex-row mb-1">
             <View className="items-center mr-4 w-6">

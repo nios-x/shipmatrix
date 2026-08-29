@@ -21,6 +21,7 @@ import { useShipments } from '../lib/useShipments';
 import { Logo } from '../components/Logo';
 import { api } from '../lib/api';
 import { useNotifications } from '../lib/useNotifications';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 import {
   realShipments,
   isBooked,
@@ -405,7 +406,7 @@ export default function DashboardScreen() {
         className="flex-1 px-3"
         contentContainerStyle={{
           paddingTop: 16,
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
         refreshControl={

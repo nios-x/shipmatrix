@@ -10,6 +10,7 @@ import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore
 import { auth, db } from '../lib/firebase';
 import { toast } from '../lib/alert';
 import { parseOrdersCsv, CSV_TEMPLATE, type CsvOrder } from '../lib/csv';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Stage = 'pick' | 'review' | 'done';
 
@@ -146,7 +147,7 @@ export default function BulkUploadScreen() {
 
       <ScrollView
         className="flex-1 px-5"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         showsVerticalScrollIndicator={false}
       >
         {stage === 'pick' && (

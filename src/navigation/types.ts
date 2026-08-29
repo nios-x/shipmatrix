@@ -45,6 +45,12 @@ export type HomeStackParamList = {
 // Orders stack
 export type OrdersStackParamList = {
   Orders: undefined;
+  /**
+   * The shipment is looked up live by id rather than passed as an object:
+   * route params must stay serialisable, and Firestore Timestamps are not.
+   */
+  OrderDetails: { shipmentId: string };
+  Tracking: { awb?: string };
   CreateShipment: {
     orderId?: string;
     pickupPincode?: string;

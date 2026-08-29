@@ -15,6 +15,7 @@ import { Feather } from '@expo/vector-icons';
 import { collection, query, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function AdminPanelScreen() {
   const insets = useSafeAreaInsets();
@@ -122,7 +123,7 @@ export default function AdminPanelScreen() {
         <FlatList
           data={filteredUsers}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
           }
@@ -149,7 +150,7 @@ export default function AdminPanelScreen() {
         <FlatList
           data={complaints}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 20 }}
+          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
           renderItem={({ item }) => (
             <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
               <Text className="font-bold text-gray-900 text-sm">{item.subject || 'Complaint'}</Text>

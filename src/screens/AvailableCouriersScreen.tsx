@@ -16,13 +16,10 @@ import { api } from '../lib/api';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { parseRates, type RateResult } from '../lib/rates';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
-export interface RateResult {
-  carrier_id: string;
-  carrier_name: string;
-  freight_charge: number;
-  estimated_days?: number;
-}
+export type { RateResult };
 
 const PRIMARY_GRADIENT = ['#7C3AED', '#4F46E5'] as const;
 const ACCENT_PURPLE = '#7C3AED';
@@ -70,12 +67,7 @@ export default function AvailableCouriersScreen() {
       });
 
       if (data.success && Array.isArray(data.data)) {
-        const parsedRates: RateResult[] = data.data.map((r: any) => ({
-          carrier_id: r.carrier_id,
-          carrier_name: r.carrier_name || r.carrier_id,
-          freight_charge: r.freight_charge,
-          estimated_days: r.estimated_days || Math.floor(Math.random() * 3) + 2,
-        }));
+        const parsedRates: RateResult[] = parseRates(data.data);
         setRates(parsedRates);
         if (isRefresh) {
           toast.success('Rates Refreshed', `Updated ${parsedRates.length} courier options.`);
@@ -196,7 +188,7 @@ export default function AvailableCouriersScreen() {
         contentContainerStyle={{
           paddingHorizontal: 14,
           paddingTop: 16,
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

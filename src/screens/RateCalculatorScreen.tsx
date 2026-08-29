@@ -16,13 +16,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { api } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { parseRates, type RateResult } from '../lib/rates';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
-export interface RateResult {
-  carrier_id: string;
-  carrier_name: string;
-  freight_charge: number;
-  estimated_days?: number;
-}
+export type { RateResult };
 
 const PRIMARY_GRADIENT = ['#7C3AED', '#4F46E5'] as const;
 const ACCENT_PURPLE = '#7C3AED';
@@ -126,12 +123,7 @@ export default function RateCalculatorScreen() {
       });
 
       if (data.success && Array.isArray(data.data)) {
-        const parsedRates: RateResult[] = data.data.map((r: any) => ({
-          carrier_id: r.carrier_id,
-          carrier_name: r.carrier_name || r.carrier_id,
-          freight_charge: r.freight_charge,
-          estimated_days: r.estimated_days || Math.floor(Math.random() * 3) + 2,
-        }));
+        const parsedRates: RateResult[] = parseRates(data.data);
 
         navigation.navigate('AvailableCouriers', {
           pickupPin,
@@ -189,7 +181,7 @@ export default function RateCalculatorScreen() {
         contentContainerStyle={{
           paddingHorizontal: 14,
           paddingTop: 20,
-          paddingBottom: Math.max(insets.bottom + 48, 64),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
@@ -407,8 +399,7 @@ export default function RateCalculatorScreen() {
           {/* Calculate Button */}
           <TouchableOpacity
             onPress={handleCalculate}
-            className={`mt-5 rounded-2xl overflow-hidden  shadow-lg bg-violet-600 shadow-violet-500/25 rounded-full 
-              }`}
+            className="mt-5 overflow-hidden rounded-full bg-violet-600 shadow-lg shadow-violet-500/25"
           >
             <View
               className="py-2 px-6 flex-row items-center justify-center gap-2.5"

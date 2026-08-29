@@ -88,13 +88,22 @@ async function apiRequest<T = any>(
   // The timer is cleared as soon as the headers land, not after the body is
   // read, so streamed responses (the PDF path below) are not cut off mid-download.
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  // Whether *we* aborted, rather than inspecting the rejection. React Native
+  // does not reject with a DOMException named 'AbortError' the way browsers do
+  // — it surfaces a generic "Fetch request has been canceled" TypeError — so
+  // sniffing `e.name` silently missed every timeout and showed users that raw
+  // message instead of an explanation.
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
 
   let response: Response;
   try {
     response = await fetch(url, { ...config, signal: controller.signal });
   } catch (e: any) {
-    if (e?.name === 'AbortError') {
+    if (timedOut) {
       throw new ApiError(
         `Request timed out after ${Math.round(timeoutMs / 1000)}s. Check that ${url} is reachable.`,
         0

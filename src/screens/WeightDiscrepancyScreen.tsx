@@ -15,6 +15,7 @@ import { useShipments } from '../lib/useShipments';
 import { EmptyState } from '../components/EmptyState';
 import { CourierLogo } from '../components/CourierLogo';
 import { toast } from '../lib/alert';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function WeightDiscrepancyScreen() {
   const insets = useSafeAreaInsets();
@@ -119,7 +120,7 @@ export default function WeightDiscrepancyScreen() {
       <FlatList
         data={displayList}
         keyExtractor={(item, idx) => item.id || String(idx)}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         renderItem={({ item }: { item: any }) => {
           const enteredWeight = item.entered_weight || item.weight || 0.5;
           const chargedWeight = item.charged_weight || enteredWeight + 0.5;

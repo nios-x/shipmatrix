@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../lib/api';
 import { toast } from '../lib/alert';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type RouteMode = 'surface' | 'air';
 type BookingMode = 'credit' | 'topay';
@@ -210,7 +211,7 @@ export default function B2bCargoScreen() {
         className="flex-1 px-4"
         contentContainerStyle={{
           paddingTop: 16,
-          paddingBottom: Math.max(insets.bottom + 32, 48),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"

@@ -9,6 +9,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toDate, formatDateTime } from '../lib/shipments';
 import type { Transaction } from '../types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Tab = 'invoices' | 'statements';
 
@@ -131,7 +132,7 @@ export default function BillingScreen() {
     <SectionList
       sections={statementSections}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 20 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
       showsVerticalScrollIndicator={false}
       stickySectionHeadersEnabled={false}
       renderSectionHeader={({ section }) => (

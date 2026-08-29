@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../lib/api';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 interface Message {
   id: string;
@@ -15,6 +16,26 @@ interface Message {
 // millisecond would otherwise collide as React keys.
 let messageCounter = 0;
 const nextId = (prefix: string) => `${prefix}-${++messageCounter}`;
+
+/**
+ * The assistant answers in Markdown, so `**bold**` reached the bubble as literal
+ * asterisks. Only emphasis is handled — it is the one construct the model uses
+ * mid-sentence, where the stray punctuation is most distracting. Headings and
+ * list bullets stay as they are, since they already read correctly as plain text.
+ */
+function renderMarkdown(content: string, onDark: boolean) {
+  // Split on the delimiters themselves so the captured groups land on odd
+  // indices, which is what marks a run as bold.
+  return content.split(/\*\*(.+?)\*\*/gs).map((part, i) =>
+    i % 2 === 1 ? (
+      <Text key={i} className={onDark ? 'font-bold text-white' : 'font-bold text-gray-900'}>
+        {part}
+      </Text>
+    ) : (
+      part
+    )
+  );
+}
 
 export default function SupportScreen() {
   const insets = useSafeAreaInsets();
@@ -84,13 +105,30 @@ export default function SupportScreen() {
         renderItem={({ item }) => (
           <View className={`max-w-[85%] ${item.role === 'user' ? 'self-end' : 'self-start'}`}>
             <View className={`px-4 py-3 rounded-2xl ${item.role === 'user' ? 'bg-violet-700 rounded-br-md' : 'bg-white border border-gray-100 rounded-bl-md'}`}>
-              <Text className={`text-sm ${item.role === 'user' ? 'text-white' : 'text-gray-800'}`}>{item.content}</Text>
+              <Text className={`text-sm ${item.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
+                {renderMarkdown(item.content, item.role === 'user')}
+              </Text>
             </View>
           </View>
         )}
+        // The reply can take a while; without a pending bubble the screen looks
+        // frozen and people send the message again.
+        ListFooterComponent={
+          sending ? (
+            <View className="self-start max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md bg-white border border-gray-100 flex-row items-center gap-2">
+              <ActivityIndicator size="small" color="#7C3AED" />
+              <Text className="text-sm text-gray-500">Thinking…</Text>
+            </View>
+          ) : null
+        }
       />
 
-      <View className="px-5 py-3 border-t border-gray-100 bg-white flex-row items-center gap-3" style={{ paddingBottom: insets.bottom + 8 }}>
+      {/* The tab bar floats above the screen rather than pushing it up, so the
+          composer has to reserve its height itself; padding for the safe-area
+          inset alone leaves it sitting underneath, unreachable. */}
+      <View
+        className="px-5 py-3 border-t border-gray-100 bg-white flex-row items-center gap-3"
+        style={{ paddingBottom: insets.bottom + BAR_HEIGHT + 12 }}>
         <TextInput
           value={input}
           onChangeText={setInput}

@@ -1,41 +1,41 @@
 import React from 'react';
 import { View, Image, Text } from 'react-native';
 
+/**
+ * Brand keyword → favicon domain, checked in order.
+ *
+ * Matching is on a substring of the normalised name rather than the whole
+ * string, because carriers arrive with an open-ended set of service suffixes
+ * ("Air", "Surface", "Surface Lite", "360", "Logistics", …). An exact-match
+ * table has to be extended every time the server adds a service tier, and
+ * silently drops to the initials badge when nobody remembers to — which is how
+ * "Shree Maruti Surface" and "Ekart Logistics" lost their logos.
+ *
+ * `bharat dart` is Blue Dart's brand for the "Ecom Surface Lite" tier, whose
+ * label does not otherwise mention Blue Dart.
+ */
+const BRAND_LOGOS: [pattern: RegExp, domain: string][] = [
+  [/delhivery/, 'delhivery.com'],
+  [/ekart/, 'ekartlogistics.com'],
+  [/xpressbees/, 'xpressbees.com'],
+  [/shadowfax/, 'shadowfax.in'],
+  [/shree ?maruti/, 'shreemaruticourier.com'],
+  [/amazon/, 'amazon.in'],
+  [/blue ?dart|bharat ?dart/, 'bluedart.com'],
+];
+
 function getCourierLogoUrl(name: string): string | null {
-  switch (name.toLowerCase()) {
-    case 'delhivery air':
-    case 'delhivery surface':
-    case 'delhivery':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=delhivery.com&sz=128';
-    case 'ekart logistics':
-    case 'ekart flat':
-    case 'ekart':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=ekartlogistics.com&sz=128';
-    case 'xpressbees surface':
-    case 'xpressbees air':
-    case 'xpressbees':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=xpressbees.com&sz=128';
-    case 'shadowfax 360':
-    case 'shadowfax':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=shadowfax.in&sz=128';
-    case 'shree maruti':
-    case 'shree maruti air':
-    case 'shreemaruti air':
-    case 'shreemaruti':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=shreemaruticourier.com&sz=128';
-    case 'amazon shipping':
-    case 'amazon express':
-    case 'amazon':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=amazon.in&sz=128';
-    case 'bluedart express':
-    case 'bluedart':
-    case 'bluedart air':
-    case 'bluedart surface':
-    case 'bluedart surface lite':
-      return 'https://s2.googleusercontent.com/s2/favicons?domain=bluedart.com&sz=128';
-    default:
-      return null;
+  // Quotes may arrive as a display label ("Shadowfax 360") or, if a caller
+  // still passes one through, as a raw carrier id ("shadowfax_360").
+  const normalised = (name || '').toLowerCase().replace(/[_-]+/g, ' ');
+
+  for (const [pattern, domain] of BRAND_LOGOS) {
+    if (pattern.test(normalised)) {
+      return `https://s2.googleusercontent.com/s2/favicons?domain=${domain}&sz=128`;
+    }
   }
+
+  return null;
 }
 
 interface CourierLogoProps {

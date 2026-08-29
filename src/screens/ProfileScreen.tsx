@@ -8,6 +8,7 @@ import { auth } from '../lib/firebase';
 import { CustomAlertModal } from '../components/CustomAlertModal';
 import { toast } from '../lib/alert';
 import type { MainTabParamList } from '../navigation/types';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 interface MenuItem {
   icon: string;
@@ -41,7 +42,7 @@ const MENU_SECTIONS: { items: MenuItem[] }[] = [
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
-  const { user } = useUser();
+  const { user, loading } = useUser();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
@@ -90,7 +91,7 @@ export default function ProfileScreen() {
         className="flex-1 px-5"
         contentContainerStyle={{
           paddingTop: 16,
-          paddingBottom: Math.max(insets.bottom + 24, 36),
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -104,11 +105,13 @@ export default function ProfileScreen() {
             </Text>
           </View>
           <View className="flex-1">
+            {/* Until the snapshot lands there is nothing to show, and the
+                fallbacks read as though the account itself were empty. */}
             <Text className="font-black text-lg text-slate-900 tracking-tight">
-              {user?.name || 'User'}
+              {user?.name || (loading ? 'Loading…' : 'User')}
             </Text>
             <Text className="text-xs text-slate-400 font-medium mt-0.5">
-              {user?.email || 'No email'}
+              {user?.email || (loading ? '' : 'No email')}
             </Text>
             {user?.companyName && (
               <View className="bg-violet-50 px-2 py-0.5 rounded-md mt-1 self-start border border-violet-100">

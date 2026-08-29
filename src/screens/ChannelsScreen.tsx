@@ -26,6 +26,7 @@ import { auth, db } from '../lib/firebase';
 import { api } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { toast } from '../lib/alert';
+import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Channel = 'shopify' | 'woocommerce' | 'custom';
 
@@ -383,7 +384,7 @@ export default function ChannelsScreen() {
 
       <ScrollView
         className="flex-1 px-5"
-        contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >

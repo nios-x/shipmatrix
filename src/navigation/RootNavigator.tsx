@@ -62,6 +62,7 @@ export default function RootNavigator() {
               dispatch(
                 setUser({
                   id: firebaseUser.uid,
+                  name: firebaseUser.displayName || undefined,
                   email: firebaseUser.email || undefined,
                   role: 'user',
                   walletBalance: 0,
