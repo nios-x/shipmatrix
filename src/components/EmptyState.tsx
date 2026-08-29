@@ -12,11 +12,17 @@ interface EmptyStateProps {
 
 export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <View className="flex-1 items-center justify-center p-8">
-      <View
-        className="w-20 h-20 bg-white rounded-3xl border border-gray-100 items-center justify-center mb-5"
-
-      >
+    // `flex-1` alone collapses to zero height in an auto-sized parent, which is
+    // every caller here: no FlatList in the app sets `flexGrow: 1` on its content
+    // container, and some render this straight into a ScrollView. That left the
+    // fixed-size logo drawing while the title and subtitle flattened away to
+    // nothing. minHeight keeps the block laid out in an unbounded parent; flex-1
+    // still centers it when a parent does give it room.
+    <View
+      className="flex-1 items-center justify-center p-8"
+      style={{ minHeight: 320 }}
+    >
+      <View className="w-20 h-20 bg-white rounded-3xl border border-gray-100 items-center justify-center mb-5">
         <Logo size={44} />
       </View>
       <Text className="font-raleway-bold text-lg text-gray-900 mb-1.5 text-center tracking-tight">

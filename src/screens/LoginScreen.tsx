@@ -22,7 +22,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
-import { useGoogleSignIn } from '../lib/googleAuth';
+import { useGoogleSignIn, isGoogleSignInConfigured } from '../lib/googleAuth';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Login'>;
 
@@ -288,33 +288,37 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Divider */}
-            <View className="flex-row items-center my-3">
-              <View className="flex-1 h-[1px] bg-gray-200" />
-              <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
-                OR
-              </Text>
-              <View className="flex-1 h-[1px] bg-gray-200" />
-            </View>
-
-            {/* Google Sign-In Button */}
-            <TouchableOpacity
-              onPress={handleGoogleSignIn}
-              disabled={googleLoading}
-              activeOpacity={0.8}
-              className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs"
-            >
-              {googleLoading ? (
-                <ActivityIndicator size="small" color="#7c3aed" />
-              ) : (
-                <>
-                  <GoogleIcon size={18} />
-                  <Text className="text-gray-800 font-raleway-bold text-xs">
-                    Continue with Google
+            {/* Google is offered only where an OAuth client is actually
+                configured; otherwise the button could only ever error out. */}
+            {isGoogleSignInConfigured && (
+              <>
+                <View className="flex-row items-center my-3">
+                  <View className="flex-1 h-[1px] bg-gray-200" />
+                  <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
+                    OR
                   </Text>
-                </>
-              )}
-            </TouchableOpacity>
+                  <View className="flex-1 h-[1px] bg-gray-200" />
+                </View>
+
+                <TouchableOpacity
+                  onPress={handleGoogleSignIn}
+                  disabled={googleLoading}
+                  activeOpacity={0.8}
+                  className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs"
+                >
+                  {googleLoading ? (
+                    <ActivityIndicator size="small" color="#7c3aed" />
+                  ) : (
+                    <>
+                      <GoogleIcon size={18} />
+                      <Text className="text-gray-800 font-raleway-bold text-xs">
+                        Continue with Google
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
           </>
         )}
 

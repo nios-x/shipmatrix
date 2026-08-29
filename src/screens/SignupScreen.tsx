@@ -21,7 +21,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
-import { useGoogleSignIn } from '../lib/googleAuth';
+import { useGoogleSignIn, isGoogleSignInConfigured } from '../lib/googleAuth';
 import { sendOtp, verifyOtp } from '../lib/otp';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
@@ -332,33 +332,37 @@ export default function SignupScreen() {
             </View>
           ) : step === 1 ? (
             <>
-              {/* Google Sign-In Button */}
-              <TouchableOpacity
-                onPress={handleGoogleSignIn}
-                disabled={googleLoading}
-                activeOpacity={0.8}
-                className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs mb-4"
-              >
-                {googleLoading ? (
-                  <ActivityIndicator size="small" color="#7c3aed" />
-                ) : (
-                  <>
-                    <GoogleIcon size={18} />
-                    <Text className="text-gray-800 font-raleway-bold text-xs">
-                      Sign up with Google
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+              {/* Google is offered only where an OAuth client is actually
+                  configured; otherwise the button could only ever error out. */}
+              {isGoogleSignInConfigured && (
+                <>
+                  <TouchableOpacity
+                    onPress={handleGoogleSignIn}
+                    disabled={googleLoading}
+                    activeOpacity={0.8}
+                    className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs mb-4"
+                  >
+                    {googleLoading ? (
+                      <ActivityIndicator size="small" color="#7c3aed" />
+                    ) : (
+                      <>
+                        <GoogleIcon size={18} />
+                        <Text className="text-gray-800 font-raleway-bold text-xs">
+                          Sign up with Google
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
 
-              {/* Divider */}
-              <View className="flex-row items-center mb-4">
-                <View className="flex-1 h-[1px] bg-gray-200" />
-                <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
-                  OR SIGN UP WITH EMAIL
-                </Text>
-                <View className="flex-1 h-[1px] bg-gray-200" />
-              </View>
+                  <View className="flex-row items-center mb-4">
+                    <View className="flex-1 h-[1px] bg-gray-200" />
+                    <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
+                      OR SIGN UP WITH EMAIL
+                    </Text>
+                    <View className="flex-1 h-[1px] bg-gray-200" />
+                  </View>
+                </>
+              )}
 
               {/* Full Name */}
               <View className="mb-4">
