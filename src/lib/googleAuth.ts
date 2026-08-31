@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Platform } from 'react-native';
+import { isRunningInExpoGo } from 'expo';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { exchangeCodeAsync } from 'expo-auth-session';
@@ -40,8 +41,14 @@ WebBrowser.maybeCompleteAuthSession();
 // and base64-decode the `authError` parameter it comes back with.
 //
 // The native clients also cannot be exercised from Expo Go: Expo Go owns the
-// `exp://` scheme, so the OAuth redirect comes back to Expo Go's launcher
-// instead of this app. Native Google sign-in requires a development build.
+// `exp://` scheme, so `useAuthRequest` builds an `exp://<lan-ip>:8081` redirect
+// and the OAuth response comes back to Expo Go's launcher instead of this app.
+// What reaches us is the bare launch URL with its query string gone, so
+// `expo-auth-session` finds no `state` to match and reports:
+//   state_mismatch — Cached state and returned state do not match.
+// That error names neither Expo Go nor the redirect, so `isRunningInExpoGo()`
+// gates the button below instead of letting it fail that way. Native Google
+// sign-in requires a development build (`npx expo run:android`).
 //
 // Find these under Google Cloud Console > project-191165632248 > APIs & Services
 // > Credentials. Enabling the Google provider in Firebase Auth auto-creates the
@@ -66,6 +73,9 @@ const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 const nativeClientId =
   Platform.OS === 'ios' ? GOOGLE_IOS_CLIENT_ID : GOOGLE_ANDROID_CLIENT_ID;
 
+/** Expo Go cannot receive this app's OAuth redirect; see the note above. */
+const isExpoGo = isRunningInExpoGo();
+
 /**
  * Whether Google sign-in can actually complete on this platform.
  *
@@ -74,21 +84,29 @@ const nativeClientId =
  * CTA at all.
  */
 export const isGoogleSignInConfigured =
-  Platform.OS === 'web' ? !!GOOGLE_WEB_CLIENT_ID : !!nativeClientId;
+  Platform.OS === 'web' ? !!GOOGLE_WEB_CLIENT_ID : !!nativeClientId && !isExpoGo;
 
 // A missing native client id is otherwise a silent failure: the button simply
 // never renders, which on screen is indistinguishable from a layout bug. Say it
 // once at startup so it lands in `adb logcat -s ReactNativeJS`.
-if (__DEV__ && !isGoogleSignInConfigured) {
-  const missingVar =
-    Platform.OS === 'ios'
-      ? 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'
-      : 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID';
-  console.warn(
-    `[googleAuth] "Continue with Google" is hidden on ${Platform.OS}: ${missingVar} is not set. ` +
-      'Create an OAuth client of that platform type in Google Cloud Console (package/bundle id ' +
-      'com.shipmatrix.app), put the id in .env, then restart Metro with --clear.'
-  );
+if (__DEV__ && !isGoogleSignInConfigured && Platform.OS !== 'web') {
+  if (isExpoGo) {
+    console.warn(
+      '[googleAuth] "Continue with Google" is hidden: Expo Go cannot complete this flow. ' +
+        "It owns the exp:// scheme, so Google's response goes to Expo Go's launcher and comes " +
+        'back stripped of its state parameter. Run a development build instead: npx expo run:android.'
+    );
+  } else {
+    const missingVar =
+      Platform.OS === 'ios'
+        ? 'EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID'
+        : 'EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID';
+    console.warn(
+      `[googleAuth] "Continue with Google" is hidden on ${Platform.OS}: ${missingVar} is not set. ` +
+        'Create an OAuth client of that platform type in Google Cloud Console (package/bundle id ' +
+        'com.shipmatrix.app), put the id in .env, then restart Metro with --clear.'
+    );
+  }
 }
 
 export type GoogleSignInResult = {
@@ -118,6 +136,12 @@ function describeAuthError(code?: string | null, description?: string | null): s
     case 'invalid_client':
     case 'unauthorized_client':
       return 'Google does not recognise this OAuth client id. Check EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in .env.';
+    case 'state_mismatch':
+      // The response came back without the state we sent, so the redirect never
+      // reached this app intact. In practice that means Expo Go swallowed it —
+      // which the button gate above now prevents — or a stale tab from an
+      // earlier attempt answered instead of the current one.
+      return 'The Google sign-in response did not come back to this app. Close any leftover sign-in tab and try again; in Expo Go this flow cannot complete at all.';
     case 'invalid_grant':
       return 'That sign-in attempt expired before it completed. Please try again.';
     case 'access_denied':

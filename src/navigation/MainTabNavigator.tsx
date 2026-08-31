@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import GlassTabBar from './GlassTabBar';
+import { BlurTargetProvider, ScreenBlurTarget } from './BlurTarget';
 import type {
   MainTabParamList,
   HomeStackParamList,
@@ -111,14 +112,23 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 export default function MainTabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={{ headerShown: false }}
-      tabBar={(props) => <GlassTabBar {...props} />}>
-      <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
-      <Tab.Screen name="OrdersTab" component={OrdersStackNavigator} />
-      <Tab.Screen name="RatesTab" component={RatesStackNavigator} />
-      <Tab.Screen name="WalletTab" component={WalletStackNavigator} />
-      <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} />
-    </Tab.Navigator>
+    // The nav bar's blur needs something to sample on Android. Each screen is
+    // wrapped in its own blur target and the focused one is what the bar
+    // frosts; the bar itself stays outside every target, which the blur
+    // library requires — a target containing its own BlurView would recurse.
+    <BlurTargetProvider>
+      <Tab.Navigator
+        screenOptions={{ headerShown: false }}
+        screenLayout={({ route, children }) => (
+          <ScreenBlurTarget routeKey={route.key}>{children}</ScreenBlurTarget>
+        )}
+        tabBar={(props) => <GlassTabBar {...props} />}>
+        <Tab.Screen name="HomeTab" component={HomeStackNavigator} />
+        <Tab.Screen name="OrdersTab" component={OrdersStackNavigator} />
+        <Tab.Screen name="RatesTab" component={RatesStackNavigator} />
+        <Tab.Screen name="WalletTab" component={WalletStackNavigator} />
+        <Tab.Screen name="ProfileTab" component={ProfileStackNavigator} />
+      </Tab.Navigator>
+    </BlurTargetProvider>
   );
 }

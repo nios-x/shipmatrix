@@ -1,7 +1,7 @@
 import { auth } from './firebase';
 
 // Base URL for the ShipMatrix API server
-const API_BASE_URL = 'https://www.shipmatrix.in';
+export const API_BASE_URL = 'https://www.shipmatrix.in';
 
 /**
  * Payments run on their own service (see the `shipmatrix-server` project),

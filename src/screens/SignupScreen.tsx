@@ -474,6 +474,16 @@ export default function SignupScreen() {
                     placeholder="••••••••"
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={!showPassword}
+                    // Revealing the password clears secureTextEntry, and with it
+                    // the platform's implicit "leave this text alone" rules: the
+                    // field falls back to sentence casing and autocorrect, so a
+                    // typed `hunter2` is submitted as `Hunter2`. Sign up with the
+                    // eye open and log in with it shut and the two values differ,
+                    // which Firebase can only report as auth/invalid-credential.
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    autoComplete="new-password"
                     className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-12 py-3 font-raleway text-sm text-gray-900 shadow-sm"
                   />
 

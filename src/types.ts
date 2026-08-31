@@ -138,6 +138,8 @@ export interface Shipment {
   deliveredAt?: any;
   shipmentId?: string;
   pkgRefId?: string;
+  /** Amazon Shipping's own reference; its label route keys on this, not the AWB. */
+  amazonShipmentId?: string;
 }
 
 /** Pickup warehouse stored on the user document as `warehouseData`. */

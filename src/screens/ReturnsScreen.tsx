@@ -8,6 +8,7 @@ import { CourierLogo } from '../components/CourierLogo';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { resolveLabelUrl, LabelError } from '../lib/labels';
 import { isRto, isDelivered, normalizeStatus, formatDate, destinationLabel } from '../lib/shipments';
 import type { Shipment } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
@@ -35,14 +36,17 @@ export default function ReturnsScreen() {
 
   const rows = activeTab === 'rto' ? rto : activeTab === 'reverse' ? reverse : all;
 
-  const openLabel = (item: Shipment) => {
-    if (!item.labelUrl) {
-      toast.warning('No Label', 'A shipping label is not available for this return yet.');
-      return;
+  const openLabel = async (item: Shipment) => {
+    try {
+      const url = await resolveLabelUrl(item);
+      await Linking.openURL(url);
+    } catch (e: any) {
+      if (e instanceof LabelError) {
+        toast.warning('No Label', e.message);
+      } else {
+        toast.error('Error', 'Could not open the label.');
+      }
     }
-    Linking.openURL(item.labelUrl).catch(() =>
-      toast.error('Error', 'Could not open the label.')
-    );
   };
 
   const renderItem = ({ item }: { item: Shipment }) => {
@@ -93,7 +97,7 @@ export default function ReturnsScreen() {
             </Text>
           </View>
 
-          {!!item.labelUrl && (
+          {!!item.awb && (
             <TouchableOpacity
               onPress={() => openLabel(item)}
               activeOpacity={0.7}

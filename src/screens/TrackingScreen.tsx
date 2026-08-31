@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../lib/api';
+import { useShipments } from '../lib/useShipments';
+import { formatDateTime } from '../lib/shipments';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -14,31 +16,75 @@ interface TrackEvent {
   description?: string;
 }
 
+interface ShipmentInfo {
+  awb: string;
+  courier?: string;
+  status?: string;
+}
+
+/**
+ * `/api/public/track/:awb` answers with a flat body — `{ success, status,
+ * courier, scans }` — with the checkpoints under `scans`, newest first. There
+ * is no `tracking` envelope. Couriers disagree on what to call a checkpoint's
+ * time and its note, so both spellings of each are read here, as the web app does.
+ */
+function toEvents(scans: any): TrackEvent[] {
+  if (!Array.isArray(scans)) return [];
+  return scans.map((scan: any) => ({
+    status: scan.status || 'Update',
+    location: scan.location || undefined,
+    timestamp: scan.time || scan.timestamp || undefined,
+    description: scan.message || scan.remarks || undefined,
+  }));
+}
+
 export default function TrackingScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<any>();
+  const { shipments } = useShipments();
   const [awb, setAwb] = useState(route.params?.awb || '');
   const [tracking, setTracking] = useState(false);
   const [events, setEvents] = useState<TrackEvent[]>([]);
-  const [shipmentInfo, setShipmentInfo] = useState<any>(null);
+  const [shipmentInfo, setShipmentInfo] = useState<ShipmentInfo | null>(null);
   const [error, setError] = useState('');
 
   const handleTrack = useCallback(
     async (value?: string) => {
-      const target = (value ?? awb).trim();
-      if (!target) return;
+      const typed = (value ?? awb).trim();
+      if (!typed) return;
+
+      // The field takes either identifier, but the endpoint only resolves
+      // carrier waybills — an order reference (ORD-313654) comes back as
+      // "Shipment not found on any network". Map it to its AWB first.
+      const order = shipments.find(
+        (s) => s.orderId && s.orderId.trim().toLowerCase() === typed.toLowerCase()
+      );
+      if (order && !order.awb) {
+        setEvents([]);
+        setShipmentInfo(null);
+        setError('This order has no AWB yet. Tracking begins once the courier assigns one.');
+        return;
+      }
+      const target = order?.awb || typed;
+
       setTracking(true);
       setError('');
       setEvents([]);
       setShipmentInfo(null);
       try {
-        const data = await api.get(`/api/public/track/${target}`);
-        if (data.success && data.tracking) {
-          setEvents(data.tracking.events || []);
-          setShipmentInfo(data.tracking);
+        const data = await api.get(`/api/public/track/${encodeURIComponent(target)}`);
+        if (data.success) {
+          setEvents(toEvents(data.scans));
+          setShipmentInfo({
+            awb: target,
+            courier: data.courier || order?.courier,
+            status: data.status,
+          });
         } else {
-          setError(data.error || 'No tracking info found');
+          // A miss answers 200 with `message`, not `error`. Keep the server's
+          // wording — it separates an unknown AWB from a silent courier.
+          setError(data.message || data.error || 'No tracking info found');
         }
       } catch (err: any) {
         setError(err.message || 'Tracking failed');
@@ -46,7 +92,7 @@ export default function TrackingScreen() {
         setTracking(false);
       }
     },
-    [awb]
+    [awb, shipments]
   );
 
   // Track straight away when opened from an order row, so the user doesn't
@@ -74,8 +120,10 @@ export default function TrackingScreen() {
           <TextInput
             value={awb}
             onChangeText={setAwb}
-            placeholder="Enter AWB number"
+            placeholder="Enter AWB or Order ID"
             placeholderTextColor="#9ca3af"
+            autoCapitalize="characters"
+            autoCorrect={false}
             className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-raleway text-gray-900 shadow-sm"
             onSubmitEditing={() => handleTrack()}
           />
@@ -95,16 +143,19 @@ export default function TrackingScreen() {
       {shipmentInfo && (
         <View className="mx-5 bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 shadow-sm" style={{ elevation: 2 }}>
           <Text className="font-raleway-bold text-gray-900 text-base">{shipmentInfo.courier || 'Courier'}</Text>
-          <Text className="text-xs font-raleway text-gray-400 mt-0.5">AWB: {awb}</Text>
-          {shipmentInfo.current_status && (
+          <Text className="text-xs font-raleway text-gray-400 mt-0.5" selectable>AWB: {shipmentInfo.awb}</Text>
+          {shipmentInfo.status && (
             <View className="bg-purple-50 border border-purple-100 px-3 py-1 rounded-full mt-2.5 self-start">
-              <Text className="text-xs font-raleway-bold text-purple-700 uppercase tracking-wider">{shipmentInfo.current_status}</Text>
+              <Text className="text-xs font-raleway-bold text-purple-700 uppercase tracking-wider">{shipmentInfo.status}</Text>
             </View>
           )}
         </View>
       )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+        {shipmentInfo && events.length === 0 && !tracking ? (
+          <Text className="text-sm font-raleway text-gray-400 italic py-2">No tracking history available yet.</Text>
+        ) : null}
         {events.map((event, index) => (
           <View key={index} className="flex-row mb-1">
             <View className="items-center mr-4 w-6">
@@ -114,7 +165,7 @@ export default function TrackingScreen() {
             <View className="flex-1 pb-6">
               <Text className="font-raleway-bold text-gray-900 text-sm">{event.status}</Text>
               {event.location && <Text className="text-xs font-raleway text-gray-500 mt-0.5">{event.location}</Text>}
-              {event.timestamp && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{event.timestamp}</Text>}
+              {event.timestamp && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{formatDateTime(event.timestamp, event.timestamp)}</Text>}
               {event.description && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{event.description}</Text>}
             </View>
           </View>

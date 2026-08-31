@@ -56,16 +56,21 @@ export default function LoginScreen() {
     }
   };
 
+  // Mobile keyboards and password managers routinely leave a trailing space on
+  // an address. Firebase rejects that outright as auth/invalid-email rather
+  // than trimming it, so every call has to be given the cleaned value.
+  const trimmedEmail = email.trim();
+
   const handleLogin = async () => {
     setError('');
-    if (!email || !password) {
+    if (!trimmedEmail || !password) {
       setError('Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      const userCred = await signInWithEmailAndPassword(auth, email, password);
+      const userCred = await signInWithEmailAndPassword(auth, trimmedEmail, password);
       const userRef = doc(db, 'users', userCred.user.uid);
       const userSnap = await getDoc(userRef);
 
@@ -74,12 +79,34 @@ export default function LoginScreen() {
       }
       // Auth state listener in RootNavigator handles the rest
     } catch (err: any) {
+      // Firebase's email-enumeration protection — on by default for projects
+      // created since late 2023 — reports a missing account and a wrong
+      // password as the same auth/invalid-credential, so the copy below cannot
+      // narrow it down and the raw code is the only way to tell either from a
+      // transport failure. Keep it in `adb logcat -s ReactNativeJS`.
+      if (__DEV__) {
+        console.warn('[login] sign-in failed', err?.code, err?.message);
+      }
       if (err.code === 'auth/operation-not-allowed') {
         setError('Email/Password login is not enabled.');
       } else if (err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password.');
+        // An account created through Google has no password credential, so
+        // correct-looking details land here too. Only say so where that button
+        // exists — pointing at a CTA this build hides would be worse than
+        // saying nothing.
+        setError(
+          isGoogleSignInConfigured
+            ? 'Invalid email or password. If you signed up with Google, use Continue with Google instead.'
+            : 'Invalid email or password.'
+        );
+      } else if (err.code === 'auth/invalid-email') {
+        setError('That does not look like a valid email address.');
+      } else if (err.code === 'auth/user-disabled') {
+        setError('This account has been disabled. Please contact support.');
       } else if (err.code === 'auth/too-many-requests') {
         setError('Too many attempts. Please try again later.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('No connection. Check your network and try again.');
       } else {
         setError(err.message || 'Login failed');
       }
@@ -89,17 +116,28 @@ export default function LoginScreen() {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    if (!trimmedEmail) {
       setError('Please enter your email address');
       return;
     }
     setLoading(true);
     setError('');
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, trimmedEmail);
       setView('reset-sent');
     } catch (err: any) {
-      setError(err.message || 'Failed to send reset email');
+      // Without this the screen shows raw SDK text ("Firebase: Error
+      // (auth/invalid-email).") — the login handler above maps its codes, and
+      // this path needs the same treatment.
+      if (err.code === 'auth/invalid-email') {
+        setError('That does not look like a valid email address.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many attempts. Please try again in a few minutes.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('No connection. Check your network and try again.');
+      } else {
+        setError(err.message || 'Failed to send reset email');
+      }
     } finally {
       setLoading(false);
     }
@@ -177,6 +215,16 @@ export default function LoginScreen() {
                     placeholder="••••••••"
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={!showPassword}
+                    // Revealing the password clears secureTextEntry, and with it
+                    // the platform's implicit "leave this text alone" rules: the
+                    // field falls back to sentence casing and autocorrect, so a
+                    // typed `hunter2` is submitted as `Hunter2`. Sign up with the
+                    // eye open and log in with it shut and the two values differ,
+                    // which Firebase can only report as auth/invalid-credential.
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    autoComplete="current-password"
                     className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-12 py-3 font-raleway text-sm text-gray-900 shadow-sm"
                   />
                   <TouchableOpacity
@@ -257,11 +305,21 @@ export default function LoginScreen() {
                 Check Your Email
               </Text>
               <Text className="text-gray-500 mt-1 text-center font-raleway text-sm">
-                We've sent a reset link to{' '}
+                If{' '}
                 <Text className="font-raleway-bold text-gray-800">
-                  {email || 'your email'}
-                </Text>
-                .
+                  {trimmedEmail || 'your email'}
+                </Text>{' '}
+                has an account with a password, a reset link is on its way.
+              </Text>
+              {/* This project has Firebase's email enumeration protection on,
+                  so the send call reports success for an address that has no
+                  account — and for a Google account, which has no password to
+                  reset. Neither ever receives a mail, so say so here rather
+                  than leaving the user waiting on an inbox. */}
+              <Text className="text-gray-400 mt-3 text-center font-raleway text-xs leading-5">
+                Nothing after a few minutes? Check your spam folder. If you signed up
+                with Google, use “Continue with Google” instead — those accounts have
+                no password to reset.
               </Text>
             </View>
           )}

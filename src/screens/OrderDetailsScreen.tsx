@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,6 +11,7 @@ import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { EmptyState } from '../components/EmptyState';
 import { toast } from '../lib/alert';
+import { resolveLabelUrl, LabelError } from '../lib/labels';
 import {
   isCod,
   codValue,
@@ -87,11 +88,25 @@ export default function OrderDetailsScreen() {
     [shipments, params.shipmentId]
   );
 
-  const openLabel = () => {
-    if (!shipment?.labelUrl) return;
-    Linking.openURL(shipment.labelUrl).catch(() =>
-      toast.error('Could not open label', 'No app on this device can open the link.')
-    );
+  // Resolving a Delhivery label needs a round trip, so the button reports its
+  // own progress rather than looking dead while that request is in flight.
+  const [labelLoading, setLabelLoading] = useState(false);
+
+  const openLabel = async () => {
+    if (!shipment || labelLoading) return;
+    setLabelLoading(true);
+    try {
+      const url = await resolveLabelUrl(shipment);
+      await Linking.openURL(url);
+    } catch (e: any) {
+      if (e instanceof LabelError) {
+        toast.warning('No label yet', e.message);
+      } else {
+        toast.error('Could not open label', 'No app on this device can open the link.');
+      }
+    } finally {
+      setLabelLoading(false);
+    }
   };
 
   const header = (
@@ -190,22 +205,22 @@ export default function OrderDetailsScreen() {
             <TouchableOpacity
               onPress={openLabel}
               activeOpacity={0.8}
-              disabled={!shipment.labelUrl}
+              disabled={!shipment.awb || labelLoading}
               className={`flex-1 h-11 rounded-xl flex-row items-center justify-center gap-2 border ${
-                shipment.labelUrl ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100'
+                shipment.awb ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100'
               }`}
             >
               <Feather
                 name="download"
                 size={15}
-                color={shipment.labelUrl ? '#334155' : '#94A3B8'}
+                color={shipment.awb ? '#334155' : '#94A3B8'}
               />
               <Text
                 className={`text-xs font-raleway-bold ${
-                  shipment.labelUrl ? 'text-slate-700' : 'text-slate-400'
+                  shipment.awb ? 'text-slate-700' : 'text-slate-400'
                 }`}
               >
-                Label
+                {labelLoading ? 'Opening…' : 'Label'}
               </Text>
             </TouchableOpacity>
           </View>

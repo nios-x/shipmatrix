@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useBlurTarget } from './BlurTarget';
 
 // ─── Glass tokens ───────────────────────────────────────
 const ACCENT = '#7c3aed';
@@ -58,21 +59,32 @@ const webGlass =
  * The frosted pane: real blur on native, backdrop-filter on web, with a
  * top-lit gradient sheen and a specular highlight along the upper edge so the
  * surface reads as glass rather than as flat translucent plastic.
+ *
+ * The tint gradients are deliberately light. Anything heavier than ~0.3 alpha
+ * white paints over the blurred backdrop and the bar goes back to looking like
+ * frosted plastic — the blur has to stay legible through them.
  */
 function GlassSurface() {
+  const blurTarget = useBlurTarget();
+  // Android needs an explicit blur target; without one expo-blur falls back to
+  // `none` (a flat translucent fill) and logs a warning, so only ask for the
+  // dimezis method once we actually have a target to sample.
+  const androidBlur = Platform.OS === 'android' && blurTarget != null;
+
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <BlurView
         tint="light"
-        intensity={Platform.OS === 'android' ? 70 : 60}
-        blurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
-        blurReductionFactor={4}
+        intensity={Platform.OS === 'android' ? 85 : 55}
+        blurTarget={blurTarget ?? undefined}
+        blurMethod={androidBlur ? 'dimezisBlurView' : undefined}
+        blurReductionFactor={3}
         style={StyleSheet.absoluteFill}
       />
 
       {/* Tint + top-down sheen */}
       <LinearGradient
-        colors={['rgba(255,255,255,0.62)', 'rgba(255,255,255,0.34)', 'rgba(248,250,252,0.30)']}
+        colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.14)', 'rgba(248,250,252,0.10)']}
         locations={[0, 0.55, 1]}
         start={{ x: 0.1, y: 0 }}
         end={{ x: 0.9, y: 1 }}
@@ -292,8 +304,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 24,
     elevation: 14,
-    // Android drops the elevation shadow without an opaque-ish backing layer.
-    backgroundColor: Platform.OS === 'android' ? 'rgba(255,255,255,0.55)' : 'transparent',
+    // Android drops the elevation shadow without a backing layer, but keep it
+    // faint — the BlurView paints over it, and anything heavier is what shows
+    // through if the blur is ever unavailable.
+    backgroundColor: Platform.OS === 'android' ? 'rgba(255,255,255,0.22)' : 'transparent',
   },
   bar: {
     height: BAR_HEIGHT,
@@ -303,7 +317,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth * 2,
     borderColor: 'rgba(255,255,255,0.65)',
-    backgroundColor: Platform.OS === 'web' ? 'rgba(255,255,255,0.42)' : 'transparent',
+    backgroundColor: Platform.OS === 'web' ? 'rgba(255,255,255,0.18)' : 'transparent',
   },
   topHighlight: {
     position: 'absolute',
