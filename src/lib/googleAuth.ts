@@ -9,8 +9,8 @@ import {
   signInWithCredential,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { auth } from './firebase';
+import { ensureUserProfile } from './userProfile';
 import { toast } from './alert';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -153,33 +153,6 @@ function describeAuthError(code?: string | null, description?: string | null): s
   }
 }
 
-/**
- * Create the user's Firestore document on first sign-in.
- * Returns true when a new document was written.
- */
-async function handleUserProvisioning(user: any): Promise<boolean> {
-  const userRef = doc(db, 'users', user.uid);
-  const userSnap = await getDoc(userRef);
-
-  if (userSnap.exists()) return false;
-
-  await setDoc(userRef, {
-    name: user.displayName || user.email?.split('@')[0] || 'Google User',
-    email: user.email || '',
-    phone: user.phoneNumber || '',
-    companyName: user.displayName ? `${user.displayName}'s Company` : 'My Business',
-    gstNo: '',
-    noOfOrders: '0-50',
-    companyType: 'B2C',
-    role: 'user',
-    walletBalance: 0,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  return true;
-}
-
 /** Exchange a Google ID token for a Firebase session and provision the user. */
 async function completeFirebaseSignIn(
   idToken: string,
@@ -194,7 +167,7 @@ async function completeFirebaseSignIn(
   // over a screen that is busy succeeding.
   let isNewUser: boolean | undefined;
   try {
-    isNewUser = await handleUserProvisioning(userCred.user);
+    isNewUser = await ensureUserProfile(userCred.user);
   } catch (err) {
     console.warn('[googleAuth] signed in, but writing the user document failed', err);
   }
@@ -213,7 +186,7 @@ async function signInWithGoogleWeb(): Promise<GoogleSignInResult> {
   const userCred = await signInWithPopup(auth, provider);
   let isNewUser: boolean | undefined;
   try {
-    isNewUser = await handleUserProvisioning(userCred.user);
+    isNewUser = await ensureUserProfile(userCred.user);
   } catch (err) {
     console.warn('[googleAuth] signed in, but writing the user document failed', err);
   }

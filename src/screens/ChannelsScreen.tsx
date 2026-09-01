@@ -23,9 +23,10 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { api } from '../lib/api';
+import { api, PAYMENTS_BASE_URL } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Channel = 'shopify' | 'woocommerce' | 'custom';
@@ -70,15 +71,18 @@ export default function ChannelsScreen() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [importing, setImporting] = useState(false);
   const [orders, setOrders] = useState<any[]>([]);
+  const { confirm, confirmDialog } = useConfirm();
 
   // Credentials default to what's saved on the profile; an edit becomes an
   // override so the saved values appear as soon as the profile loads.
   const [shopifyEdit, setShopifyEdit] = useState<{ domain: string; accessToken: string } | null>(
     null
   );
+  // The token is never read back: the server keeps it and returns only a
+  // connected flag, so this field starts empty and is for (re)connecting.
   const shopify = shopifyEdit ?? {
     domain: user?.integrations?.shopify?.domain || '',
-    accessToken: user?.integrations?.shopify?.accessToken || '',
+    accessToken: '',
   };
   const setShopify = (update: (prev: typeof shopify) => typeof shopify) =>
     setShopifyEdit(update(shopify));
@@ -88,13 +92,20 @@ export default function ChannelsScreen() {
   );
   const woo = wooEdit ?? {
     domain: user?.integrations?.woocommerce?.domain || '',
-    key: user?.integrations?.woocommerce?.key || '',
-    secret: user?.integrations?.woocommerce?.secret || '',
+    key: '',
+    secret: '',
   };
   const setWoo = (update: (prev: typeof woo) => typeof woo) => setWooEdit(update(woo));
 
+  // Enough typed in to *save* a connection.
   const shopifyReady = !!(shopify.domain && shopify.accessToken);
   const wooReady = !!(woo.domain && woo.key && woo.secret);
+
+  // Already connected, per the server-written summary on the profile. Importing
+  // depends on this rather than on holding a token locally.
+  const shopifyConnected = !!user?.integrations?.shopify?.connected;
+  const wooConnected = !!user?.integrations?.woocommerce?.connected;
+  const activeConnected = activeTab === 'shopify' ? shopifyConnected : wooConnected;
 
   const handleSaveShopify = async () => {
     if (!auth.currentUser) return;
@@ -104,18 +115,16 @@ export default function ChannelsScreen() {
     }
     setSaving(true);
     try {
-      const domain = cleanDomain(shopify.domain);
-      // Registers the fulfilment webhooks on the store before persisting.
-      await api.post('/api/integrations/shopify/setup', {
-        userId: auth.currentUser.uid,
-        domain,
+      // The token goes to the server once and stays there. It used to be
+      // written into this user's own Firestore document and then appended to
+      // the orders URL as a query parameter, which put a store-modifying
+      // credential in every access log along the way.
+      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/shopify/connect`, {
+        domain: cleanDomain(shopify.domain),
         token: shopify.accessToken.trim(),
       });
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        'integrations.shopify.domain': domain,
-        'integrations.shopify.accessToken': shopify.accessToken.trim(),
-      });
-      toast.success('Shopify Connected', 'Store saved and webhooks registered.');
+      setShopifyEdit(null);
+      toast.success('Shopify Connected', 'Store credentials saved securely.');
     } catch (e: any) {
       toast.error('Connection Failed', e.message || 'Could not connect the Shopify store.');
     } finally {
@@ -131,12 +140,13 @@ export default function ChannelsScreen() {
     }
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        'integrations.woocommerce.domain': cleanDomain(woo.domain),
-        'integrations.woocommerce.key': woo.key.trim(),
-        'integrations.woocommerce.secret': woo.secret.trim(),
+      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/woocommerce/connect`, {
+        domain: cleanDomain(woo.domain),
+        key: woo.key.trim(),
+        secret: woo.secret.trim(),
       });
-      toast.success('WooCommerce Connected', 'Store credentials saved.');
+      setWooEdit(null);
+      toast.success('WooCommerce Connected', 'Store credentials saved securely.');
     } catch {
       toast.error('Error', 'Could not save the WooCommerce credentials.');
     } finally {
@@ -144,22 +154,28 @@ export default function ChannelsScreen() {
     }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = () => {
+    if (!auth.currentUser) return;
+    confirm(
+      {
+        title: 'Disconnect Store',
+        message: `Are you sure you want to disconnect your ${activeTab === 'shopify' ? 'Shopify' : 'WooCommerce'} store? Saved credentials will be cleared and orders will stop syncing.`,
+        confirmText: 'Yes, Disconnect',
+        destructive: true,
+      },
+      disconnectStore
+    );
+  };
+
+  const disconnectStore = async () => {
     if (!auth.currentUser) return;
     setSaving(true);
     try {
-      if (activeTab === 'shopify') {
-        await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-          'integrations.shopify.accessToken': null,
-        });
-        setShopify((p) => ({ ...p, accessToken: '' }));
-      } else {
-        await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-          'integrations.woocommerce.key': '',
-          'integrations.woocommerce.secret': '',
-        });
-        setWoo((p) => ({ ...p, key: '', secret: '' }));
-      }
+      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/disconnect`, {
+        channel: activeTab === 'shopify' ? 'shopify' : 'woocommerce',
+      });
+      if (activeTab === 'shopify') setShopifyEdit(null);
+      else setWooEdit(null);
       setOrders([]);
       toast.success('Disconnected', 'The store has been unlinked.');
     } catch {
@@ -174,7 +190,7 @@ export default function ChannelsScreen() {
     if (!auth.currentUser) return;
     const source = activeTab;
     if (source === 'custom') return;
-    if (source === 'shopify' ? !shopifyReady : !wooReady) {
+    if (!activeConnected) {
       toast.warning('Not Connected', 'Save your store credentials first.');
       return;
     }
@@ -189,16 +205,14 @@ export default function ChannelsScreen() {
       );
       const existingIds = new Set(existing.docs.map((d) => String(d.data().orderId)));
 
-      const endpoint =
-        source === 'shopify'
-          ? `/api/integrations/shopify/orders?domain=${encodeURIComponent(
-              cleanDomain(shopify.domain)
-            )}&token=${encodeURIComponent(shopify.accessToken.trim())}`
-          : `/api/integrations/woocommerce/orders?domain=${encodeURIComponent(
-              cleanDomain(woo.domain)
-            )}&key=${encodeURIComponent(woo.key)}&secret=${encodeURIComponent(woo.secret)}`;
-
-      const data = await api.get(endpoint);
+      // Only the channel name travels. The server holds the credentials and
+      // decides which ones to use from the verified uid — the previous version
+      // put the Shopify token and the Woo secret in the query string.
+      const data = await api.get(
+        `${PAYMENTS_BASE_URL}/api/integrations/orders?channel=${
+          source === 'shopify' ? 'shopify' : 'woocommerce'
+        }`
+      );
       const fetched: any[] = data.orders || [];
 
       const fresh = fetched
@@ -223,7 +237,7 @@ export default function ChannelsScreen() {
     } finally {
       setLoadingOrders(false);
     }
-  }, [activeTab, shopify, woo, shopifyReady, wooReady]);
+  }, [activeTab, activeConnected]);
 
   /** Maps a store order onto the canonical shipment shape. */
   const mapOrder = (order: any, source: Channel) => {
@@ -299,8 +313,20 @@ export default function ChannelsScreen() {
     };
   };
 
-  const importAll = async () => {
+  const importAll = () => {
     if (!auth.currentUser || orders.length === 0) return;
+    confirm(
+      {
+        title: 'Confirm Import',
+        message: `Are you sure you want to import ${orders.length} order${orders.length === 1 ? '' : 's'} from your ${activeTab === 'shopify' ? 'Shopify' : 'WooCommerce'} store as drafts?`,
+        confirmText: `Yes, Import ${orders.length}`,
+      },
+      runImport
+    );
+  };
+
+  const runImport = async () => {
+    if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
     const source = activeTab;
 
@@ -336,7 +362,9 @@ export default function ChannelsScreen() {
     }
   };
 
-  const connected = activeTab === 'shopify' ? shopifyReady : wooReady;
+  // What the UI calls connected is the server's stored link, not whatever is
+  // currently typed into the credential fields.
+  const connected = activeConnected;
 
   return (
     <KeyboardAvoidingView
@@ -576,6 +604,8 @@ export default function ChannelsScreen() {
           </>
         )}
       </ScrollView>
+
+      {confirmDialog}
     </KeyboardAvoidingView>
   );
 }

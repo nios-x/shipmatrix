@@ -7,7 +7,6 @@ import {
   TextInput,
   Modal,
   Linking,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -17,6 +16,7 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { CourierLogo } from '../components/CourierLogo';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { api } from '../lib/api';
 import { auth, db } from '../lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -27,6 +27,7 @@ export default function NdrScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { shipments, loading } = useShipments();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'ACTION_REQ' | 'REATTEMPT' | 'RTO'>('ALL');
   const [selectedShipment, setSelectedShipment] = useState<any>(null);
@@ -85,36 +86,36 @@ export default function NdrScreen() {
   };
 
   const handleRequestRTO = (item: any) => {
-    Alert.alert(
-      'Confirm RTO',
-      `Are you sure you want to return shipment (AWB: ${item.awb}) back to your origin address?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Request RTO',
-          style: 'destructive',
-          onPress: async () => {
-            if (!item.awb) {
-              toast.warning('No AWB', 'This shipment has no AWB to return.');
-              return;
-            }
-            setActioning(true);
-            try {
-              const res = await api.post('/api/v1/shipments/mark-rto', { awb: item.awb });
-              if (res.success) {
-                toast.success('RTO Initiated', `Return to Origin initiated for AWB ${item.awb}.`);
-              } else {
-                toast.error('RTO Failed', res.message || 'Could not initiate the return.');
-              }
-            } catch (e: any) {
-              toast.error('RTO Failed', e.message || 'Could not initiate the return.');
-            } finally {
-              setActioning(false);
-            }
-          },
-        },
-      ]
+    if (!item.awb) {
+      toast.warning('No AWB', 'This shipment has no AWB to return.');
+      return;
+    }
+
+    confirm(
+      {
+        title: 'Confirm RTO',
+        message: `Are you sure you want to return this order (AWB: ${item.awb}) back to your origin address? The delivery will be stopped and return freight will be charged.`,
+        confirmText: 'Yes, Return Order',
+        destructive: true,
+      },
+      () => requestRTO(item)
     );
+  };
+
+  const requestRTO = async (item: any) => {
+    setActioning(true);
+    try {
+      const res = await api.post('/api/v1/shipments/mark-rto', { awb: item.awb });
+      if (res.success) {
+        toast.success('RTO Initiated', `Return to Origin initiated for AWB ${item.awb}.`);
+      } else {
+        toast.error('RTO Failed', res.message || 'Could not initiate the return.');
+      }
+    } catch (e: any) {
+      toast.error('RTO Failed', e.message || 'Could not initiate the return.');
+    } finally {
+      setActioning(false);
+    }
   };
 
   if (loading) return <LoadingSpinner fullScreen message="Loading NDR Shipments..." />;
@@ -334,6 +335,8 @@ export default function NdrScreen() {
           </View>
         </View>
       </Modal>
+
+      {confirmDialog}
     </View>
   );
 }

@@ -4,6 +4,7 @@ import { Feather } from '@expo/vector-icons';
 import { usePincode } from '../lib/usePincode';
 import { isWarehouseComplete } from '../lib/shipments';
 import type { WarehouseData } from '../types';
+import { onlyDigits, singleSpaced } from '../lib/inputs';
 
 function Field({
   label,
@@ -55,29 +56,33 @@ export function WarehouseForm({
       <Field
         label="Warehouse Name"
         value={value.name}
-        onChangeText={set('name')}
+        onChangeText={(v) => set('name')(singleSpaced(v))}
         placeholder="e.g. Main Warehouse"
+        autoCapitalize="words"
         hint="Must match the pickup location registered with your courier."
       />
       <Field
         label="Contact Phone"
         value={value.phone}
-        onChangeText={set('phone')}
+        onChangeText={(v) => set('phone')(onlyDigits(v, 10))}
         placeholder="9876543210"
-        keyboardType="phone-pad"
+        keyboardType="number-pad"
         maxLength={10}
+        autoComplete="tel"
+        hint="10-digit mobile starting 6-9. Couriers reject anything else and fall back to a placeholder number."
       />
       <Field
         label="Address"
         value={value.address}
-        onChangeText={set('address')}
+        onChangeText={(v) => set('address')(singleSpaced(v))}
         placeholder="Street, area, landmark"
+        autoCapitalize="words"
         multiline
       />
       <Field
         label={loading ? 'Pincode (looking up…)' : 'Pincode'}
         value={value.pincode}
-        onChangeText={set('pincode')}
+        onChangeText={(v) => set('pincode')(onlyDigits(v, 6))}
         placeholder="201301"
         keyboardType="number-pad"
         maxLength={6}
@@ -98,10 +103,10 @@ export function WarehouseForm({
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Field label="City" value={value.city} onChangeText={set('city')} placeholder="Noida" />
+          <Field label="City" value={value.city} onChangeText={(v) => set('city')(singleSpaced(v))} placeholder="Noida" autoCapitalize="words" />
         </View>
         <View className="flex-1">
-          <Field label="State" value={value.state} onChangeText={set('state')} placeholder="UP" />
+          <Field label="State" value={value.state} onChangeText={(v) => set('state')(singleSpaced(v))} placeholder="UP" autoCapitalize="words" />
         </View>
       </View>
 

@@ -1,98 +1,25 @@
-import { useState, useEffect } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import type { User as AuthUser } from 'firebase/auth';
-import { auth, db } from './firebase';
-import { handleFirestoreError, OperationType } from './firebase-utils';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../store';
 import type { User } from '../types';
 
 /**
- * A user document can come into existence without ever passing through signup —
- * the payments server creates one with a merge-write when it credits a wallet,
- * for instance — which leaves a profile with a balance but no identity. Auth
- * holds the real name and email, so fill them in the first time we notice.
+ * The signed-in user's profile.
  *
- * Deliberately never writes `role` or `walletBalance`. Those are privilege and
- * money: `role === 'admin'` unlocks the admin panel, and the balance is the
- * payment server's alone. Neither may be set by a client.
+ * This is a read of the store, not a subscription of its own. It used to open
+ * its own `onAuthStateChanged` plus an `onSnapshot` on `users/{uid}` per call
+ * site, and a dozen screens call it — so a single dashboard held a dozen live
+ * listeners on one document, and the identity backfill fired from every one of
+ * them at once as a pile of identical concurrent writes. RootNavigator owns the
+ * one listener now and writes what it sees into the store.
+ *
+ * The shape is unchanged (`{ user, loading }`) so call sites did not have to move.
  */
-async function backfillIdentity(
-  authUser: AuthUser,
-  data: Record<string, unknown> | undefined
-): Promise<void> {
-  const patch: Record<string, string> = {};
-  if (!data?.name && authUser.displayName) patch.name = authUser.displayName;
-  if (!data?.email && authUser.email) patch.email = authUser.email;
-  if (Object.keys(patch).length === 0) return;
-
-  try {
-    // The resulting snapshot re-runs this with the fields now present, so the
-    // patch comes out empty and it settles after one write.
-    await updateDoc(doc(db, 'users', authUser.uid), patch);
-  } catch (e) {
-    // Best effort. The screen already rendered whatever the document had.
-    handleFirestoreError(e, OperationType.UPDATE, `users/${authUser.uid}`);
-  }
-}
-
-export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let unsubscribeSnapshot: (() => void) | null = null;
-
-    const unsubscribeAuth = auth.onAuthStateChanged(async (authUser) => {
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-        unsubscribeSnapshot = null;
-      }
-
-      if (authUser) {
-        unsubscribeSnapshot = onSnapshot(
-          doc(db, 'users', authUser.uid),
-          (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-              setUser({ id: docSnap.id, ...data } as User);
-              void backfillIdentity(authUser, data);
-            } else {
-              // Creating minimal user state so they aren't blocked silently.
-              // Name and email are carried over from the Auth record — signup
-              // writes both there via updateProfile — otherwise the profile
-              // renders as an anonymous "User" with no email.
-              setUser({
-                id: authUser.uid,
-                name: authUser.displayName || undefined,
-                email: authUser.email || undefined,
-                role: 'user',
-                walletBalance: 0,
-                needsOnboarding: true,
-              });
-            }
-            setLoading(false);
-          },
-          (error) => {
-            handleFirestoreError(
-              error,
-              OperationType.GET,
-              `users/${authUser.uid}`
-            );
-            setLoading(false);
-          }
-        );
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => {
-      if (unsubscribeSnapshot) {
-        unsubscribeSnapshot();
-      }
-      unsubscribeAuth();
-    };
-  }, []);
+export function useUser(): { user: User | null; loading: boolean } {
+  // Two selectors rather than one returning `{ user, loading }`: react-redux
+  // compares results by reference, so a fresh object would re-render every
+  // consumer on every dispatched action, wallet and shipments included.
+  const user = useSelector((state: RootState) => state.auth.user);
+  const loading = useSelector((state: RootState) => state.auth.isLoading);
 
   return { user, loading };
 }

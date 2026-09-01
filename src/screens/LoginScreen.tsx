@@ -18,8 +18,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { useGoogleSignIn, isGoogleSignInConfigured } from '../lib/googleAuth';
@@ -70,14 +69,12 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const userCred = await signInWithEmailAndPassword(auth, trimmedEmail, password);
-      const userRef = doc(db, 'users', userCred.user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        navigation.navigate('Signup', { fromGoogle: false });
-      }
-      // Auth state listener in RootNavigator handles the rest
+      // RootNavigator's auth listener takes it from here — including the case
+      // where the profile document is missing, which it repairs itself. This
+      // used to check for that and navigate to Signup, which could never run:
+      // signing in flips `isAuthenticated`, and the whole Auth stack (this
+      // screen included) is unmounted before the navigate lands.
+      await signInWithEmailAndPassword(auth, trimmedEmail, password);
     } catch (err: any) {
       // Firebase's email-enumeration protection — on by default for projects
       // created since late 2023 — reports a missing account and a wrong
@@ -423,7 +420,7 @@ export default function LoginScreen() {
           <Text className="text-xs font-raleway text-gray-500">
             Don't have an account?{' '}
           </Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup', {})}>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
             <Text className="font-raleway-bold text-xs text-purple-600">Sign up</Text>
           </TouchableOpacity>
         </View>

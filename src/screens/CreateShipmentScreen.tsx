@@ -7,22 +7,21 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../lib/firebase';
-import { api } from '../lib/api';
-import { doc, addDoc, collection, serverTimestamp, updateDoc, increment } from 'firebase/firestore';
+import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useUser } from '../lib/useUser';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { CustomAlertModal } from '../components/CustomAlertModal';
+import { useConfirm } from '../components/useConfirm';
 import { toast } from '../lib/alert';
 import { usePincode } from '../lib/usePincode';
 import {
-  courierEndpoint,
+  bookingKey,
   warehousePayload,
   isWarehouseComplete,
   generateOrderId,
@@ -32,6 +31,17 @@ import { WarehouseForm } from '../components/WarehouseForm';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 import { parseRates, type RateResult } from '../lib/rates';
+import {
+  onlyDigits,
+  onlyDecimal,
+  singleSpaced,
+  checkPincode,
+  checkMobile,
+  checkOptionalEmail,
+  checkNumberInRange,
+  firstError,
+  LIMITS,
+} from '../lib/inputs';
 
 type Step = 'form' | 'rates' | 'booking';
 
@@ -44,6 +54,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   const navigation = propNavigation || hookNavigation;
   const route = propRoute || hookRoute;
   const { user } = useUser();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [step, setStep] = useState<Step>('form');
   const [loading, setLoading] = useState(false);
@@ -125,8 +136,29 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   };
 
   const handleGetRates = async () => {
-    if (!warehouse.pincode || !form.pincode || !form.weight) {
-      toast.warning('Missing Info', 'Please fill pickup pincode, delivery pincode, and weight.');
+    // Everything is validated here rather than at booking: the user picks a
+    // courier off the rates list, and being sent back to fix a phone number
+    // after choosing one loses that choice. These bounds mirror the server's
+    // schema, so anything accepted here is accepted by /api/shipments/book.
+    const problem = firstError([
+      checkPincode(warehouse.pincode, 'Pickup pincode'),
+      checkPincode(form.pincode, 'Delivery pincode'),
+      form.customerName.trim() ? null : 'Customer name is required.',
+      checkMobile(form.customerPhone, 'Customer phone'),
+      checkOptionalEmail(form.customerEmail, 'Customer email'),
+      form.address.trim() ? null : 'Delivery address is required.',
+      checkNumberInRange(form.weight, LIMITS.weightKg, 'Weight', ' kg'),
+      form.length ? checkNumberInRange(form.length, LIMITS.dimensionCm, 'Length', ' cm') : null,
+      form.breadth ? checkNumberInRange(form.breadth, LIMITS.dimensionCm, 'Width', ' cm') : null,
+      form.height ? checkNumberInRange(form.height, LIMITS.dimensionCm, 'Height', ' cm') : null,
+      // COD collects this amount from the customer, so it cannot be zero.
+      form.paymentMethod === 'COD'
+        ? checkNumberInRange(form.orderValue, LIMITS.orderValue, 'Order value', '')
+        : null,
+    ]);
+
+    if (problem) {
+      toast.warning('Check the form', problem);
       return;
     }
 
@@ -135,7 +167,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       // `/api/rates` uses the lowercase `paymentType` vocabulary, unlike the
       // create-shipment routes which expect title-case `paymentMethod`.
       const isCodOrder = form.paymentMethod === 'COD';
-      const data = await api.post('/api/rates', {
+      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
         pickupPincode: warehouse.pincode,
         deliveryPincode: form.pincode,
         weight: form.weight,
@@ -160,9 +192,14 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     }
   };
 
-  const handleBookShipment = async (rate: RateItem) => {
+  /**
+   * Runs the guards first so a blocked booking never gets a pointless
+   * confirmation, then asks before spending wallet balance — booking bills the
+   * wallet immediately, and undoing it depends on the courier still accepting
+   * a cancellation.
+   */
+  const handleBookShipment = (rate: RateItem) => {
     if (!auth.currentUser) return;
-    const uid = auth.currentUser.uid;
 
     // A registered pickup location is mandatory: couriers match
     // `pickupLocationName` against a warehouse registered on their side, and
@@ -184,15 +221,46 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       return;
     }
 
+    confirm(
+      {
+        title: 'Confirm Order',
+        message: `Are you sure you want to place this order with ${rate.carrier_name}? ₹${rate.freight_charge} will be deducted from your wallet, and refunded only if you cancel the order while the courier still allows it.`,
+        confirmText: 'Yes, Place Order',
+      },
+      () => bookShipment(rate)
+    );
+  };
+
+  /**
+   * Hands the whole booking to the payments server, which prices it, debits the
+   * wallet, calls the courier and writes the shipment inside one flow it
+   * controls. None of that can happen here: a client that can debit its own
+   * `walletBalance` can just as easily credit it, so the Firestore rules that
+   * would allow this screen to do the bookkeeping are the same rules that let
+   * anyone hand themselves free shipping.
+   *
+   * `freight_charge` still travels, but only so the server can refuse a booking
+   * whose displayed price has drifted from the live quote. The amount charged
+   * is the server's own.
+   */
+  const bookShipment = async (rate: RateItem) => {
+    if (!auth.currentUser) return;
+
     setLoading(true);
     try {
       const finalOrderId = form.orderId || generateOrderId();
-      const isCodOrder = form.paymentMethod === 'COD';
       // The server derives both `cod_amount` and `total_amount` from
       // `orderValue`, so it must never be zero.
       const orderValue = parseFloat(form.orderValue) || 1;
 
-      const shipmentPayload = {
+      const res = await api.post(`${PAYMENTS_BASE_URL}/api/shipments/book`, {
+        // Survives a retry: the same attempt must never be charged twice, and a
+        // dropped response is exactly when the user taps Book again.
+        idempotencyKey: bookingKey(finalOrderId, rate.carrier_id),
+        carrierId: rate.carrier_id,
+        quotedCharge: rate.freight_charge,
+        isReverse: false,
+
         orderId: finalOrderId,
         customerName: form.customerName,
         customerEmail: form.customerEmail,
@@ -210,89 +278,18 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         senderName: user?.businessName || user?.name || 'Shipmatrix',
         orderValue,
         productName: form.productName || 'Products',
-        courier: rate.carrier_id,
-        courierName: rate.carrier_name,
-        expedited: rate.carrier_id.startsWith('delhivery'),
-      };
+      });
 
-      const res = await api.post(
-        `/api/${courierEndpoint(rate.carrier_id)}/create-shipment`,
-        shipmentPayload
-      );
+      toast.success('Shipment Booked!', `AWB: ${res.awb}`);
 
-      if (res.success || res.awb) {
-        const awb = res.awb || res.tracking_id || '';
-
-        // Persist in the canonical shape shared with the web app and admin
-        // panel — flat destination fields, title-case status/paymentMethod.
-        // `userId` is required for the server's collectionGroup queries, and
-        // the status must be one the `/api/v1/shipments/sync-all` job polls or
-        // the shipment will never receive tracking updates.
-        await addDoc(collection(db, `users/${uid}/shipments`), {
-          userId: uid,
-          source: 'mobile',
-          orderId: finalOrderId,
-          customerName: form.customerName,
-          customerEmail: form.customerEmail,
-          customerPhone: form.customerPhone,
-          address: form.address,
-          city,
-          state: state || city,
-          pincode: form.pincode,
-          weight: parseFloat(form.weight) || 0.5,
-          length: parseFloat(form.length) || 10,
-          breadth: parseFloat(form.breadth) || 10,
-          height: parseFloat(form.height) || 10,
-          pickupLocationName: warehouse.name,
-          pickupAddress: warehouse.address,
-          pickupCity: warehouse.city,
-          pickupState: warehouse.state,
-          pickupPincode: warehouse.pincode,
-          pickupPhone: warehouse.phone,
-          productName: form.productName || 'Products',
-          paymentMethod: form.paymentMethod,
-          orderValue,
-          codAmount: isCodOrder ? orderValue : 0,
-          awb,
-          courier: rate.carrier_name,
-          courierName: rate.carrier_name,
-          carrierId: rate.carrier_id,
-          status: 'Ready to Pickup',
-          amount: rate.freight_charge,
-          freightCharge: rate.freight_charge,
-          labelUrl: res.labelUrl || res.label_url || res.label || '',
-          shipmentId: res.shipmentId || res.shipment_id || '',
-          pkgRefId: res.pkgRefId || res.pkg_ref_id || finalOrderId,
-          createdAt: serverTimestamp(),
-        });
-
-        // Deduct wallet
-        const userRef = doc(db, 'users', uid);
-        await updateDoc(userRef, {
-          walletBalance: increment(-rate.freight_charge),
-        });
-
-        // Record transaction
-        await addDoc(collection(db, `users/${uid}/transactions`), {
-          type: 'debit',
-          amount: rate.freight_charge,
-          description: `Shipment booked - ${rate.carrier_name} - AWB: ${awb}`,
-          createdAt: serverTimestamp(),
-        });
-
-        toast.success('Shipment Booked!', `AWB: ${awb}`);
-
-        setBookingResult({
-          ...res,
-          courier: rate.carrier_name,
-          charge: rate.freight_charge,
-        });
-        setStep('booking');
-      } else {
-        toast.error('Booking Failed', res.error || 'Could not book shipment.');
-      }
+      setBookingResult({
+        ...res,
+        courier: res.courier || rate.carrier_name,
+        charge: res.charge,
+      });
+      setStep('booking');
     } catch (err: any) {
-      toast.error('Error', err.message || 'Booking failed');
+      toast.error('Booking Failed', err?.message || 'Could not book shipment.');
     } finally {
       setLoading(false);
     }
@@ -312,9 +309,9 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
 
       >
-        <InputField label="Name" value={form.customerName} onChangeText={(v) => updateField('customerName', v)} placeholder="Customer name" icon="user" />
-        <InputField label="Phone" value={form.customerPhone} onChangeText={(v) => updateField('customerPhone', v)} placeholder="9876543210" icon="phone" keyboardType="phone-pad" />
-        <InputField label="Email" value={form.customerEmail} onChangeText={(v) => updateField('customerEmail', v)} placeholder="customer@email.com" icon="mail" keyboardType="email-address" />
+        <InputField label="Name" value={form.customerName} onChangeText={(v) => updateField('customerName', singleSpaced(v))} placeholder="Customer name" icon="user" autoCapitalize="words" maxLength={120} />
+        <InputField label="Phone" value={form.customerPhone} onChangeText={(v) => updateField('customerPhone', onlyDigits(v, 10))} placeholder="9876543210" icon="phone" keyboardType="number-pad" maxLength={10} autoComplete="tel" />
+        <InputField label="Email" value={form.customerEmail} onChangeText={(v) => updateField('customerEmail', v.trim())} placeholder="customer@email.com" icon="mail" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" maxLength={160} />
       </View>
 
       {/* Delivery Address */}
@@ -325,21 +322,21 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
 
       >
-        <InputField label="Address" value={form.address} onChangeText={(v) => updateField('address', v)} placeholder="Full address" icon="map-pin" multiline />
+        <InputField label="Address" value={form.address} onChangeText={(v) => updateField('address', singleSpaced(v))} placeholder="Full address" icon="map-pin" multiline autoCapitalize="words" maxLength={500} />
         <InputField
           label={resolvingCity ? 'Delivery Pincode (looking up…)' : 'Delivery Pincode'}
           value={form.pincode}
-          onChangeText={(v) => updateField('pincode', v)}
+          onChangeText={(v) => updateField('pincode', onlyDigits(v, 6))}
           placeholder="110001"
           keyboardType="number-pad"
           maxLength={6}
         />
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="City" value={city} onChangeText={(v) => updateField('city', v)} placeholder="City" />
+            <InputField label="City" value={city} onChangeText={(v) => updateField('city', singleSpaced(v))} placeholder="City" autoCapitalize="words" maxLength={80} />
           </View>
           <View className="flex-1">
-            <InputField label="State" value={state} onChangeText={(v) => updateField('state', v)} placeholder="State" />
+            <InputField label="State" value={state} onChangeText={(v) => updateField('state', singleSpaced(v))} placeholder="State" autoCapitalize="words" maxLength={80} />
           </View>
         </View>
       </View>
@@ -375,21 +372,21 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         <InputField label="Product Name" value={form.productName} onChangeText={(v) => updateField('productName', v)} placeholder="Product description" icon="package" />
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="Weight (kg)" value={form.weight} onChangeText={(v) => updateField('weight', v)} placeholder="0.5" keyboardType="decimal-pad" />
+            <InputField label="Weight (kg)" value={form.weight} onChangeText={(v) => updateField('weight', onlyDecimal(v, 4, 3))} placeholder="0.5" keyboardType="decimal-pad" maxLength={8} />
           </View>
           <View className="flex-1">
-            <InputField label="Order Value (₹)" value={form.orderValue} onChangeText={(v) => updateField('orderValue', v)} placeholder="500" keyboardType="number-pad" />
+            <InputField label="Order Value (₹)" value={form.orderValue} onChangeText={(v) => updateField('orderValue', onlyDigits(v, 8))} placeholder="500" keyboardType="number-pad" maxLength={8} />
           </View>
         </View>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="L (cm)" value={form.length} onChangeText={(v) => updateField('length', v)} placeholder="10" keyboardType="number-pad" />
+            <InputField label="L (cm)" value={form.length} onChangeText={(v) => updateField('length', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
           </View>
           <View className="flex-1">
-            <InputField label="W (cm)" value={form.breadth} onChangeText={(v) => updateField('breadth', v)} placeholder="10" keyboardType="number-pad" />
+            <InputField label="W (cm)" value={form.breadth} onChangeText={(v) => updateField('breadth', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
           </View>
           <View className="flex-1">
-            <InputField label="H (cm)" value={form.height} onChangeText={(v) => updateField('height', v)} placeholder="10" keyboardType="number-pad" />
+            <InputField label="H (cm)" value={form.height} onChangeText={(v) => updateField('height', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
           </View>
         </View>
 
@@ -625,7 +622,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         Charge: <Text className="font-bold text-slate-800">₹{bookingResult?.charge}</Text>
       </Text>
       <TouchableOpacity
-        onPress={() => navigation.goBack()}
+        onPress={() => navigation.navigate('Orders')}
         activeOpacity={0.8}
         className="bg-violet-600 px-8 py-3.5 rounded-xl shadow-sm shadow-violet-500/20"
       >
@@ -724,6 +721,8 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       ) : (
         renderBookingSuccess()
       )}
+
+      {confirmDialog}
     </KeyboardAvoidingView>
   );
 }
@@ -736,6 +735,9 @@ function InputField({
   placeholder,
   icon,
   keyboardType,
+  autoCapitalize,
+  autoCorrect,
+  autoComplete,
   maxLength,
   multiline,
 }: {
@@ -745,6 +747,9 @@ function InputField({
   placeholder: string;
   icon?: string;
   keyboardType?: any;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
+  autoComplete?: any;
   maxLength?: number;
   multiline?: boolean;
 }) {
@@ -763,6 +768,9 @@ function InputField({
           placeholder={placeholder}
           placeholderTextColor="#9ca3af"
           keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+          autoComplete={autoComplete}
           maxLength={maxLength}
           multiline={multiline}
           style={{ textAlignVertical: multiline ? 'top' : 'center' }}

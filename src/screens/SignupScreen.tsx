@@ -14,17 +14,18 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import { Feather } from '@expo/vector-icons';
 import {
-  createUserWithEmailAndPassword,
-  updateProfile,
+  signInWithCustomToken,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { useGoogleSignIn, isGoogleSignInConfigured } from '../lib/googleAuth';
-import { sendOtp, verifyOtp } from '../lib/otp';
+import { sendOtp, registerWithOtp } from '../lib/otp';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
+
+/** Digits in an emailed code, as the payments server generates them. */
+const OTP_LENGTH = 6;
 
 export default function SignupScreen() {
   const navigation = useNavigation<Nav>();
@@ -147,65 +148,54 @@ export default function SignupScreen() {
   const handleVerifyAndSignup = async () => {
     setError('');
 
-    if (!otpCode.trim()) {
-      setError('Enter the code we emailed you');
+    // The server issues six digits, so anything shorter is a half-typed field
+    // rather than a wrong code — no reason to spend a round trip on it.
+    if (otpCode.trim().length !== OTP_LENGTH) {
+      setError(`Enter the ${OTP_LENGTH}-digit code we emailed you`);
       return;
     }
 
     setLoading(true);
 
     try {
-      await verifyOtp(formData.email, otpCode, 'signup');
       await createAccount();
     } catch (err: any) {
       setError(err?.message || 'Verification failed');
+    } finally {
+      // Also on success: the stack swap that unmounts this screen is driven by
+      // the auth listener, so until it lands the button is still on screen and
+      // must not sit on "Verifying..." forever.
       setLoading(false);
     }
   };
 
+  /**
+   * Creates the account on the server, then signs in with the token it returns.
+   *
+   * Errors propagate: this used to catch them itself, which left the caller's
+   * own catch unreachable and its `setLoading` never running.
+   *
+   * Verification and creation are one call: doing them separately here meant
+   * nothing connected the emailed code to the account, and the code could be
+   * skipped entirely by talking to Firebase directly with the bundled API key.
+   * The profile document is written server-side too, so `role` and
+   * `walletBalance` are seeded where a client cannot choose them.
+   */
   const createAccount = async () => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email.trim(),
-        formData.password
-      );
+    const customToken = await registerWithOtp({
+      email: formData.email,
+      code: otpCode,
+      password: formData.password,
+      name: formData.name,
+      phone: formData.phone,
+      companyName: formData.companyName,
+      gstNo: formData.gstNo,
+      noOfOrders: formData.noOfOrders,
+      companyType: formData.companyType,
+    });
 
-      const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: formData.name.trim(),
-      });
-
-      await setDoc(doc(db, 'users', user.uid), {
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone.trim(),
-        companyName: formData.companyName.trim(),
-        gstNo: formData.gstNo.trim(),
-        noOfOrders: formData.noOfOrders,
-        companyType: formData.companyType,
-
-        walletBalance: 0,
-        role: 'user',
-
-        createdAt: serverTimestamp(),
-      });
-
-      // RootNavigator/Auth listener should handle navigation.
-    } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('An account with this email already exists.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password should be at least 6 characters.');
-      } else if (err.code === 'auth/invalid-email') {
-        setError('Please enter a valid email address.');
-      } else {
-        setError(err.message || 'Signup failed');
-      }
-    } finally {
-      setLoading(false);
-    }
+    // RootNavigator's auth listener takes over from here.
+    await signInWithCustomToken(auth, customToken);
   };
 
   const orderOptions = ['0-50', '51-200', '200-500', '500+'];
@@ -307,7 +297,7 @@ export default function SignupScreen() {
                 placeholder="000000"
                 placeholderTextColor="#9ca3af"
                 keyboardType="number-pad"
-                maxLength={6}
+                maxLength={OTP_LENGTH}
                 autoFocus
                 className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-raleway-bold text-2xl text-center tracking-[8px] text-gray-900 shadow-sm"
               />

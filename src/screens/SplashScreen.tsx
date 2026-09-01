@@ -8,6 +8,20 @@ import { safeGetItem } from '../lib/storage';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Splash'>;
 
+/**
+ * Whether the brand animation has already played this process.
+ *
+ * The Auth stack is unmounted while signed in and rebuilt on sign-out, so
+ * without this a logout replays the full three-second splash before Login
+ * appears. Module scope, not storage: it is a per-launch fact, and the splash
+ * should still play on a cold start.
+ */
+let splashPlayed = false;
+
+export function hasPlayedSplash(): boolean {
+  return splashPlayed;
+}
+
 // Brand tokens, matched to the mark and the app chrome.
 const VIOLET = '#7C3AED';
 const CYAN = '#22D3EE';
@@ -90,6 +104,7 @@ export default function SplashScreen() {
 
     // Navigate after 3s
     const timer = setTimeout(async () => {
+      splashPlayed = true;
       const hasOnboarded = await safeGetItem('local', 'hasOnboarded');
       if (hasOnboarded === 'true') {
         navigation.replace('Login');

@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,12 +14,14 @@ import { useShipments } from '../lib/useShipments';
 import { EmptyState } from '../components/EmptyState';
 import { CourierLogo } from '../components/CourierLogo';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function WeightDiscrepancyScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { shipments } = useShipments();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'DISPUTED' | 'RESOLVED'>('ALL');
   const [selectedItem, setSelectedItem] = useState<any>(null);
@@ -48,17 +49,14 @@ export default function WeightDiscrepancyScreen() {
   };
 
   const handleAcceptDiscrepancy = (item: any) => {
-    Alert.alert(
-      'Accept Extra Weight Charge',
-      `Accept ₹${item?.discrepancy_amount || 45} deduction for AWB ${item?.awb}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Accept & Pay',
-          style: 'default',
-          onPress: () => toast.success('Charge Accepted', 'Extra weight charge verified and settled.'),
-        },
-      ]
+    confirm(
+      {
+        title: 'Accept Extra Weight Charge',
+        message: `Are you sure you want to accept the ₹${item?.discrepancy_amount || 45} deduction for AWB ${item?.awb}? Once accepted the charge cannot be disputed.`,
+        confirmText: 'Accept & Pay',
+        destructive: true,
+      },
+      () => toast.success('Charge Accepted', 'Extra weight charge verified and settled.')
     );
   };
 
@@ -239,6 +237,8 @@ export default function WeightDiscrepancyScreen() {
           </View>
         </View>
       </Modal>
+
+      {confirmDialog}
     </View>
   );
 }

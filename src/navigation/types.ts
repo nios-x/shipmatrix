@@ -8,7 +8,7 @@ export type AuthStackParamList = {
   Splash: undefined;
   Onboarding: undefined;
   Login: undefined;
-  Signup: { fromGoogle?: boolean };
+  Signup: undefined;
 };
 
 // Main tab screens

@@ -9,6 +9,7 @@ import * as Clipboard from 'expo-clipboard';
 import { collection, writeBatch, doc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { parseOrdersCsv, CSV_TEMPLATE, type CsvOrder } from '../lib/csv';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -25,6 +26,7 @@ export default function BulkUploadScreen() {
   const [parsing, setParsing] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importedCount, setImportedCount] = useState(0);
+  const { confirm, confirmDialog } = useConfirm();
 
   const handlePick = async () => {
     try {
@@ -73,8 +75,21 @@ export default function BulkUploadScreen() {
    * Writes the parsed rows as draft orders. They land with status 'New' so they
    * appear in Orders, where a courier can be picked and the shipment booked.
    */
-  const handleImport = async () => {
+  const handleImport = () => {
     if (!auth.currentUser || orders.length === 0) return;
+
+    confirm(
+      {
+        title: 'Confirm Import',
+        message: `Are you sure you want to create ${orders.length} order${orders.length === 1 ? '' : 's'} from ${fileName || 'this file'}? They will be added to your Orders list as drafts.`,
+        confirmText: `Yes, Import ${orders.length}`,
+      },
+      importOrders
+    );
+  };
+
+  const importOrders = async () => {
+    if (!auth.currentUser) return;
     const uid = auth.currentUser.uid;
 
     setImporting(true);
@@ -333,6 +348,8 @@ export default function BulkUploadScreen() {
           </View>
         )}
       </ScrollView>
+
+      {confirmDialog}
     </View>
   );
 }

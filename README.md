@@ -43,7 +43,7 @@
   * 1-tap "Accept Charge" or "Raise Dispute" with remarks and evidence arbitration.
 
 ### 💳 5. Wallet, Remittances & Invoicing
-* **Instant Wallet Recharge**: Native Razorpay integration (`react-native-razorpay`) with predefined top-up amounts (₹500, ₹1000, ₹2500, ₹5000).
+* **Instant Wallet Recharge**: Native Cashfree checkout (`react-native-cashfree-pg-sdk`) with predefined top-up amounts (₹500, ₹1000, ₹2000, ₹5000). Orders are created and verified server-side, so the app never reports an amount.
 * **Transparent Ledger**: Real-time transaction history with automatic credit/debit badges.
 * **COD Remittance**: Total Cash on Delivery collection breakdown and settlement logs.
 * **Invoices & Billing**: View and export commercial invoices and shipping charge statements.
@@ -95,6 +95,28 @@ my-expo-app/
 │       ├── LoginScreen.tsx
 │       └── SignupScreen.tsx
 ```
+
+---
+
+## 🔒 Backend & Trust Boundary
+
+The app talks to **`shipmatrix-server`** (sibling repo, `EXPO_PUBLIC_PAYMENTS_URL`) for everything that
+moves money or privilege. The app is not trusted: the Firebase config ships inside the bundle, so any
+account holder can call Firestore directly with their own ID token. Anything the rules permit, a user
+can do by hand.
+
+| Operation | Where it runs | Why |
+| --- | --- | --- |
+| Rate quotes | `POST /api/rates` | The price that gets charged is fetched server-side, not sent by the app |
+| Booking | `POST /api/shipments/book` | Balance check + debit share one transaction; courier call wrapped in a reserve → confirm/refund saga with an idempotency key |
+| Cancellation | `POST /api/shipments/cancel` | Refunds credit the wallet, so it cannot be client-side |
+| Wallet recharge | `POST /api/cashfree/*` | Amount comes from Cashfree, never from the app |
+| Signup | `POST /api/otp/register` | Verifying the code and creating the account are one call, so the code actually gates it |
+| Store credentials | `POST /api/integrations/*` | Shopify/Woo secrets live in a collection no client rule grants |
+
+`walletBalance`, `role` and `integrations` are **unwritable by clients** — see `firestore.rules` in the
+server repo. Deploy the server **before** the rules: reversed, bookings fail because the app can no
+longer write the balance and nothing else can yet.
 
 ---
 

@@ -12,20 +12,33 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { collection, query, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { useUser } from '../lib/useUser';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export default function AdminPanelScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { user, loading: userLoading } = useUser();
   const [activeTab, setActiveTab] = useState<'users' | 'complaints'>('users');
   const [users, setUsers] = useState<any[]>([]);
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [rulesRejected, setRulesRejected] = useState(false);
+
+  // Hiding the menu entry on the profile screen is not a guard — this screen is
+  // still a route, so anything that can navigate reaches it. The real barrier is
+  // the Firestore rule on listing `users`; this check exists so a non-admin gets
+  // told, instead of watching a spinner resolve into an empty list.
+  const isAdmin = user?.role === 'admin';
+
+  // Derived rather than stored, so the refusal needs no setState from an effect
+  // — and so a profile that loses the role mid-session closes the screen too.
+  const denied = (!userLoading && !isAdmin) || rulesRejected;
 
   const fetchData = async () => {
     try {
@@ -39,6 +52,9 @@ export default function AdminPanelScreen() {
         // complaints collection might not exist yet
       }
     } catch (e: any) {
+      // A rules rejection lands here when the profile claims admin but the
+      // database disagrees — the database is the one that counts.
+      setRulesRejected(true);
       console.error(e);
     } finally {
       setLoading(false);
@@ -47,8 +63,12 @@ export default function AdminPanelScreen() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Waits for the profile, otherwise the first pass always looks unprivileged.
+    // Non-admins never fetch at all: the rules would refuse them anyway.
+    if (userLoading || !isAdmin) return;
+    void fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLoading, isAdmin]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -64,6 +84,28 @@ export default function AdminPanelScreen() {
       u.phone?.includes(q)
     );
   });
+
+  if (denied) {
+    return (
+      <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
+        <View className="px-5 py-4 flex-row items-center gap-3">
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Feather name="arrow-left" size={24} color="#1f2937" />
+          </TouchableOpacity>
+          <Text className="text-xl font-black text-gray-900">Admin Panel</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-10">
+          <View className="w-14 h-14 rounded-2xl bg-red-50 items-center justify-center mb-4">
+            <Feather name="lock" size={26} color="#ef4444" />
+          </View>
+          <Text className="text-base font-black text-gray-900 mb-1.5">Admins only</Text>
+          <Text className="text-sm text-gray-500 font-medium text-center leading-5">
+            This account does not have administrator access.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>

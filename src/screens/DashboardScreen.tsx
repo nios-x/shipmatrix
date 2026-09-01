@@ -500,6 +500,7 @@ export default function DashboardScreen() {
               onPress={() => {
                 (navigation as any).getParent()?.navigate('OrdersTab', {
                   screen: 'CreateShipment',
+                  initial: false,
                 });
               }}
             />
@@ -562,6 +563,14 @@ export default function DashboardScreen() {
               bgColor="bg-rose-50"
               iconColor="#EF4444"
               onPress={() => navigation.navigate('Ndr')}
+            />
+
+            <QuickAction
+              title="Performance"
+              iconName="bar-chart-2"
+              bgColor="bg-emerald-50"
+              iconColor="#059669"
+              onPress={() => navigation.navigate('CourierPerformance')}
             />
           </View>
         </View>

@@ -123,7 +123,7 @@ export default function ReturnsScreen() {
         <Text className="text-xl font-black text-gray-900 flex-1">Returns</Text>
         <TouchableOpacity
           onPress={() =>
-            navigation.navigate('OrdersTab', { screen: 'CreateReverseShipment', params: {} })
+            navigation.navigate('OrdersTab', { screen: 'CreateReverseShipment', initial: false, params: {} })
           }
           activeOpacity={0.8}
           className="bg-violet-700 px-4 py-2 rounded-xl flex-row items-center gap-1"

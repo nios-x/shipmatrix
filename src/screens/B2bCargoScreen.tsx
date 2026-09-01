@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { api } from '../lib/api';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type RouteMode = 'surface' | 'air';
@@ -22,6 +23,7 @@ type BookingMode = 'credit' | 'topay';
 export default function B2bCargoScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const { confirm, confirmDialog } = useConfirm();
 
   const [loading, setLoading] = useState(false);
   const [manifestResult, setManifestResult] = useState<any>(null);
@@ -54,7 +56,7 @@ export default function B2bCargoScreen() {
   const [height, setHeight] = useState('');
   const [mpsCount, setMpsCount] = useState('1');
 
-  const handleCreateManifest = async () => {
+  const handleCreateManifest = () => {
     // Validations
     if (!invoiceValue || parseFloat(invoiceValue) <= 0) {
       toast.warning('Missing Invoice Value', 'Please enter invoice value (₹).');
@@ -73,6 +75,17 @@ export default function B2bCargoScreen() {
       return;
     }
 
+    confirm(
+      {
+        title: 'Confirm Cargo Booking',
+        message: `Are you sure you want to book this ${routeMode === 'air' ? 'air' : 'surface'} cargo manifest for ${consigneeName} (₹${invoiceValue} invoice value)? A manifest cannot be edited once generated.`,
+        confirmText: 'Yes, Book Cargo',
+      },
+      () => createManifest()
+    );
+  };
+
+  const createManifest = async () => {
     setLoading(true);
     setManifestResult(null);
 
@@ -639,6 +652,8 @@ export default function B2bCargoScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {confirmDialog}
     </KeyboardAvoidingView>
   );
 }

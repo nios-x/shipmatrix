@@ -21,7 +21,6 @@ export interface User {
   walletBalance: number;
   role: string;
   apiKey?: string;
-  needsOnboarding?: boolean;
   createdAt?: any;
   warehouses?: Warehouse[];
   /** Default pickup warehouse used when booking shipments. */
@@ -31,18 +30,22 @@ export interface User {
   integrations?: Integrations;
 }
 
-/** Sales-channel credentials, stored under `integrations` on the user doc. */
+/**
+ * Which sales channels are linked, as written by the payments server.
+ *
+ * Deliberately holds no secrets. The Shopify access token and the WooCommerce
+ * key pair live in `integrationCredentials/{uid}`, which no Firestore rule
+ * exposes to a client — a token that can rewrite a merchant's fulfilments has
+ * no reason to reach a phone. Only the domain and a connected flag come back.
+ */
 export interface Integrations {
   shopify?: {
     domain?: string;
-    accessToken?: string | null;
-    clientId?: string;
-    clientSecret?: string;
+    connected?: boolean;
   };
   woocommerce?: {
     domain?: string;
-    key?: string;
-    secret?: string;
+    connected?: boolean;
   };
 }
 
@@ -120,12 +123,22 @@ export interface Shipment {
 
   productName?: string;
   freightCharge?: number;
+  /**
+   * Freight charge under the name the web app writes it. Bookings made here
+   * set it alongside `freightCharge`; web bookings set only this one, and it
+   * is what a cancellation refunds.
+   */
+  amount?: number;
   labelUrl?: string;
   trackingUrl?: string;
 
   /** True for reverse pickups (returns collected from the customer). */
   isReverse?: boolean;
   returnReason?: string;
+
+  // Cancellation — written by whichever app released the AWB.
+  cancelReason?: string;
+  cancelledAt?: any;
 
   // COD remittance
   remittanceStatus?: string;

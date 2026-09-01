@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { useTransactions } from '../lib/useTransactions';
 import { api, PAYMENTS_BASE_URL } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { openCashfreeCheckout, CashfreeError } from '../lib/cashfree';
 import { formatDate } from '../lib/shipments';
 import type { Transaction } from '../types';
@@ -29,6 +29,7 @@ export default function WalletScreen() {
   const [showRecharge, setShowRecharge] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('500');
   const [processing, setProcessing] = useState(false);
+  const { confirm, confirmDialog } = useConfirm();
 
   const balanceStr = (user?.walletBalance || 0).toFixed(2);
   const [balanceMain, balanceDec] = balanceStr.split('.');
@@ -68,13 +69,24 @@ export default function WalletScreen() {
     }
   };
 
-  const handleRecharge = async () => {
+  const handleRecharge = () => {
     const amount = Number(rechargeAmount);
     if (!(amount >= 500)) {
       toast.warning('Minimum Amount', 'Minimum recharge amount is ₹500');
       return;
     }
 
+    confirm(
+      {
+        title: 'Confirm Recharge',
+        message: `Are you sure you want to add ₹${amount} to your wallet? You will be taken to the payment page to complete this transaction.`,
+        confirmText: `Yes, Pay ₹${amount}`,
+      },
+      () => startRecharge(amount)
+    );
+  };
+
+  const startRecharge = async (amount: number) => {
     setProcessing(true);
     try {
       // The server holds the Cashfree secret and returns `payment_session_id`
@@ -261,6 +273,8 @@ export default function WalletScreen() {
           />
         )}
       </View>
+
+      {confirmDialog}
     </View>
   );
 }

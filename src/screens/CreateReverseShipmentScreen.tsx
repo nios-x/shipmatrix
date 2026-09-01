@@ -7,23 +7,31 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { auth, db } from '../lib/firebase';
-import { api } from '../lib/api';
-import { addDoc, collection, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { auth } from '../lib/firebase';
+import { api, PAYMENTS_BASE_URL } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
+import { useConfirm } from '../components/useConfirm';
 import { usePincode } from '../lib/usePincode';
-import { courierEndpoint, isWarehouseComplete, generateOrderId, EMPTY_WAREHOUSE } from '../lib/shipments';
+import { bookingKey, isWarehouseComplete, generateOrderId, EMPTY_WAREHOUSE } from '../lib/shipments';
 import { WarehouseForm } from '../components/WarehouseForm';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
+import {
+  onlyDigits,
+  onlyDecimal,
+  checkPincode,
+  checkMobile,
+  checkNumberInRange,
+  firstError,
+  LIMITS,
+} from '../lib/inputs';
 
 type Step = 'form' | 'rates' | 'success';
 
@@ -38,6 +46,7 @@ export default function CreateReverseShipmentScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { user } = useUser();
+  const { confirm, confirmDialog } = useConfirm();
   const [step, setStep] = useState<Step>('form');
   const [loading, setLoading] = useState(false);
   const [rates, setRates] = useState<RateItem[]>([]);
@@ -80,13 +89,28 @@ export default function CreateReverseShipmentScreen() {
   const update = (k: string, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
   const handleGetRates = async () => {
-    if (!form.pincode || !warehouse.pincode || !form.weight) {
-      toast.warning('Missing Info', "Fill the customer's pincode, your warehouse pincode, and weight.");
+    // Same reasoning as the forward screen: validate before the rates list, so
+    // choosing a courier is never undone by a field error. A return is always
+    // prepaid, so order value is not required here.
+    const problem = firstError([
+      checkPincode(form.pincode, "Customer's pincode"),
+      checkPincode(warehouse.pincode, 'Warehouse pincode'),
+      form.customerName.trim() ? null : "Customer's name is required.",
+      checkMobile(form.customerPhone, "Customer's phone"),
+      form.address.trim() ? null : 'Pickup address is required.',
+      checkNumberInRange(form.weight, LIMITS.weightKg, 'Weight', ' kg'),
+      form.length ? checkNumberInRange(form.length, LIMITS.dimensionCm, 'Length', ' cm') : null,
+      form.breadth ? checkNumberInRange(form.breadth, LIMITS.dimensionCm, 'Width', ' cm') : null,
+      form.height ? checkNumberInRange(form.height, LIMITS.dimensionCm, 'Height', ' cm') : null,
+    ]);
+
+    if (problem) {
+      toast.warning('Check the form', problem);
       return;
     }
     setLoading(true);
     try {
-      const data = await api.post('/api/rates', {
+      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
         // Reverse leg: collected from the customer, delivered to the warehouse.
         pickupPincode: form.pincode,
         deliveryPincode: warehouse.pincode,
@@ -115,9 +139,9 @@ export default function CreateReverseShipmentScreen() {
     }
   };
 
-  const handleBook = async (rate: RateItem) => {
+  /** Guards first, then confirm — the return is billed the moment it books. */
+  const handleBook = (rate: RateItem) => {
     if (!auth.currentUser) return;
-    const uid = auth.currentUser.uid;
     if ((user?.walletBalance || 0) < rate.freight_charge) {
       toast.error('Insufficient Balance', `Need ₹${rate.freight_charge}, have ₹${(user?.walletBalance || 0).toFixed(2)}`);
       return;
@@ -130,93 +154,69 @@ export default function CreateReverseShipmentScreen() {
       return;
     }
 
+    confirm(
+      {
+        title: 'Confirm Return',
+        message: `Are you sure you want to return this order? ${rate.carrier_name} will collect it from the customer and ₹${rate.freight_charge} will be deducted from your wallet.`,
+        confirmText: 'Yes, Return Order',
+      },
+      () => bookReturn(rate)
+    );
+  };
+
+  /**
+   * Books through the payments server rather than debiting here. Same reasoning
+   * as the forward booking: a client permitted to write its own `walletBalance`
+   * is a client permitted to top it up for free, so the money side has to sit
+   * behind a Firebase-verified endpoint.
+   */
+  const bookReturn = async (rate: RateItem) => {
+    if (!auth.currentUser) return;
+
     setLoading(true);
     try {
       const finalOrderId = form.orderId || generateOrderId('RET');
       const orderValue = parseFloat(form.orderValue) || 1;
 
-      const res = await api.post(`/api/${courierEndpoint(rate.carrier_id)}/create-shipment`, {
+      const res = await api.post(`${PAYMENTS_BASE_URL}/api/shipments/book`, {
+        idempotencyKey: bookingKey(finalOrderId, rate.carrier_id),
+        carrierId: rate.carrier_id,
+        quotedCharge: rate.freight_charge,
+        // Flips the priced legs: collected from the customer, returned to the
+        // warehouse. The server builds the courier payload from this.
+        isReverse: true,
+
         orderId: finalOrderId,
         customerName: form.customerName,
         customerEmail: form.customerEmail,
         customerPhone: form.customerPhone,
-        // Customer side — the courier collects from here.
         address: form.address,
         city,
         state: state || city,
         pincode: form.pincode,
-        pickupPincode: form.pincode,
-        pickupLocationName: form.customerName,
-        pickupCity: city,
-        pickupState: state || city,
-        pickupPhone: form.customerPhone,
-        pickupAddress: form.address,
-        // Warehouse side — the return is delivered back here.
-        returnLocationName: warehouse.name,
-        returnPhone: warehouse.phone,
-        returnAddress: warehouse.address,
-        returnPincode: warehouse.pincode,
-        returnCity: warehouse.city,
-        returnState: warehouse.state,
         weight: parseFloat(form.weight) || 0.5,
         length: parseFloat(form.length) || 10,
         breadth: parseFloat(form.breadth) || 10,
         height: parseFloat(form.height) || 10,
-        paymentMethod: 'prepaid',
+
+        pickupLocationName: warehouse.name,
+        pickupAddress: warehouse.address,
+        pickupCity: warehouse.city,
+        pickupState: warehouse.state,
+        pickupPincode: warehouse.pincode,
+        pickupPhone: warehouse.phone,
+
+        paymentMethod: 'Prepaid',
         orderValue,
         productName: form.productName || 'Return Item',
-        courier: rate.carrier_id,
-        courierName: rate.carrier_name,
-        isReverse: true,
+        returnReason: form.reason,
       });
 
-      if (res.success || res.awb) {
-        const awb = res.awb || res.tracking_id || '';
-        await addDoc(collection(db, `users/${uid}/shipments`), {
-          userId: uid,
-          source: 'mobile',
-          orderId: finalOrderId,
-          customerName: form.customerName,
-          customerEmail: form.customerEmail,
-          customerPhone: form.customerPhone,
-          address: form.address,
-          city,
-          state: state || city,
-          pincode: form.pincode,
-          weight: parseFloat(form.weight) || 0.5,
-          length: parseFloat(form.length) || 10,
-          breadth: parseFloat(form.breadth) || 10,
-          height: parseFloat(form.height) || 10,
-          productName: form.productName || 'Return Item',
-          paymentMethod: 'Prepaid',
-          orderValue,
-          returnReason: form.reason,
-          awb,
-          courier: rate.carrier_name,
-          courierName: rate.carrier_name,
-          carrierId: rate.carrier_id,
-          status: 'Ready to Pickup',
-          isReverse: true,
-          amount: rate.freight_charge,
-          freightCharge: rate.freight_charge,
-          labelUrl: res.labelUrl || res.label_url || res.label || '',
-          createdAt: serverTimestamp(),
-        });
-        await updateDoc(doc(db, 'users', uid), { walletBalance: increment(-rate.freight_charge) });
-        await addDoc(collection(db, `users/${uid}/transactions`), {
-          type: 'debit',
-          amount: rate.freight_charge,
-          description: `Reverse shipment - ${rate.carrier_name} - AWB: ${awb}`,
-          createdAt: serverTimestamp(),
-        });
-        toast.success('Return Booked!', `AWB: ${awb}`);
-        setResult({ awb, courier: rate.carrier_name, charge: rate.freight_charge });
-        setStep('success');
-      } else {
-        toast.error('Failed', res.error || 'Could not book reverse shipment.');
-      }
+      toast.success('Return Booked!', `AWB: ${res.awb}`);
+      setResult({ awb: res.awb, courier: res.courier || rate.carrier_name, charge: res.charge });
+      setStep('success');
     } catch (err: any) {
-      toast.error('Error', err.message || 'Booking failed');
+      toast.error('Booking Failed', err?.message || 'Could not book reverse shipment.');
     } finally {
       setLoading(false);
     }
@@ -247,9 +247,9 @@ export default function CreateReverseShipmentScreen() {
           </Text>
           <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
             <Field label="Customer Name" value={form.customerName} onChange={(v) => update('customerName', v)} placeholder="Name" icon="user" />
-            <Field label="Phone" value={form.customerPhone} onChange={(v) => update('customerPhone', v)} placeholder="9876543210" icon="phone" keyboardType="phone-pad" />
+            <Field label="Phone" value={form.customerPhone} onChange={(v) => update('customerPhone', onlyDigits(v, 10))} placeholder="9876543210" icon="phone" keyboardType="number-pad" maxLength={10} autoComplete="tel" />
             <Field label="Pickup Address" value={form.address} onChange={(v) => update('address', v)} placeholder="Full address" icon="map-pin" multiline />
-            <Field label="Pickup Pincode" value={form.pincode} onChange={(v) => update('pincode', v)} placeholder="400001" keyboardType="number-pad" maxLength={6} />
+            <Field label="Pickup Pincode" value={form.pincode} onChange={(v) => update('pincode', onlyDigits(v, 6))} placeholder="400001" keyboardType="number-pad" maxLength={6} />
             <View className="flex-row gap-3">
               <View className="flex-1"><Field label="City" value={city} onChange={(v) => update('city', v)} placeholder="City" /></View>
               <View className="flex-1"><Field label="State" value={state} onChange={(v) => update('state', v)} placeholder="State" /></View>
@@ -274,13 +274,13 @@ export default function CreateReverseShipmentScreen() {
           <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
             <Field label="Product" value={form.productName} onChange={(v) => update('productName', v)} placeholder="Product name" icon="package" />
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="Weight (kg)" value={form.weight} onChange={(v) => update('weight', v)} placeholder="0.5" keyboardType="decimal-pad" /></View>
-              <View className="flex-1"><Field label="Value (₹)" value={form.orderValue} onChange={(v) => update('orderValue', v)} placeholder="500" keyboardType="number-pad" /></View>
+              <View className="flex-1"><Field label="Weight (kg)" value={form.weight} onChange={(v) => update('weight', onlyDecimal(v, 4, 3))} placeholder="0.5" keyboardType="decimal-pad" maxLength={8} /></View>
+              <View className="flex-1"><Field label="Value (₹)" value={form.orderValue} onChange={(v) => update('orderValue', onlyDigits(v, 8))} placeholder="500" keyboardType="number-pad" maxLength={8} /></View>
             </View>
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="L (cm)" value={form.length} onChange={(v) => update('length', v)} placeholder="10" keyboardType="number-pad" /></View>
-              <View className="flex-1"><Field label="W (cm)" value={form.breadth} onChange={(v) => update('breadth', v)} placeholder="10" keyboardType="number-pad" /></View>
-              <View className="flex-1"><Field label="H (cm)" value={form.height} onChange={(v) => update('height', v)} placeholder="10" keyboardType="number-pad" /></View>
+              <View className="flex-1"><Field label="L (cm)" value={form.length} onChange={(v) => update('length', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
+              <View className="flex-1"><Field label="W (cm)" value={form.breadth} onChange={(v) => update('breadth', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
+              <View className="flex-1"><Field label="H (cm)" value={form.height} onChange={(v) => update('height', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
             </View>
             <Field label="Reason" value={form.reason} onChange={(v) => update('reason', v)} placeholder="Customer Return" />
           </View>
@@ -322,20 +322,23 @@ export default function CreateReverseShipmentScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {confirmDialog}
     </KeyboardAvoidingView>
   );
 }
 
-function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLength, multiline }: {
+function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLength, multiline, autoCapitalize, autoComplete }: {
   label: string; value: string; onChange: (v: string) => void; placeholder: string;
   icon?: string; keyboardType?: any; maxLength?: number; multiline?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters'; autoComplete?: any;
 }) {
   return (
     <View>
       <Text className="text-xs font-raleway-bold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
         {icon && <View className="absolute left-3 top-3.5 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
-        <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline}
+        <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} autoCapitalize={autoCapitalize} autoComplete={autoComplete}
           className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-raleway text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
       </View>
     </View>

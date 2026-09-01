@@ -147,11 +147,44 @@ export function courierEndpoint(carrierId: string): string {
 }
 
 /**
+ * True when cancelling is worth offering: the booking reached a courier, so
+ * there is an AWB to release, and it has not already ended as delivered, RTO
+ * or cancelled. Whether that particular courier can be cancelled at all is
+ * settled by `/api/shipments/cancel`, which reports an unsupported one when
+ * the user asks rather than silently hiding the action.
+ */
+export function isCancellable(s: Shipment): boolean {
+  return !!s.awb && isActive(s);
+}
+
+/**
+ * Wallet amount to return when an order is cancelled — whatever booking
+ * debited. Bookings made here write the freight charge to both `amount` and
+ * `freightCharge`; the web app writes only `amount`.
+ */
+export function refundableAmount(s: Shipment): number {
+  return Number(s.amount ?? s.freightCharge ?? 0) || 0;
+}
+
+/**
  * Generates a fallback order reference. Lives at module scope because
  * `Date.now()` is impure and must not be called from a component body.
  */
 export function generateOrderId(prefix = 'ORD'): string {
   return `${prefix}-${Date.now().toString().slice(-6)}`;
+}
+
+/**
+ * Stable identity for one booking attempt, so `/api/shipments/book` can tell a
+ * retry from a second order.
+ *
+ * Derived rather than random: the moment worth retrying is the one where the
+ * response was lost, and a fresh random key each tap would read to the server
+ * as a new booking and charge for it again. Booking the same order with the
+ * same courier twice is the duplicate this is meant to collapse.
+ */
+export function bookingKey(orderId: string, carrierId: string): string {
+  return `${orderId}:${carrierId}`;
 }
 
 /** Fallback warehouse so a booking never sends empty pickup fields. */

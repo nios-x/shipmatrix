@@ -19,7 +19,11 @@ import {
   formatDateTime,
   deliveryDays,
   destinationLabel,
+  isCancellable,
+  refundableAmount,
 } from '../lib/shipments';
+import { cancelOrder, CancelError } from '../lib/cancelOrder';
+import { CancelOrderModal } from '../components/CancelOrderModal';
 import type { Shipment } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -92,6 +96,11 @@ export default function OrderDetailsScreen() {
   // own progress rather than looking dead while that request is in flight.
   const [labelLoading, setLabelLoading] = useState(false);
 
+  // Cancelling releases the AWB at the courier and credits the wallet back, so
+  // it asks for a reason first and reports progress until both have landed.
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
   const openLabel = async () => {
     if (!shipment || labelLoading) return;
     setLabelLoading(true);
@@ -106,6 +115,33 @@ export default function OrderDetailsScreen() {
       }
     } finally {
       setLabelLoading(false);
+    }
+  };
+
+  /**
+   * The courier is asked first: `cancelOrder` leaves the record and the wallet
+   * untouched unless it accepts, so a refusal here means nothing changed and
+   * the sheet stays open to retry.
+   */
+  const handleCancel = async (reason: string) => {
+    if (!shipment || cancelling) return;
+    setCancelling(true);
+    try {
+      const refunded = await cancelOrder(shipment, reason);
+      setCancelOpen(false);
+      toast.success(
+        'Order Cancelled',
+        refunded > 0
+          ? `₹${refunded} has been refunded to your wallet.`
+          : 'The courier has released this AWB.'
+      );
+    } catch (e: any) {
+      toast.error(
+        'Could not cancel',
+        e instanceof CancelError ? e.message : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -224,6 +260,20 @@ export default function OrderDetailsScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
+          {isCancellable(shipment) && (
+            <TouchableOpacity
+              onPress={() => setCancelOpen(true)}
+              activeOpacity={0.8}
+              disabled={cancelling}
+              className="h-11 mt-2.5 rounded-xl bg-rose-50 border border-rose-100 flex-row items-center justify-center gap-2"
+            >
+              <Feather name="x-circle" size={15} color="#E11D48" />
+              <Text className="text-xs font-raleway-bold text-rose-600">
+                {cancelling ? 'Cancelling…' : 'Cancel Order'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Section icon="file-text" title="Order">
@@ -245,6 +295,9 @@ export default function OrderDetailsScreen() {
           />
           {!!shipment.isReverse && (
             <Field label="Return Reason" value={shipment.returnReason} wide />
+          )}
+          {!!shipment.cancelReason && (
+            <Field label="Cancel Reason" value={shipment.cancelReason} wide />
           )}
         </Section>
 
@@ -284,6 +337,16 @@ export default function OrderDetailsScreen() {
           </Section>
         )}
       </ScrollView>
+
+      {cancelOpen && (
+        <CancelOrderModal
+          awb={shipment.awb}
+          refund={refundableAmount(shipment)}
+          submitting={cancelling}
+          onClose={() => setCancelOpen(false)}
+          onConfirm={handleCancel}
+        />
+      )}
     </View>
   );
 }

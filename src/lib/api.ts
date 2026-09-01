@@ -36,6 +36,27 @@ interface ApiOptions {
 const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
+ * The only hosts allowed to receive a Firebase ID token. Both are our own
+ * deployments, and `PAYMENTS_BASE_URL` still honours the `EXPO_PUBLIC_PAYMENTS_URL`
+ * override, so pointing at a dev server on the LAN keeps working.
+ */
+const TRUSTED_ORIGINS = [API_BASE_URL, PAYMENTS_BASE_URL].map((u) =>
+  u.replace(/\/+$/, '')
+);
+
+/**
+ * Prefix matching alone would accept `https://www.shipmatrix.in.evil.com`, so the
+ * character after the base has to be a path separator or nothing at all.
+ */
+function isTrustedOrigin(url: string): boolean {
+  return TRUSTED_ORIGINS.some((base) => {
+    if (!url.startsWith(base)) return false;
+    const rest = url.slice(base.length);
+    return rest === '' || rest.startsWith('/') || rest.startsWith('?') || rest.startsWith('#');
+  });
+}
+
+/**
  * Centralized API client for ShipMatrix.
  * Handles:
  * - Absolute URL construction from relative paths
@@ -66,10 +87,17 @@ async function apiRequest<T = any>(
     ...headers,
   };
 
-  // Inject auth token if available
-  if (!skipAuth && auth.currentUser) {
+  // Inject auth token if available.
+  //
+  // Only ever to our own backends. A Firebase ID token identifies the user for
+  // an hour and is enough to act as them, so it must not travel to a host just
+  // because a caller passed an absolute URL — one `api.post('https://...')`
+  // against a third-party endpoint (a courier callback, a tracking widget)
+  // would hand that host the user's session.
+  const sendToken = !skipAuth && !!auth.currentUser && isTrustedOrigin(url);
+  if (sendToken) {
     try {
-      const token = await auth.currentUser.getIdToken();
+      const token = await auth.currentUser!.getIdToken();
       requestHeaders['Authorization'] = `Bearer ${token}`;
     } catch (e) {
       console.warn('Failed to get auth token:', e);
@@ -103,6 +131,30 @@ async function apiRequest<T = any>(
   let response: Response;
   try {
     response = await fetch(url, { ...config, signal: controller.signal });
+
+    // A 401 on a request we did authenticate means the server rejected the
+    // token, not the user: a cached token that expired against a skewed clock,
+    // or one minted before a claims change. `getIdToken(true)` mints a fresh
+    // one; one retry, and only for requests that carried a token, so nothing
+    // unauthenticated is ever replayed.
+    //
+    // Deliberately no sign-out on a second 401. A server-side fault would then
+    // log every user out at once, and a genuinely revoked or disabled account
+    // already surfaces through `onAuthStateChanged` the moment Firebase's own
+    // refresh fails.
+    if (response.status === 401 && sendToken && auth.currentUser) {
+      try {
+        const freshToken = await auth.currentUser.getIdToken(true);
+        requestHeaders['Authorization'] = `Bearer ${freshToken}`;
+        response = await fetch(url, {
+          ...config,
+          headers: requestHeaders,
+          signal: controller.signal,
+        });
+      } catch (e) {
+        console.warn('Token refresh after 401 failed:', e);
+      }
+    }
   } catch (e: any) {
     if (timedOut) {
       throw new ApiError(

@@ -28,7 +28,12 @@ import {
   isRto,
   isCancelled,
   isActive,
+  isCancellable,
+  refundableAmount,
 } from '../lib/shipments';
+import { cancelOrder, CancelError } from '../lib/cancelOrder';
+import { CancelOrderModal } from '../components/CancelOrderModal';
+import { toast } from '../lib/alert';
 import { api } from '../lib/api';
 import type { Shipment } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
@@ -183,6 +188,51 @@ export default function OrdersScreen() {
     }
   };
 
+  /**
+   * The order the cancel sheet is open for, held as an id and resolved against
+   * the live list on every render.
+   *
+   * Storing the shipment itself would freeze it at the moment the sheet opened,
+   * so a status or refund amount that changed underneath — the sync on pull-to-
+   * refresh, or a cancellation from another device — would keep showing the
+   * stale value. Resolving by id also closes the sheet on its own if the order
+   * stops existing. One modal serves the whole list, so this is a screen-level
+   * value rather than per-row state.
+   */
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+
+  const cancelTarget = cancelTargetId
+    ? shipments.find((s) => s.id === cancelTargetId) ?? null
+    : null;
+
+  /**
+   * Cancelling releases the AWB at the courier first; the record and the wallet
+   * are only touched if it agrees. A refusal therefore changes nothing, so the
+   * sheet stays open to retry rather than closing on a failure.
+   */
+  const handleCancel = async (reason: string) => {
+    if (!cancelTarget || cancelling) return;
+    setCancelling(true);
+    try {
+      const refunded = await cancelOrder(cancelTarget, reason);
+      setCancelTargetId(null);
+      toast.success(
+        'Order Cancelled',
+        refunded > 0
+          ? `₹${refunded} has been refunded to your wallet.`
+          : 'The courier has released this AWB.'
+      );
+    } catch (e: any) {
+      toast.error(
+        'Could not cancel',
+        e instanceof CancelError ? e.message : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const renderItem = ({ item }: { item: Shipment }) => {
     const [bgClass, textClass] = statusPillClasses(item);
 
@@ -237,6 +287,20 @@ export default function OrdersScreen() {
             </Text>
           </View>
         </View>
+
+        {/* Only orders the courier can still release show this. A delivered,
+            RTO or already-cancelled order has nothing to cancel, and one
+            without an AWB was never handed to a courier. */}
+        {isCancellable(item) && (
+          <TouchableOpacity
+            onPress={() => setCancelTargetId(item.id)}
+            activeOpacity={0.8}
+            className="h-10 mt-3 rounded-xl bg-rose-50 border border-rose-100 flex-row items-center justify-center gap-2"
+          >
+            <Feather name="x-circle" size={14} color="#E11D48" />
+            <Text className="text-xs font-raleway-bold text-rose-600">Cancel Order</Text>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -339,6 +403,16 @@ export default function OrdersScreen() {
           />
         }
       />
+
+      {cancelTarget && (
+        <CancelOrderModal
+          awb={cancelTarget.awb}
+          refund={refundableAmount(cancelTarget)}
+          submitting={cancelling}
+          onClose={() => setCancelTargetId(null)}
+          onConfirm={handleCancel}
+        />
+      )}
     </View>
   );
 }
