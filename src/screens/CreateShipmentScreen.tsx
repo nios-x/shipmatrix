@@ -212,8 +212,13 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       return;
     }
 
-    // Check wallet balance
-    if ((user?.walletBalance || 0) < rate.freight_charge) {
+    // A COD shipment is not billed to the wallet, so there is no balance to
+    // require. This only mirrors the decision — `/api/shipments/book` is what
+    // sets the charge, and it re-derives COD from the payload rather than
+    // trusting anything sent from here.
+    const isCod = form.paymentMethod === 'COD';
+
+    if (!isCod && (user?.walletBalance || 0) < rate.freight_charge) {
       toast.error(
         'Insufficient Balance',
         `You need ₹${rate.freight_charge} but have ₹${(user?.walletBalance || 0).toFixed(2)}. Please recharge your wallet.`
@@ -224,7 +229,9 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     confirm(
       {
         title: 'Confirm Order',
-        message: `Are you sure you want to place this order with ${rate.carrier_name}? ₹${rate.freight_charge} will be deducted from your wallet, and refunded only if you cancel the order while the courier still allows it.`,
+        message: isCod
+          ? `Place this order with ${rate.carrier_name}? Freight is ₹${rate.freight_charge}, and nothing is deducted from your wallet for a COD shipment.`
+          : `Are you sure you want to place this order with ${rate.carrier_name}? ₹${rate.freight_charge} will be deducted from your wallet, and refunded only if you cancel the order while the courier still allows it.`,
         confirmText: 'Yes, Place Order',
       },
       () => bookShipment(rate)
@@ -633,6 +640,13 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </Text>
       <Text className="text-slate-500 text-center mb-6 font-medium text-sm">
         Charge: <Text className="font-bold text-slate-800">₹{bookingResult?.charge}</Text>
+        {/* The freight is shown either way, but on COD nothing left the wallet
+            — saying only "Charge: ₹80" next to an unchanged balance reads as a
+            deduction that failed to appear. `walletCharged` is the server's own
+            figure, so this cannot drift from what was actually taken. */}
+        {bookingResult?.walletCharged === 0 && (
+          <Text className="text-emerald-600 font-bold"> · not deducted (COD)</Text>
+        )}
       </Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Orders')}
