@@ -155,10 +155,9 @@ function describeAuthError(code?: string | null, description?: string | null): s
 
 /** Exchange a Google ID token for a Firebase session and provision the user. */
 async function completeFirebaseSignIn(
-  idToken: string,
-  accessToken?: string
+  idToken: string
 ): Promise<GoogleSignInResult> {
-  const credential = GoogleAuthProvider.credential(idToken, accessToken);
+  const credential = GoogleAuthProvider.credential(idToken);
   const userCred = await signInWithCredential(auth, credential);
 
   // Past this line the user *is* signed in and the auth listener has already
@@ -319,10 +318,16 @@ export function useGoogleSignIn() {
         return { success: false, error: 'Google did not return an ID token.' };
       }
 
-      return await completeFirebaseSignIn(tokens.idToken, tokens.accessToken);
+      return await completeFirebaseSignIn(tokens.idToken);
     } catch (err: any) {
       if (err?.code === 'auth/popup-closed-by-user') {
         return { success: false, error: 'Sign in cancelled' };
+      }
+      if (err?.code === 'auth/unauthorized-domain') {
+        const message =
+          'Google sign-in is not enabled for this website. Add new-shipmatrix.vercel.app in Firebase Console > Authentication > Settings > Authorized domains.';
+        toast.error('Google Sign-In Unavailable', message);
+        return { success: false, error: message };
       }
       const message = err?.message || 'Google sign-in failed';
       toast.error('Google Sign-In Error', message);
