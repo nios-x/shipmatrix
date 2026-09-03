@@ -21,6 +21,7 @@ import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
 import { useGoogleSignIn, isGoogleSignInConfigured } from '../lib/googleAuth';
 import { sendOtp, registerWithOtp } from '../lib/otp';
+import { checkEmail } from '../lib/inputs';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Signup'>;
 
@@ -93,6 +94,16 @@ export default function SignupScreen() {
       !formData.password
     ) {
       setError('Please fill in all required fields');
+      return;
+    }
+
+    // The server's zod schema is the authority on the address, but it only
+    // sees it at step 2 when the code is sent — two screens on from the field
+    // that caused it, and behind a generic "Invalid request body." Checking
+    // the shape here fails on the input the user can still see.
+    const emailError = checkEmail(formData.email);
+    if (emailError) {
+      setError(emailError);
       return;
     }
 

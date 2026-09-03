@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { auth, db } from '../lib/firebase';
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useUser } from '../lib/useUser';
 import { CourierLogo } from '../components/CourierLogo';
@@ -167,7 +167,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       // `/api/rates` uses the lowercase `paymentType` vocabulary, unlike the
       // create-shipment routes which expect title-case `paymentMethod`.
       const isCodOrder = form.paymentMethod === 'COD';
-      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
+      const data = await api.post(routes.rates, {
         pickupPincode: warehouse.pincode,
         deliveryPincode: form.pincode,
         weight: form.weight,
@@ -253,7 +253,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       // `orderValue`, so it must never be zero.
       const orderValue = parseFloat(form.orderValue) || 1;
 
-      const res = await api.post(`${PAYMENTS_BASE_URL}/api/shipments/book`, {
+      const res = await api.post(routes.bookShipment, {
         // Survives a retry: the same attempt must never be charged twice, and a
         // dropped response is exactly when the user taps Book again.
         idempotencyKey: bookingKey(finalOrderId, rate.carrier_id),
@@ -389,6 +389,19 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
             <InputField label="H (cm)" value={form.height} onChangeText={(v) => updateField('height', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
           </View>
         </View>
+
+        {/* Fills L/W/H from a photo of the parcel. `returnTo` tells the sizer
+            to come back to this form rather than pushing a second copy. */}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('ParcelSizer', { returnTo: 'CreateShipment' })}
+          activeOpacity={0.75}
+          className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-violet-200 bg-violet-50/70 py-2.5"
+        >
+          <Feather name="camera" size={14} color="#7C3AED" />
+          <Text className="text-[11px] font-raleway-bold text-violet-700">
+            Measure dimensions with camera
+          </Text>
+        </TouchableOpacity>
 
         {/* Payment Method */}
         <Text className="text-xs font-raleway-bold text-gray-700 mb-1">Payment Method</Text>

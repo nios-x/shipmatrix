@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { api } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { useShipments } from '../lib/useShipments';
 import { formatDateTime } from '../lib/shipments';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -73,7 +73,7 @@ export default function TrackingScreen() {
       setEvents([]);
       setShipmentInfo(null);
       try {
-        const data = await api.get(`/api/public/track/${encodeURIComponent(target)}`);
+        const data = await api.get(routes.publicTrack(target));
         if (data.success) {
           setEvents(toEvents(data.scans));
           setShipmentInfo({

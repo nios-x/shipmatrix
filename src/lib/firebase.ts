@@ -6,11 +6,9 @@ import {
 } from 'firebase/auth';
 import { initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
-
 import { firebaseConfig, firestoreDatabaseId } from './firebase-config';
 
 export { firebaseConfig, firestoreDatabaseId };
-
 export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
 // Web platform authentication with localStorage persistence

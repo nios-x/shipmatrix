@@ -34,7 +34,14 @@
         }
       ],
       "expo-secure-store",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ShipMatrix needs your photos so you can size a parcel from a picture you already took.",
+          "cameraPermission": "ShipMatrix uses the camera to measure your parcel from a photo."
+        }
+      ]
     ],
     "scheme": [
       "shipmatrix",

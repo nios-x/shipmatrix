@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
 import { useTransactions } from '../lib/useTransactions';
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
@@ -45,7 +45,7 @@ export default function WalletScreen() {
     // someone whose money has already left their account that nothing
     // happened, so the non-terminal state is retried before it is reported.
     for (let attempt = 0; ; attempt++) {
-      const verifyRes = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/verify`, {
+      const verifyRes = await api.post(routes.verifyPayment, {
         order_id: orderId,
       });
 
@@ -92,7 +92,7 @@ export default function WalletScreen() {
       // The server holds the Cashfree secret and returns `payment_session_id`
       // plus `order_id` from Cashfree's Create Order API. It re-validates the
       // amount, so this value is a request rather than an instruction.
-      const order = await api.post(`${PAYMENTS_BASE_URL}/api/cashfree/create-order`, {
+      const order = await api.post(routes.createOrder, {
         amount,
         customer_name: user?.name,
         customer_email: user?.email,

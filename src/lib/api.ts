@@ -1,24 +1,88 @@
 import { auth } from './firebase';
 
-// Base URL for the ShipMatrix API server
+/**
+ * The core API, shared with the website. Everything public or read-only lives
+ * here: tracking, pincodes, labels, support. A relative path passed to `api.*`
+ * resolves against this host, so it is also the default for anything that does
+ * not say otherwise.
+ */
 export const API_BASE_URL = 'https://www.shipmatrix.in';
 
 /**
- * Payments run on their own service (see the `shipmatrix-server` project),
- * because they need the Cashfree secret key and Firebase Admin. Point this at
- * that deployment; it can share a host with the main API or stand alone.
+ * The privileged services: payments, OTP, rates, booking, and the channel
+ * integrations — anything needing the Cashfree secret key or Firebase Admin.
+ *
+ * These ran as their own deployment (`shipmatrix-server`, on Render) and have
+ * been migrated into the website, so this is now the same host as
+ * `API_BASE_URL`. The two constants are kept apart deliberately: the split is
+ * about *privilege*, not about hosting, and the `routes` table below still says
+ * which half of the backend answers each path. Should the privileged services
+ * ever move back onto their own box, only this line changes.
  *
  * `EXPO_PUBLIC_PAYMENTS_URL` overrides it — set it in `.env` to reach the
- * server running on your machine (e.g. `http://192.168.1.5:8080`) instead of
- * the deployment. Expo inlines `EXPO_PUBLIC_*` at bundle time, so changing it
- * needs a restart with `--clear`. A plain-`http` override only works in a debug
- * build; release builds block cleartext traffic on Android.
+ * server running on your machine (e.g. `http://192.168.1.5:3000`) instead of
+ * the deployment. The env var keeps its original name so existing `.env` files
+ * and deployment configs go on working. Expo inlines `EXPO_PUBLIC_*` at bundle
+ * time, so changing it needs a restart with `--clear`. A plain-`http` override
+ * only works in a debug build; release builds block cleartext traffic on
+ * Android.
  */
-const DEFAULT_PAYMENTS_BASE_URL = 'https://shipmatrix-server.onrender.com';
+const DEFAULT_SERVICES_BASE_URL = API_BASE_URL;
 
-export const PAYMENTS_BASE_URL = (
-  process.env.EXPO_PUBLIC_PAYMENTS_URL || DEFAULT_PAYMENTS_BASE_URL
+export const SERVICES_BASE_URL = (
+  process.env.EXPO_PUBLIC_PAYMENTS_URL || DEFAULT_SERVICES_BASE_URL
 ).replace(/\/+$/, '');
+
+/** An absolute URL on the services host. */
+const svc = (path: string) => `${SERVICES_BASE_URL}${path}`;
+
+/**
+ * Every endpoint the app calls, and — by whether it is absolute — which half
+ * of the backend serves it.
+ *
+ * This used to live at the call sites, each one remembering to prefix the
+ * services base itself. Forgetting the prefix was silent: the path is relative,
+ * so it resolved against the core API instead and 404d at runtime, with
+ * nothing between the typo and production to catch it. The two sides also
+ * carry near-identical paths — `/api/shipments/book` here,
+ * `/api/v1/shipments/sync` on the core API — where the `/v1` reads like a
+ * version but really marks which side answers. Naming the route makes both
+ * traps unreachable.
+ *
+ * The two now resolve to the same host, so a missing prefix currently lands on
+ * the right server by luck. That is exactly why the distinction is still
+ * written down: `/api/rates` is served by *both* — the privileged, authenticated
+ * quote the app books against, and the website's public rate calculator — and
+ * only the bearer token this module attaches decides which one answers.
+ */
+export const routes = {
+  // ── Services host ──────────────────────────────────────
+  createOrder: svc('/api/cashfree/create-order'),
+  verifyPayment: svc('/api/cashfree/verify'),
+
+  otpSend: svc('/api/otp/send'),
+  otpVerify: svc('/api/otp/verify'),
+  otpRegister: svc('/api/otp/register'),
+
+  rates: svc('/api/rates'),
+  bookShipment: svc('/api/shipments/book'),
+  cancelShipment: svc('/api/shipments/cancel'),
+
+  connectShopify: svc('/api/integrations/shopify/connect'),
+  connectWooCommerce: svc('/api/integrations/woocommerce/connect'),
+  disconnectChannel: svc('/api/integrations/disconnect'),
+  /** Only the channel name travels; the server holds the credentials. */
+  channelOrders: (channel: string) =>
+    svc(`/api/integrations/orders?${new URLSearchParams({ channel })}`),
+
+  // ── Core host (relative — `apiRequest` prefixes API_BASE_URL) ──
+  syncTracking: (awb: string) => `/api/v1/shipments/sync/${encodeURIComponent(awb)}`,
+  markRto: '/api/v1/shipments/mark-rto',
+  b2bCargo: '/api/v1/xpressbees/b2b-cargo',
+  publicTrack: (awb: string) => `/api/public/track/${encodeURIComponent(awb)}`,
+  pincode: (pin: string) => `/api/pincode/${encodeURIComponent(pin)}`,
+  supportChat: '/api/support/chat',
+} as const;
 
 interface ApiOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
@@ -37,10 +101,15 @@ const DEFAULT_TIMEOUT_MS = 30000;
 
 /**
  * The only hosts allowed to receive a Firebase ID token. Both are our own
- * deployments, and `PAYMENTS_BASE_URL` still honours the `EXPO_PUBLIC_PAYMENTS_URL`
+ * deployments, and `SERVICES_BASE_URL` still honours the `EXPO_PUBLIC_PAYMENTS_URL`
  * override, so pointing at a dev server on the LAN keeps working.
+ *
+ * The two are usually the same host now that the services live on the website.
+ * Both are still listed rather than collapsed: the override can point
+ * `SERVICES_BASE_URL` somewhere else at any time, and a list that silently
+ * dropped it would stop sending the token to a LAN dev server.
  */
-const TRUSTED_ORIGINS = [API_BASE_URL, PAYMENTS_BASE_URL].map((u) =>
+const TRUSTED_ORIGINS = [...new Set([API_BASE_URL, SERVICES_BASE_URL])].map((u) =>
   u.replace(/\/+$/, '')
 );
 
@@ -54,6 +123,28 @@ function isTrustedOrigin(url: string): boolean {
     const rest = url.slice(base.length);
     return rest === '' || rest.startsWith('/') || rest.startsWith('?') || rest.startsWith('#');
   });
+}
+
+/**
+ * Turns an error payload into something worth showing a user.
+ *
+ * A rejected body comes back as a fixed `error` of "Invalid request body."
+ * with the actual reason in `details` — one entry per field. Reading `error`
+ * alone told the user only that something was wrong, never what, so a
+ * mistyped email surfaced two screens away from the field that held it.
+ */
+function describeError(data: any, status: number): string {
+  const base = data?.error || data?.message || `Request failed with status ${status}`;
+
+  const fields = (Array.isArray(data?.details) ? data.details : [])
+    .map((d: any) => {
+      const path = Array.isArray(d?.path) ? d.path.join('.') : d?.path;
+      if (!d?.message) return null;
+      return path ? `${path}: ${d.message}` : d.message;
+    })
+    .filter(Boolean);
+
+  return fields.length ? `${base} (${fields.join('; ')})` : base;
 }
 
 /**
@@ -182,11 +273,7 @@ async function apiRequest<T = any>(
   const data = await response.json();
 
   if (!response.ok) {
-    throw new ApiError(
-      data.error || data.message || `Request failed with status ${response.status}`,
-      response.status,
-      data
-    );
+    throw new ApiError(describeError(data, response.status), response.status, data);
   }
 
   return data;

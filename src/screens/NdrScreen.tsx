@@ -17,7 +17,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { CourierLogo } from '../components/CourierLogo';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
-import { api } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { auth, db } from '../lib/firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { isNdr, isRto } from '../lib/shipments';
@@ -105,7 +105,7 @@ export default function NdrScreen() {
   const requestRTO = async (item: any) => {
     setActioning(true);
     try {
-      const res = await api.post('/api/v1/shipments/mark-rto', { awb: item.awb });
+      const res = await api.post(routes.markRto, { awb: item.awb });
       if (res.success) {
         toast.success('RTO Initiated', `Return to Origin initiated for AWB ${item.awb}.`);
       } else {

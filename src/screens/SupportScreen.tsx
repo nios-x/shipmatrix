@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { api } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 interface Message {
@@ -58,7 +58,7 @@ export default function SupportScreen() {
     setSending(true);
 
     try {
-      const data = await api.post('/api/support/chat', {
+      const data = await api.post(routes.supportChat, {
         message: text,
         // The Gemini-backed endpoint expects 'user'/'model' roles.
         history: priorMessages.map((m) => ({

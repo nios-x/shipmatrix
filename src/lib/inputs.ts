@@ -78,6 +78,13 @@ export function checkMobile(value: string, label = 'Phone number'): string | nul
   return null;
 }
 
+/** Signup and login must have an address, so empty is an error here. */
+export function checkEmail(value: string, label = 'Email'): string | null {
+  const v = value.trim();
+  if (!v) return `${label} is required.`;
+  return checkOptionalEmail(v, label);
+}
+
 /** Email is optional on a shipment, so an empty value passes. */
 export function checkOptionalEmail(value: string, label = 'Email'): string | null {
   const v = value.trim();

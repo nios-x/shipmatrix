@@ -12,7 +12,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
@@ -55,7 +55,7 @@ export default function AvailableCouriersScreen() {
     }
 
     try {
-      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
+      const data = await api.post(routes.rates, {
         pickupPincode: pickupPin,
         deliveryPincode: deliveryPin,
         weight,

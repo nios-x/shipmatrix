@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from './api';
+import { api, routes } from './api';
 
 export interface PincodeInfo {
   city: string;
@@ -15,7 +15,7 @@ export async function lookupPincode(pin: string): Promise<PincodeInfo | null> {
 
   try {
     // The upstream postal API returns a single-element array.
-    const data = await api.get(`/api/pincode/${pin}`);
+    const data = await api.get(routes.pincode(pin));
     const entry = Array.isArray(data) ? data[0] : data;
     const office = entry?.PostOffice?.[0];
     const result: PincodeInfo | null = office

@@ -23,7 +23,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
@@ -119,7 +119,7 @@ export default function ChannelsScreen() {
       // written into this user's own Firestore document and then appended to
       // the orders URL as a query parameter, which put a store-modifying
       // credential in every access log along the way.
-      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/shopify/connect`, {
+      await api.post(routes.connectShopify, {
         domain: cleanDomain(shopify.domain),
         token: shopify.accessToken.trim(),
       });
@@ -140,7 +140,7 @@ export default function ChannelsScreen() {
     }
     setSaving(true);
     try {
-      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/woocommerce/connect`, {
+      await api.post(routes.connectWooCommerce, {
         domain: cleanDomain(woo.domain),
         key: woo.key.trim(),
         secret: woo.secret.trim(),
@@ -171,7 +171,7 @@ export default function ChannelsScreen() {
     if (!auth.currentUser) return;
     setSaving(true);
     try {
-      await api.post(`${PAYMENTS_BASE_URL}/api/integrations/disconnect`, {
+      await api.post(routes.disconnectChannel, {
         channel: activeTab === 'shopify' ? 'shopify' : 'woocommerce',
       });
       if (activeTab === 'shopify') setShopifyEdit(null);
@@ -209,9 +209,7 @@ export default function ChannelsScreen() {
       // decides which ones to use from the verified uid — the previous version
       // put the Shopify token and the Woo secret in the query string.
       const data = await api.get(
-        `${PAYMENTS_BASE_URL}/api/integrations/orders?channel=${
-          source === 'shopify' ? 'shopify' : 'woocommerce'
-        }`
+        routes.channelOrders(source === 'shopify' ? 'shopify' : 'woocommerce')
       );
       const fetched: any[] = data.orders || [];
 

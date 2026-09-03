@@ -1,4 +1,4 @@
-import { api, PAYMENTS_BASE_URL } from './api';
+import { api, routes } from './api';
 
 /**
  * Email one-time codes, served by the ShipMatrix payments server.
@@ -18,7 +18,7 @@ export interface SendOtpResult {
 
 export async function sendOtp(email: string, purpose: OtpPurpose = 'signup'): Promise<SendOtpResult> {
   const res = await api.post(
-    `${PAYMENTS_BASE_URL}/api/otp/send`,
+    routes.otpSend,
     { email: email.trim(), purpose },
     { skipAuth: true }
   );
@@ -35,7 +35,7 @@ export async function verifyOtp(
   purpose: OtpPurpose = 'signup'
 ): Promise<void> {
   await api.post(
-    `${PAYMENTS_BASE_URL}/api/otp/verify`,
+    routes.otpVerify,
     { email: email.trim(), code: code.trim(), purpose },
     { skipAuth: true }
   );
@@ -70,7 +70,7 @@ export interface RegistrationDetails {
  */
 export async function registerWithOtp(details: RegistrationDetails): Promise<string> {
   const res = await api.post(
-    `${PAYMENTS_BASE_URL}/api/otp/register`,
+    routes.otpRegister,
     {
       email: details.email.trim(),
       code: details.code.trim(),

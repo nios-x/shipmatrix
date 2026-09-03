@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { api } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
@@ -124,7 +124,7 @@ export default function B2bCargoScreen() {
     };
 
     try {
-      const res = await api.post('/api/v1/xpressbees/b2b-cargo', payload);
+      const res = await api.post(routes.b2bCargo, payload);
 
       if (res && res.success) {
         setManifestResult({

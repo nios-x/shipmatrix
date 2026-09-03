@@ -1,5 +1,5 @@
 import { auth } from './firebase';
-import { api, ApiError, PAYMENTS_BASE_URL } from './api';
+import { api, ApiError, routes } from './api';
 import type { Shipment } from '../types';
 
 /** Reasons offered in the cancel sheet. Same list the web app shows. */
@@ -51,7 +51,7 @@ export async function cancelOrder(shipment: Shipment, reason: string): Promise<n
   }
 
   try {
-    const res = await api.post(`${PAYMENTS_BASE_URL}/api/shipments/cancel`, {
+    const res = await api.post(routes.cancelShipment, {
       shipmentId: shipment.id,
       reason,
     });

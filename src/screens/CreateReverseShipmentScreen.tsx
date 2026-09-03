@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { auth } from '../lib/firebase';
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { CourierLogo } from '../components/CourierLogo';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -110,7 +110,7 @@ export default function CreateReverseShipmentScreen() {
     }
     setLoading(true);
     try {
-      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
+      const data = await api.post(routes.rates, {
         // Reverse leg: collected from the customer, delivered to the warehouse.
         pickupPincode: form.pincode,
         deliveryPincode: warehouse.pincode,
@@ -178,7 +178,7 @@ export default function CreateReverseShipmentScreen() {
       const finalOrderId = form.orderId || generateOrderId('RET');
       const orderValue = parseFloat(form.orderValue) || 1;
 
-      const res = await api.post(`${PAYMENTS_BASE_URL}/api/shipments/book`, {
+      const res = await api.post(routes.bookShipment, {
         idempotencyKey: bookingKey(finalOrderId, rate.carrier_id),
         carrierId: rate.carrier_id,
         quotedCharge: rate.freight_charge,

@@ -37,6 +37,7 @@ import BillingScreen from '../screens/BillingScreen';
 import CodRemittanceScreen from '../screens/CodRemittanceScreen';
 import ReturnsScreen from '../screens/ReturnsScreen';
 import AdminPanelScreen from '../screens/AdminPanelScreen';
+import ParcelSizerScreen from '../screens/ParcelSizerScreen';
 
 // ─── Stack Navigators ───────────────────────────────────
 const HomeStack = createNativeStackNavigator<HomeStackParamList>();
@@ -52,6 +53,7 @@ function HomeStackNavigator() {
       <HomeStack.Screen name="Channels" component={ChannelsScreen} />
       <HomeStack.Screen name="Ndr" component={NdrScreen} />
       <HomeStack.Screen name="WeightDiscrepancy" component={WeightDiscrepancyScreen} />
+      <HomeStack.Screen name="ParcelSizer" component={ParcelSizerScreen} />
       <HomeStack.Screen name="AvailableCouriers" component={AvailableCouriersScreen} />
     </HomeStack.Navigator>
   );
@@ -68,6 +70,9 @@ function OrdersStackNavigator() {
       <OrdersStack.Screen name="Tracking" component={TrackingScreen} />
       <OrdersStack.Screen name="CreateShipment" component={CreateShipmentScreen} />
       <OrdersStack.Screen name="CreateReverseShipment" component={CreateReverseShipmentScreen} />
+      {/* Registered in both stacks so the sizer can pop straight back to the
+          booking form it was opened from, whichever tab that was. */}
+      <OrdersStack.Screen name="ParcelSizer" component={ParcelSizerScreen} />
     </OrdersStack.Navigator>
   );
 }

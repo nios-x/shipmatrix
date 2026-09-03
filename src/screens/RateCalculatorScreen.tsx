@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 
-import { api, PAYMENTS_BASE_URL } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { parseRates, type RateResult } from '../lib/rates';
@@ -111,7 +111,7 @@ export default function RateCalculatorScreen() {
     setCalculating(true);
 
     try {
-      const data = await api.post(`${PAYMENTS_BASE_URL}/api/rates`, {
+      const data = await api.post(routes.rates, {
         pickupPincode: pickupPin,
         deliveryPincode: deliveryPin,
         weight,

@@ -19,7 +19,7 @@ import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
 import { useShipments } from '../lib/useShipments';
 import { Logo } from '../components/Logo';
-import { api } from '../lib/api';
+import { api, routes } from '../lib/api';
 import { useNotifications } from '../lib/useNotifications';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 import {
@@ -113,18 +113,20 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<any>(null);
+  // Mirrors activeIndex so the timer can read the current slide without the
+  // effect resubscribing on every change.
+  const indexRef = useRef(0);
 
   // Auto-play carousel
   useEffect(() => {
     timerRef.current = setInterval(() => {
-      setActiveIndex((prev) => {
-        const nextIndex = (prev + 1) % CAROUSEL_SLIDES.length;
-        flatListRef.current?.scrollToIndex({
-          index: nextIndex,
-          animated: true,
-        });
-        return nextIndex;
+      const nextIndex = (indexRef.current + 1) % CAROUSEL_SLIDES.length;
+      indexRef.current = nextIndex;
+      flatListRef.current?.scrollToIndex({
+        index: nextIndex,
+        animated: true,
       });
+      setActiveIndex(nextIndex);
     }, 4500);
 
     return () => {
@@ -136,9 +138,19 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
     const offsetX = event.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / CAROUSEL_WIDTH);
     if (index >= 0 && index < CAROUSEL_SLIDES.length && index !== activeIndex) {
+      indexRef.current = index;
       setActiveIndex(index);
     }
   };
+
+  // Every slide is exactly CAROUSEL_WIDTH wide, so an index's offset is known
+  // without measuring it — which is what scrollToIndex needs to reach a slide
+  // that has not been rendered yet.
+  const getItemLayout = (_: ArrayLike<CarouselSlide> | null | undefined, index: number) => ({
+    length: CAROUSEL_WIDTH,
+    offset: CAROUSEL_WIDTH * index,
+    index,
+  });
 
   return (
     <View className="mb-6">
@@ -153,6 +165,7 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
         scrollEventThrottle={16}
         snapToInterval={CAROUSEL_WIDTH}
         decelerationRate="fast"
+        getItemLayout={getItemLayout}
         renderItem={({ item }) => (
           <View style={{ width: CAROUSEL_WIDTH }} className="px-1 py-1 w-[90%]">
             <TouchableOpacity
@@ -362,7 +375,7 @@ export default function DashboardScreen() {
       const active = shipments.filter((s) => s.awb && isActive(s)).slice(0, 20);
       await Promise.all(
         active.map((s) =>
-          api.post(`/api/v1/shipments/sync/${s.awb}`, { courier: s.courier }).catch(() => null)
+          api.post(routes.syncTracking(s.awb!), { courier: s.courier }).catch(() => null)
         )
       );
     } finally {
@@ -487,7 +500,7 @@ export default function DashboardScreen() {
               Quick Actions
             </Text>
             <Text className="text-[10px] font-bold text-violet-700 uppercase tracking-wide">
-              8 Shortcuts
+              10 Shortcuts
             </Text>
           </View>
 
@@ -571,6 +584,14 @@ export default function DashboardScreen() {
               bgColor="bg-emerald-50"
               iconColor="#059669"
               onPress={() => navigation.navigate('CourierPerformance')}
+            />
+
+            <QuickAction
+              title="Parcel Size"
+              iconName="camera"
+              bgColor="bg-cyan-50"
+              iconColor="#0891B2"
+              onPress={() => navigation.navigate('ParcelSizer')}
             />
           </View>
         </View>
