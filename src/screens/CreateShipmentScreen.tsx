@@ -212,6 +212,20 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       return;
     }
 
+    // An estimated quote has no courier behind it — the server priced it from
+    // its local list because that carrier has no credentials, and
+    // `/api/shipments/book` refuses it. Stopping here means saying so once,
+    // rather than letting the booking fail and inviting the seller to try the
+    // next courier, which on a deployment with no credentials is every other
+    // row on this screen.
+    if (rate.estimated) {
+      toast.error(
+        'Not Bookable Yet',
+        `₹${rate.freight_charge} for ${rate.carrier_name} is an estimate — that courier is not connected on the server yet, so it cannot be booked. Please contact support.`
+      );
+      return;
+    }
+
     // A COD shipment is not billed to the wallet, so there is no balance to
     // require. This only mirrors the decision — `/api/shipments/book` is what
     // sets the charge, and it re-derives COD from the payload rather than
@@ -553,6 +567,20 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                       <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
                         <Text className="text-[9px] font-black text-violet-700">
                           ⚡ FASTEST
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Priced from the local list, with no courier account
+                        behind it. Marked on the card as well as blocked on tap:
+                        finding out only after choosing a courier, filling a
+                        form and pressing Ship Now is what made this read as a
+                        courier outage rather than a deployment that has no
+                        courier connected. */}
+                    {rate.estimated && (
+                      <View className="bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                        <Text className="text-[9px] font-black text-amber-700">
+                          ESTIMATE
                         </Text>
                       </View>
                     )}

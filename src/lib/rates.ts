@@ -12,6 +12,15 @@ export interface RateResult {
   carrier_name: string;
   freight_charge: number;
   estimated_days?: number;
+  /**
+   * True when the server priced this from its local list because the carrier
+   * has no credentials on the deployment — it can be browsed but never booked.
+   *
+   * Dropping it here is what made "every courier fails to book" so hard to
+   * read: the server marks these rows precisely so nobody is walked into a
+   * refusal, and both screens rendered them identically to live quotes.
+   */
+  estimated?: boolean;
 }
 
 /**
@@ -37,6 +46,7 @@ export function parseRate(r: any): RateResult {
     carrier_name: r.display_name || r.carrier_name || r.carrier_id,
     freight_charge: r.freight_charge,
     estimated_days: r.estimated_days ?? FALLBACK_ESTIMATED_DAYS,
+    estimated: Boolean(r.estimated),
   };
 }
 
