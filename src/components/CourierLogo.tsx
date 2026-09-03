@@ -22,6 +22,7 @@ const BRAND_LOGOS: [pattern: RegExp, domain: string][] = [
   [/shree ?maruti/, 'shreemaruticourier.com'],
   [/amazon/, 'amazon.in'],
   [/blue ?dart|bharat ?dart/, 'bluedart.com'],
+  [/smartship/, 'smartship.in'],
 ];
 
 function getCourierLogoUrl(name: string): string | null {

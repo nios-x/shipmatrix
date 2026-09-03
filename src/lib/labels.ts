@@ -91,6 +91,10 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
     return apiUrl(`/api/bluedart/label/${enc}`);
   }
 
+  // Smartship addresses labels by its own order id, not the AWB. The route
+  // resolves one from the other, so the AWB is still what gets passed here.
+  if (name.includes('smartship')) return apiUrl(`/api/smartship/label/${enc}`);
+
   // Delhivery answers with JSON describing the packages, not the PDF itself.
   if (name.includes('delhivery')) {
     let data: any;
