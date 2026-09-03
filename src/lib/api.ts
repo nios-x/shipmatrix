@@ -1,37 +1,46 @@
 import { auth } from './firebase';
 
+/** Trailing slashes would double up when a path is appended. */
+const trim = (url: string) => url.replace(/\/+$/, '');
+
 /**
- * The core API, shared with the website. Everything public or read-only lives
- * here: tracking, pincodes, labels, support. A relative path passed to `api.*`
- * resolves against this host, so it is also the default for anything that does
- * not say otherwise.
+ * The one deployment this app talks to.
+ *
+ * It used to be `https://www.shipmatrix.in`, hard-coded. That host now runs a
+ * build that predates the services migration — its `/api/cashfree/*`,
+ * `/api/otp/*` and `/api/shipments/*` routes do not exist — and it is not ours
+ * to redeploy, so every privileged call to it answered 404 and the app surfaced
+ * that as "Request failed with status 404" on the recharge screen.
+ *
+ * The default is therefore the fork we do control. `EXPO_PUBLIC_API_URL`
+ * overrides it; Expo inlines `EXPO_PUBLIC_*` at bundle time, so a change needs
+ * a rebuild, not just a restart.
  */
-export const API_BASE_URL = 'https://www.shipmatrix.in';
+export const API_BASE_URL = trim(
+  process.env.EXPO_PUBLIC_API_URL || 'https://new-shipmatrix.vercel.app'
+);
 
 /**
  * The privileged services: payments, OTP, rates, booking, and the channel
  * integrations — anything needing the Cashfree secret key or Firebase Admin.
  *
  * These ran as their own deployment (`shipmatrix-server`, on Render) and have
- * been migrated into the website, so this is now the same host as
- * `API_BASE_URL`. The two constants are kept apart deliberately: the split is
- * about *privilege*, not about hosting, and the `routes` table below still says
- * which half of the backend answers each path. Should the privileged services
- * ever move back onto their own box, only this line changes.
+ * been migrated into the website, so this is the same host as `API_BASE_URL`
+ * and defaults to it. The two constants are kept apart deliberately: the split
+ * is about *privilege*, not about hosting, and the `routes` table below still
+ * says which half of the backend answers each path. Should the privileged
+ * services ever move back onto their own box, only this line changes.
  *
- * `EXPO_PUBLIC_PAYMENTS_URL` overrides it — set it in `.env` to reach the
- * server running on your machine (e.g. `http://192.168.1.5:3000`) instead of
- * the deployment. The env var keeps its original name so existing `.env` files
- * and deployment configs go on working. Expo inlines `EXPO_PUBLIC_*` at bundle
- * time, so changing it needs a restart with `--clear`. A plain-`http` override
+ * `EXPO_PUBLIC_PAYMENTS_URL` overrides it — point it at a server on your own
+ * machine (e.g. `http://192.168.1.5:3000`) to develop against local changes.
+ * Leave it unset and everything goes to the one deployment, which is what you
+ * want unless you are actively debugging the backend. A plain-`http` override
  * only works in a debug build; release builds block cleartext traffic on
  * Android.
  */
-const DEFAULT_SERVICES_BASE_URL = API_BASE_URL;
-
-export const SERVICES_BASE_URL = (
-  process.env.EXPO_PUBLIC_PAYMENTS_URL || DEFAULT_SERVICES_BASE_URL
-).replace(/\/+$/, '');
+export const SERVICES_BASE_URL = trim(
+  process.env.EXPO_PUBLIC_PAYMENTS_URL || API_BASE_URL
+);
 
 /** An absolute URL on the services host. */
 const svc = (path: string) => `${SERVICES_BASE_URL}${path}`;
@@ -123,6 +132,29 @@ function isTrustedOrigin(url: string): boolean {
     const rest = url.slice(base.length);
     return rest === '' || rest.startsWith('/') || rest.startsWith('?') || rest.startsWith('#');
   });
+}
+
+/**
+ * What to say when the server answered with something that is not JSON.
+ *
+ * Every route this app calls replies in JSON, so a non-JSON body means the
+ * request never reached its handler — a host serving its SPA for an unknown
+ * path, a gateway's own error page, a deployment missing the route entirely.
+ * The old text was `Request failed with status ${status}`, which is how a
+ * wallet recharge came to tell users "Request failed with status 404": true,
+ * and of no use to anyone.
+ */
+function describeNonJsonError(status: number): string {
+  if (status === 404) {
+    return 'This feature is not available on the server the app is set up to use. Please update the app or contact support.';
+  }
+  if (status === 401 || status === 403) {
+    return 'Your session is no longer valid. Please sign in again.';
+  }
+  if (status >= 500) {
+    return 'The server is having trouble right now. Please try again in a moment.';
+  }
+  return `The server returned an unexpected response (status ${status}). Please try again.`;
 }
 
 /**
@@ -262,15 +294,21 @@ async function apiRequest<T = any>(
   const contentType = response.headers.get('content-type');
   if (contentType && !contentType.includes('application/json')) {
     if (!response.ok) {
-      throw new ApiError(
-        `Request failed with status ${response.status}`,
-        response.status
-      );
+      throw new ApiError(describeNonJsonError(response.status), response.status);
     }
     return response as unknown as T;
   }
 
-  const data = await response.json();
+  // A body that claims to be JSON and is not. Reaching `response.json()` with
+  // an HTML error page — a gateway's own 502, a host answering an unknown path
+  // with index.html — throws a raw SyntaxError, and "JSON Parse error:
+  // Unexpected character: <" is what the user would have been shown.
+  let data: any;
+  try {
+    data = await response.json();
+  } catch {
+    throw new ApiError(describeNonJsonError(response.status), response.status);
+  }
 
   if (!response.ok) {
     throw new ApiError(describeError(data, response.status), response.status, data);

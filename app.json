@@ -64,7 +64,15 @@
         "monochromeImage": "./assets/adaptive-icon-monochrome.png",
         "backgroundColor": "#4C1D95"
       },
-      "package": "com.shipmatrix.app"
+      "package": "com.shipmatrix.app",
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "93adbb1f-03ba-4046-8a8d-0e20a35f22a8"
+      }
     }
   }
 }
