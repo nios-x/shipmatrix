@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
 import { View, ActivityIndicator, Text, TextInput, Platform } from 'react-native';
+import * as Sentry from '@sentry/react-native';
 import {
   useFonts,
   Raleway_100Thin,
@@ -24,6 +25,20 @@ import './global.css';
 
 import { PortalHost } from '@rn-primitives/portal';
 import { toastConfig } from './src/components/ToastConfig';
+
+// Crash reporting. Expo inlines EXPO_PUBLIC_* at bundle time, so a deploy with
+// no DSN set simply skips init rather than reporting to nowhere — there was no
+// crash visibility at all before this, and a deploy still mid-setup should
+// stay that way loudly (missing env var) rather than silently pretending to
+// report crashes it never sends.
+const SENTRY_DSN = process.env.EXPO_PUBLIC_SENTRY_DSN;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 0.2,
+    sendDefaultPii: false,
+  });
+}
 
 // Inject Raleway font stylesheet dynamically on Web platform
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -61,7 +76,7 @@ if (TextInput.defaultProps == null) TextInput.defaultProps = {};
 // @ts-ignore
 TextInput.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Raleway' : 'Raleway_400Regular' };
 
-export default function App() {
+function App() {
   const [fontsLoaded] = useFonts({
     Raleway_100Thin,
     Raleway_200ExtraLight,
@@ -110,3 +125,8 @@ export default function App() {
     </Provider>
   );
 }
+
+// Wrapping with Sentry.wrap also catches render errors, not just JS
+// exceptions — skipped entirely when no DSN is configured, so an unwrapped
+// dev build behaves exactly as it did before this.
+export default SENTRY_DSN ? Sentry.wrap(App) : App;

@@ -509,8 +509,8 @@ function EnhancedRateCard({
       }}
     >
       {/* Top Badges */}
-      <View className="flex-row items-center justify-between mb-3.5">
-        <View className="flex-row items-center gap-2">
+      <View className="flex-row items-start justify-between gap-2 mb-3.5">
+        <View className="flex-1 flex-row flex-wrap items-center gap-2">
           <View
             className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
               ? 'bg-sky-50 border border-sky-100'
@@ -547,7 +547,7 @@ function EnhancedRateCard({
           )}
         </View>
 
-        <View className="flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
+        <View className="shrink-0 mt-0.5 flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
           <Feather name="shield" size={10} color="#10B981" />
           <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
         </View>

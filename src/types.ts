@@ -28,6 +28,8 @@ export interface User {
   bankDetails?: BankDetails;
   notificationPrefs?: NotificationPrefs;
   integrations?: Integrations;
+  kycStatus?: 'Pending' | 'Approved' | 'Rejected';
+  kycUploaded?: boolean;
 }
 
 /**

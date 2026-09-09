@@ -76,6 +76,7 @@ export const routes = {
   rates: svc('/api/rates'),
   bookShipment: svc('/api/shipments/book'),
   cancelShipment: svc('/api/shipments/cancel'),
+  deleteAccount: svc('/api/account/delete'),
 
   connectShopify: svc('/api/integrations/shopify/connect'),
   connectWooCommerce: svc('/api/integrations/woocommerce/connect'),

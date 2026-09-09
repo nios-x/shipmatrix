@@ -86,6 +86,16 @@ module.exports = {
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontFamily: {
+        // Plain platform UI font (Roboto / San Francisco). Used by the create
+        // shipment form, which reads better in the device's own font than in
+        // Raleway.
+        system: [
+          platformSelect({
+            ios: 'System',
+            android: 'sans-serif',
+            default: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+          }),
+        ],
         sans: [
           platformSelect({
             ios: 'Raleway_400Regular',

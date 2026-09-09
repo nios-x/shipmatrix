@@ -1,4 +1,4 @@
-import { CourierRate } from './types';
+import { CourierRate } from '../types';
 
 export const mockCouriers: CourierRate[] = [
   {

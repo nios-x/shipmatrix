@@ -93,20 +93,9 @@ const CAROUSEL_SLIDES: CarouselSlide[] = [
       nav.getParent()?.navigate('WalletTab', { screen: 'Wallet' });
     },
   },
-  {
-    id: '4',
-    tag: 'HEAVY LOGISTICS',
-    tagIcon: 'truck',
-    title: 'B2B Cargo & Bulk Shipping',
-    description: 'Dedicated linehauls, LTL logistics and discounted freight for 50kg+ shipments.',
-    ctaText: 'Explore B2B',
-    gradientColors: ['#D97706', '#EA580C', '#C2410C'] as const,
-    badgeBg: 'rgba(255, 255, 255, 0.2)',
-    badgeTextColor: '#FFFFFF',
-    action: (nav) => {
-      nav.navigate('B2bCargo');
-    },
-  },
+  // B2B Cargo & Bulk Shipping used to have a slot here. Pulled until there's a
+  // real rate card and a wallet debit for it — see B2bCargoScreen.tsx, which
+  // now shows a "contact sales" state rather than a form that can only fail.
 ];
 
 function HeroPromoCarousel({ navigation }: { navigation: any }) {
@@ -524,14 +513,6 @@ export default function DashboardScreen() {
               bgColor="bg-pink-50"
               iconColor="#EC4899"
               onPress={() => navigation.navigate('BulkUpload')}
-            />
-
-            <QuickAction
-              title="B2B Cargo"
-              iconName="truck"
-              bgColor="bg-amber-50"
-              iconColor="#F59E0B"
-              onPress={() => navigation.navigate('B2bCargo')}
             />
 
             <QuickAction

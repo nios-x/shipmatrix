@@ -12,13 +12,26 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { api, routes } from '../lib/api';
+import { api, ApiError, routes } from '../lib/api';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type RouteMode = 'surface' | 'air';
 type BookingMode = 'credit' | 'topay';
+
+/**
+ * Off until there's a real rate card and a wallet debit for this product.
+ *
+ * The form below never showed a price or checked a balance before booking,
+ * and the server route it calls had no auth in front of it either — every
+ * booking through here was a real, free XpressBees cargo manifest. The server
+ * side is closed now (`/api/v1/xpressbees/b2b-cargo` refuses every request),
+ * so this flag is UI-only: it stops sellers from filling out a form that can
+ * only ever fail, rather than leaving the fact that it's disabled to a
+ * generic error after they've typed in two addresses.
+ */
+const B2B_CARGO_ENABLED = false;
 
 export default function B2bCargoScreen() {
   const insets = useSafeAreaInsets();
@@ -89,9 +102,6 @@ export default function B2bCargoScreen() {
     setLoading(true);
     setManifestResult(null);
 
-    const parentAwbPrefix = routeMode === 'air' ? '7167' : '9169';
-    const generatedAwb = `${parentAwbPrefix}${Math.floor(10000000 + Math.random() * 90000000)}`;
-
     const payload = {
       routeMode: routeMode === 'air' ? 'Air Cargo (7167...)' : 'Surface Cargo (9169...)',
       bookingMode: bookingMode.toUpperCase(),
@@ -126,35 +136,26 @@ export default function B2bCargoScreen() {
     try {
       const res = await api.post(routes.b2bCargo, payload);
 
-      if (res && res.success) {
+      if (res && res.success && (res.awb || res.parent_awb)) {
         setManifestResult({
-          awb: res.awb || res.parent_awb || generatedAwb,
+          awb: res.awb || res.parent_awb,
           routeMode: payload.routeMode,
           bookingMode: payload.bookingMode,
           mpsCount: payload.package.mpsCount,
           weight: payload.package.weight,
         });
-        toast.success('B2B Cargo Created!', `Manifest created with AWB: ${res.awb || generatedAwb}`);
+        toast.success('B2B Cargo Created!', `Manifest created with AWB: ${res.awb || res.parent_awb}`);
       } else {
-        // Fallback successful manifest format
-        setManifestResult({
-          awb: res?.awb || res?.parent_awb || generatedAwb,
-          routeMode: payload.routeMode,
-          bookingMode: payload.bookingMode,
-          mpsCount: payload.package.mpsCount,
-          weight: payload.package.weight,
-        });
-        toast.success('Manifest Generated', `B2B Cargo Manifest created: ${generatedAwb}`);
+        toast.error(
+          'Manifest Not Created',
+          res?.ReturnMessage || res?.message || 'The courier did not confirm this booking. Nothing was charged.'
+        );
       }
     } catch (err: any) {
-      setManifestResult({
-        awb: generatedAwb,
-        routeMode: payload.routeMode,
-        bookingMode: payload.bookingMode,
-        mpsCount: payload.package.mpsCount,
-        weight: payload.package.weight,
-      });
-      toast.success('Manifest Generated', `B2B Cargo Manifest created: ${generatedAwb}`);
+      toast.error(
+        'Manifest Not Created',
+        err instanceof ApiError ? err.message : 'Could not reach the server. Check your connection and try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -183,6 +184,34 @@ export default function B2bCargoScreen() {
     setMpsCount('1');
     setManifestResult(null);
   };
+
+  if (!B2B_CARGO_ENABLED) {
+    return (
+      <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
+        <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center gap-3">
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.7}
+            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
+          >
+            <Feather name="arrow-left" size={20} color="#334155" />
+          </TouchableOpacity>
+          <Text className="text-xl font-black text-slate-900 tracking-tight">B2B Cargo Shipping</Text>
+        </View>
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-16 h-16 rounded-2xl bg-violet-50 items-center justify-center border border-violet-100 mb-4">
+            <Feather name="package" size={26} color="#7C3AED" />
+          </View>
+          <Text className="text-base font-black text-slate-900 text-center mb-1.5">
+            B2B Cargo is not live yet
+          </Text>
+          <Text className="text-sm text-slate-500 text-center leading-5">
+            Bulk cargo shipping is being finalized. Contact support to enable it for your account.
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView

@@ -339,7 +339,7 @@ function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLen
       <View className="relative">
         {icon && <View className="absolute left-3 top-3.5 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
         <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} autoCapitalize={autoCapitalize} autoComplete={autoComplete}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-raleway text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-system  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
       </View>
     </View>
   );

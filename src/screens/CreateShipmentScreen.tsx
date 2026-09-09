@@ -323,7 +323,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
-      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
+      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
         Customer Details
       </Text>
       <View
@@ -336,7 +336,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Delivery Address */}
-      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
         Delivery Address
       </Text>
       <View
@@ -364,7 +364,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
       {/* Pickup Warehouse */}
       <View className="flex-row items-center justify-between mb-2.5">
-        <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider">
+        <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider">
           Pickup Warehouse
         </Text>
         {!isWarehouseComplete(warehouse) && (
@@ -383,7 +383,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Package Details */}
-      <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
         Package Details
       </Text>
       <View
@@ -419,13 +419,13 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
           className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-violet-200 bg-violet-50/70 py-2.5"
         >
           <Feather name="camera" size={14} color="#7C3AED" />
-          <Text className="text-[11px] font-raleway-bold text-violet-700">
+          <Text className="text-[11px] font-system font-semibold text-violet-700">
             Measure dimensions with camera
           </Text>
         </TouchableOpacity>
 
         {/* Payment Method */}
-        <Text className="text-xs font-raleway-bold text-gray-700 mb-1">Payment Method</Text>
+        <Text className="text-xs font-system font-semibold text-gray-700 mb-1">Payment Method</Text>
         <View className="flex-row gap-3">
           {(['Prepaid', 'COD'] as const).map((type) => (
             <TouchableOpacity
@@ -449,7 +449,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                   : undefined
               }
             >
-              <Text className={`font-raleway-bold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
+              <Text className={`font-system font-semibold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}
               </Text>
             </TouchableOpacity>
@@ -458,7 +458,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
         {form.paymentMethod === 'COD' && (
           <View className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-            <Text className="text-[11px] font-raleway text-amber-800 leading-4">
+            <Text className="text-[11px] font-system text-amber-800 leading-4">
               ₹{parseFloat(form.orderValue) || 0} will be collected from the customer on delivery,
               based on the order value above.
             </Text>
@@ -476,7 +476,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className={`bg-violet-700 py-4 rounded-full items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
         style={{ elevation: 4 }}
       >
-        <Text className="text-white font-raleway-bold text-sm">
+        <Text className="text-white font-system font-semibold text-sm">
           {loading ? 'Fetching Rates...' : 'Get Shipping Rates'}
         </Text>
       </TouchableOpacity>
@@ -528,14 +528,26 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
             const isCheapest = rate.freight_charge === cheapestRate;
             const isFastest = rate.estimated_days === fastestDays;
 
+            // Two badges max on the row: the mode chip, plus whichever of the
+            // rest matters most. ESTIMATE outranks the superlatives because it
+            // changes whether the rate can be booked at all, not just how it
+            // compares to the others.
+            const secondaryBadge = rate.estimated
+              ? 'estimate'
+              : isCheapest
+                ? 'cheapest'
+                : isFastest
+                  ? 'fastest'
+                  : null;
+
             return (
               <View
                 key={rate.carrier_id}
                 className="bg-white rounded-3xl p-5 mb-3.5 border border-slate-100 shadow-xs"
               >
                 {/* Top Badges */}
-                <View className="flex-row items-center justify-between mb-3.5">
-                  <View className="flex-row items-center gap-2">
+                <View className="flex-row items-start justify-between gap-2 mb-3.5">
+                  <View className="flex-1 flex-row flex-wrap items-center gap-2">
                     <View
                       className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
                         ? 'bg-sky-50 border border-sky-100'
@@ -555,7 +567,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                       </Text>
                     </View>
 
-                    {isCheapest && (
+                    {secondaryBadge === 'cheapest' && (
                       <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
                         <Text className="text-[9px] font-black text-emerald-700">
                           ★ CHEAPEST
@@ -563,7 +575,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                       </View>
                     )}
 
-                    {isFastest && !isCheapest && (
+                    {secondaryBadge === 'fastest' && (
                       <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
                         <Text className="text-[9px] font-black text-violet-700">
                           ⚡ FASTEST
@@ -577,7 +589,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                         form and pressing Ship Now is what made this read as a
                         courier outage rather than a deployment that has no
                         courier connected. */}
-                    {rate.estimated && (
+                    {secondaryBadge === 'estimate' && (
                       <View className="bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
                         <Text className="text-[9px] font-black text-amber-700">
                           ESTIMATE
@@ -586,7 +598,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                     )}
                   </View>
 
-                  <View className="flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
+                  <View className="shrink-0 mt-0.5 flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
                     <Feather name="shield" size={10} color="#10B981" />
                     <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
                   </View>
@@ -810,7 +822,7 @@ function InputField({
 }) {
   return (
     <View>
-      <Text className="text-xs font-raleway-bold text-gray-700 mb-1">{label}</Text>
+      <Text className="text-xs font-system font-semibold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
         {icon && (
           <View className="absolute left-3 top-3.5 z-10">
@@ -829,7 +841,7 @@ function InputField({
           maxLength={maxLength}
           multiline={multiline}
           style={{ textAlignVertical: multiline ? 'top' : 'center' }}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-raleway text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
         />
       </View>
     </View>

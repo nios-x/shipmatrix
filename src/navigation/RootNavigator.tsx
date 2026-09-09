@@ -10,6 +10,7 @@ import { auth, db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/firebase-utils';
 import { backfillIdentity, repairMissingProfile } from '../lib/userProfile';
 import { toast } from '../lib/alert';
+import { usePushNotifications } from '../lib/usePushNotifications';
 import { setUser, logout } from '../store/authSlice';
 import type { RootState } from '../store';
 import type { RootStackParamList } from './types';
@@ -17,6 +18,7 @@ import type { User } from '../types';
 
 import AuthNavigator from './AuthNavigator';
 import MainTabNavigator from './MainTabNavigator';
+import { navigationRef } from './navigationRef';
 
 import { View, ActivityIndicator } from 'react-native';
 
@@ -59,6 +61,8 @@ export default function RootNavigator() {
   const { isAuthenticated, isLoading } = useSelector(
     (state: RootState) => state.auth
   );
+
+  usePushNotifications();
 
   // The app's only auth subscription. Screens read the result through
   // `useUser()`, which selects from the store — they do not open listeners of
@@ -124,7 +128,7 @@ export default function RootNavigator() {
   }, [dispatch]);
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isLoading ? (
           <Stack.Screen name="Loading" component={LoadingScreen} />

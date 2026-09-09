@@ -1,14 +1,34 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
+import { doc, updateDoc } from 'firebase/firestore';
 import { useUser } from '../lib/useUser';
-import { auth } from '../lib/firebase';
+import { auth, db } from '../lib/firebase';
+import { unregisterPushToken } from '../lib/pushNotifications';
 import { CustomAlertModal } from '../components/CustomAlertModal';
 import { toast } from '../lib/alert';
+import { api, ApiError, routes } from '../lib/api';
 import type { MainTabParamList } from '../navigation/types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
+
+// Same public form the old website links from Profile > KYC Verification —
+// there's no in-app KYC flow yet, so submission still happens on Google's side.
+const KYC_FORM_URL = 'https://docs.google.com/forms/d/1dCgIQofuxRFSbbqGbAhy6rSzMulyLNwjKMBDZqzdhvc/viewform';
+
+const PRIVACY_POLICY_URL = 'https://shipmatrix.in/privacy-policy';
+
+const KYC_BADGE = {
+  Approved: { label: 'Verified', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  Rejected: { label: 'Rejected', bg: 'bg-rose-50', text: 'text-rose-700' },
+  Pending: { label: 'Pending', bg: 'bg-amber-50', text: 'text-amber-700' },
+} as const;
+
+function getKycBadge(status: string | undefined) {
+  if (status && status in KYC_BADGE) return KYC_BADGE[status as keyof typeof KYC_BADGE];
+  return { label: 'Not Submitted', bg: 'bg-slate-100', text: 'text-slate-600' };
+}
 
 interface MenuItem {
   icon: string;
@@ -32,9 +52,11 @@ const MENU_SECTIONS: { items: MenuItem[] }[] = [
       { icon: 'bell', label: 'Notifications', color: '#ec4899', screen: 'Notifications', tab: 'HomeTab' },
       { icon: 'credit-card', label: 'Billing & Invoices', color: '#22c55e', screen: 'Billing', tab: 'WalletTab' },
       { icon: 'dollar-sign', label: 'COD Remittance', color: '#10b981', screen: 'CodRemittance', tab: 'WalletTab' },
+      { icon: 'file-text', label: 'KYC Verification', color: '#f59e0b', screen: 'KycVerification' },
       { icon: 'rotate-ccw', label: 'Returns', color: '#06b6d4', screen: 'Returns' },
       { icon: 'help-circle', label: 'Help & Support', color: '#8b5cf6', screen: 'Support' },
       { icon: 'code', label: 'API Documentation', color: '#f59e0b', screen: 'ApiDocs' },
+      { icon: 'shield', label: 'Privacy Policy', color: '#64748b', screen: 'PrivacyPolicy' },
     ],
   },
 ];
@@ -44,10 +66,45 @@ export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { user, loading } = useUser();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showKycConfirm, setShowKycConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleKycClick = () => {
+    if (user?.kycStatus === 'Pending') {
+      toast.info('Already Submitted', 'Your KYC is already pending review.');
+      return;
+    }
+    if (user?.kycStatus === 'Approved') {
+      toast.success('Already Verified', 'Your KYC is already approved.');
+      return;
+    }
+    Linking.openURL(KYC_FORM_URL).catch(() => {
+      toast.error('Could not open form', 'No app on this device can open the link.');
+    });
+    setShowKycConfirm(true);
+  };
+
+  const handleKycConfirm = async () => {
+    if (!auth.currentUser) return;
+    try {
+      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
+        kycUploaded: true,
+        kycStatus: 'Pending',
+      });
+      toast.success('KYC Submitted', 'Waiting for admin approval.');
+    } catch {
+      toast.error('Submission Failed', 'Please try again.');
+    }
+  };
 
   const handleLogout = async () => {
     setShowLogoutModal(false);
+    const uid = auth.currentUser?.uid;
     try {
+      // Best-effort, and before signOut() — once signed out there is no user
+      // to scope the delete to, and a stale token just means a wasted push.
+      if (uid) await unregisterPushToken(uid);
       await auth.signOut();
       toast.success('Logged Out', 'You have been successfully signed out.');
     } catch {
@@ -58,10 +115,33 @@ export default function ProfileScreen() {
   // Screens outside ProfileStack must be addressed through their own tab —
   // a bare navigate() by name never reaches a sibling stack.
   const navigateTo = (item: MenuItem) => {
+    if (item.screen === 'PrivacyPolicy') {
+      Linking.openURL(PRIVACY_POLICY_URL).catch(() => {
+        toast.error('Could Not Open Link', 'No app on this device can open the link.');
+      });
+      return;
+    }
     if (item.tab) {
       navigation.navigate(item.tab, { screen: item.screen });
     } else {
       navigation.navigate(item.screen);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setShowDeleteConfirm(false);
+    setDeleting(true);
+    try {
+      await api.post(routes.deleteAccount, {});
+      await auth.signOut();
+      toast.success('Account Deleted', 'Your account and personal data have been removed.');
+    } catch (e: any) {
+      toast.error(
+        'Could Not Delete Account',
+        e instanceof ApiError ? e.message : 'Please try again.'
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -131,13 +211,16 @@ export default function ProfileScreen() {
           >
             {section.items.map((item, ii) => {
               const isAdmin = item.highlight;
+              const isKyc = item.screen === 'KycVerification';
               const showItem = isAdmin ? user?.role === 'admin' : true;
               if (!showItem) return null;
+
+              const kycBadge = isKyc ? getKycBadge(user?.kycStatus) : null;
 
               return (
                 <TouchableOpacity
                   key={ii}
-                  onPress={() => navigateTo(item)}
+                  onPress={() => (isKyc ? handleKycClick() : navigateTo(item))}
                   activeOpacity={0.7}
                   className={`px-4 py-3.5 flex-row items-center justify-between ${
                     ii < section.items.length - 1 ? 'border-b border-slate-100' : ''
@@ -160,7 +243,13 @@ export default function ProfileScreen() {
                       {item.label}
                     </Text>
                   </View>
-                  <Feather name="chevron-right" size={18} color="#94A3B8" />
+                  {kycBadge ? (
+                    <View className={`px-2 py-0.5 rounded-md ${kycBadge.bg}`}>
+                      <Text className={`text-[11px] font-bold ${kycBadge.text}`}>{kycBadge.label}</Text>
+                    </View>
+                  ) : (
+                    <Feather name="chevron-right" size={18} color="#94A3B8" />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -168,7 +257,7 @@ export default function ProfileScreen() {
         ))}
 
         {/* Logout */}
-        <View className="bg-white border border-rose-100 rounded-2xl mb-8 overflow-hidden">
+        <View className="bg-white border border-rose-100 rounded-2xl mb-4 overflow-hidden">
           <TouchableOpacity
             onPress={() => setShowLogoutModal(true)}
             activeOpacity={0.7}
@@ -178,6 +267,18 @@ export default function ProfileScreen() {
             <Text className="font-bold text-rose-600 text-sm">Logout</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Delete Account */}
+        <TouchableOpacity
+          onPress={() => setShowDeleteConfirm(true)}
+          activeOpacity={0.6}
+          disabled={deleting}
+          className="mb-8 items-center"
+        >
+          <Text className="text-xs font-semibold text-slate-400">
+            {deleting ? 'Deleting account…' : 'Delete Account'}
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
       {/* Themed Logout Confirmation Modal */}
@@ -191,6 +292,32 @@ export default function ProfileScreen() {
           { text: 'Logout', style: 'destructive', onPress: handleLogout },
         ]}
         onClose={() => setShowLogoutModal(false)}
+      />
+
+      {/* KYC Submission Confirmation Modal */}
+      <CustomAlertModal
+        visible={showKycConfirm}
+        title="Confirm KYC Upload"
+        message="Have you successfully filled and submitted the KYC Google Form?"
+        type="confirm"
+        buttons={[
+          { text: 'Not Yet', style: 'cancel' },
+          { text: 'Yes, Submitted', onPress: handleKycConfirm },
+        ]}
+        onClose={() => setShowKycConfirm(false)}
+      />
+
+      {/* Delete Account Confirmation Modal */}
+      <CustomAlertModal
+        visible={showDeleteConfirm}
+        title="Delete Account"
+        message="This permanently removes your name, email and phone number from ShipMatrix and signs you out. It cannot be undone. Your wallet must be empty first — contact support if you have a remaining balance."
+        type="warning"
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete Account', style: 'destructive', onPress: handleDeleteAccount },
+        ]}
+        onClose={() => setShowDeleteConfirm(false)}
       />
     </View>
   );

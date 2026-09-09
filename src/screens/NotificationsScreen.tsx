@@ -7,6 +7,7 @@ import { useNotifications } from '../lib/useNotifications';
 import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { formatDateTime } from '../lib/shipments';
+import { resolveNotificationTarget } from '../lib/notificationRouting';
 import type { Notification } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -36,22 +37,6 @@ function iconFor(n: Notification): { name: keyof typeof Feather.glyphMap; color:
   return { name: 'info', color: '#6b7280', bg: '#f3f4f6' };
 }
 
-/**
- * Deep-links a notification's `actionLink` (e.g. '/app?tab=wallet') to the
- * matching screen. Unknown targets fall through to no navigation.
- */
-const TAB_ROUTES: Record<string, { tab: string; screen?: string }> = {
-  wallet: { tab: 'WalletTab' },
-  billing: { tab: 'WalletTab', screen: 'Billing' },
-  cod: { tab: 'WalletTab', screen: 'CodRemittance' },
-  orders: { tab: 'OrdersTab' },
-  rates: { tab: 'RatesTab' },
-  profile: { tab: 'ProfileTab' },
-  ndr: { tab: 'HomeTab', screen: 'Ndr' },
-  returns: { tab: 'ProfileTab', screen: 'Returns' },
-  tracking: { tab: 'HomeTab', screen: 'Tracking' },
-};
-
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -71,8 +56,7 @@ export default function NotificationsScreen() {
 
   const handleAction = (n: Notification) => {
     markAsRead(n.id);
-    const match = n.actionLink?.match(/tab=([^&]+)/);
-    const target = match && TAB_ROUTES[match[1].toLowerCase()];
+    const target = resolveNotificationTarget(n.actionLink);
     if (!target) return;
     navigation.navigate('Main', {
       screen: target.tab,

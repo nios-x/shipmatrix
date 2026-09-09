@@ -147,14 +147,63 @@ export function courierEndpoint(carrierId: string): string {
 }
 
 /**
- * True when cancelling is worth offering: the booking reached a courier, so
- * there is an AWB to release, and it has not already ended as delivered, RTO
- * or cancelled. Whether that particular courier can be cancelled at all is
- * settled by `/api/shipments/cancel`, which reports an unsupported one when
- * the user asks rather than silently hiding the action.
+ * The couriers `/api/shipments/cancel` can actually release an AWB for — one
+ * entry per adapter on the server, matched as a prefix so every variant of a
+ * carrier (`delhivery_surface`, `bluedart_surface_lite`, `shadowfax_360`) folds
+ * onto the adapter that owns it.
+ */
+const CANCELLABLE_COURIERS = [
+  'delhivery',
+  'bluedart',
+  'ekart',
+  'xpressbees',
+  'shadowfax',
+  'shreemaruti',
+  'amazon',
+  'smartship',
+];
+
+/** Separators dropped so 'Blue Dart' and 'bluedart_air' read alike. */
+function normalise(value: string): string {
+  return (value || '').toLowerCase().replace(/[\s_-]+/g, '');
+}
+
+/**
+ * Resolves a shipment to the courier that would be asked to cancel it.
+ *
+ * The same two-step the server does. Orders booked through the app carry an
+ * exact `carrierId` and match on the prefix; ones written by the web app carry
+ * only a display name ('Blue Dart', 'Shree Maruti Surface') and match on the
+ * adapter id appearing inside it. Returns null when neither identifies a
+ * courier this platform can cancel.
+ */
+export function cancellableCourier(s: Shipment): string | null {
+  const id = normalise(String(s.carrierId ?? ''));
+  const name = normalise(String(s.courier ?? s.courierName ?? ''));
+
+  return (
+    CANCELLABLE_COURIERS.find((c) => (id ? id.startsWith(c) : false) || name.includes(c)) ?? null
+  );
+}
+
+/**
+ * True when cancelling is worth offering: the booking reached a courier this
+ * platform can cancel through, and the order has not already ended as
+ * delivered, RTO or cancelled.
+ *
+ * The courier check mirrors the web app, which only ever offered the action for
+ * the carriers it could actually call. Without it the button showed on every
+ * active order and a courier with no cancel route answered CANCEL_UNSUPPORTED
+ * after the user had picked a reason and confirmed — a dead end reached three
+ * taps in. Whether the courier then accepts the cancellation is still the
+ * server's call; this only hides the ones that were never going to be asked.
+ *
+ * Simulated bookings are exempt: a `sim_` AWB never reached a courier, so
+ * cancelling it is a local status change and no adapter is involved.
  */
 export function isCancellable(s: Shipment): boolean {
-  return !!s.awb && isActive(s);
+  if (!s.awb || !isActive(s)) return false;
+  return s.awb.startsWith('sim_') || cancellableCourier(s) !== null;
 }
 
 /**
