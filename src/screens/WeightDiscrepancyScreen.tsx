@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
+import { View, FlatList, TouchableOpacity, Modal } from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { formatRate } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,13 +18,17 @@ export default function WeightDiscrepancyScreen() {
   const { shipments } = useShipments();
   const { confirm, confirmDialog } = useConfirm();
 
-  const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'DISPUTED' | 'RESOLVED'>('ALL');
+  const [activeFilter, setActiveFilter] = useState<'ALL' | 'PENDING' | 'DISPUTED' | 'RESOLVED'>(
+    'ALL'
+  );
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [disputeModalVisible, setDisputeModalVisible] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
 
   // Sample or actual discrepancies
-  const discrepancies = shipments.filter((s) => (s as any).weightDiscrepancy || (s as any).weight_discrepancy);
+  const discrepancies = shipments.filter(
+    (s) => (s as any).weightDiscrepancy || (s as any).weight_discrepancy
+  );
 
   const displayList = discrepancies.length > 0 ? discrepancies : [];
 
@@ -41,11 +40,17 @@ export default function WeightDiscrepancyScreen() {
 
   const handleConfirmDispute = () => {
     if (!disputeReason.trim()) {
-      toast.warning('Reason Required', 'Please explain why the courier charged weight is incorrect.');
+      toast.warning(
+        'Reason Required',
+        'Please explain why the courier charged weight is incorrect.'
+      );
       return;
     }
     setDisputeModalVisible(false);
-    toast.success('Dispute Raised', `Dispute for AWB ${selectedItem?.awb || 'N/A'} submitted for review.`);
+    toast.success(
+      'Dispute Raised',
+      `Dispute for AWB ${selectedItem?.awb || 'N/A'} submitted for review.`
+    );
   };
 
   const handleAcceptDiscrepancy = (item: any) => {
@@ -63,21 +68,20 @@ export default function WeightDiscrepancyScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3 flex-1">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
+        <View className="flex-1 flex-row items-center gap-3">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
+            <Text className="font-black text-xl tracking-tight text-slate-900">
               Weight Discrepancy
             </Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            <Text className="mt-0.5 font-medium text-xs text-slate-500">
               {displayList.length} weight disputes & audit reviews
             </Text>
           </View>
@@ -85,7 +89,7 @@ export default function WeightDiscrepancyScreen() {
       </View>
 
       {/* Filter Tabs */}
-      <View className="px-4 py-3 bg-white border-b border-slate-100 flex-row gap-2">
+      <View className="flex-row gap-2 border-b border-slate-100 bg-white px-4 py-3">
         {[
           { id: 'ALL', label: 'All' },
           { id: 'PENDING', label: 'Action Required' },
@@ -97,17 +101,12 @@ export default function WeightDiscrepancyScreen() {
             <TouchableOpacity
               key={tab.id}
               onPress={() => setActiveFilter(tab.id as any)}
-              className={`px-3 py-1.5 rounded-xl border ${
+              className={`rounded-xl border px-3 py-1.5 ${
                 isActive
-                  ? 'bg-violet-600 border-violet-600 shadow-sm shadow-violet-500/20'
-                  : 'bg-slate-50 border-slate-200'
-              }`}
-            >
-              <Text
-                className={`text-xs font-black ${
-                  isActive ? 'text-white' : 'text-slate-600'
-                }`}
-              >
+                  ? 'border-violet-600 bg-violet-600 shadow-sm shadow-violet-500/20'
+                  : 'border-slate-200 bg-slate-50'
+              }`}>
+              <Text className={`font-black text-xs ${isActive ? 'text-white' : 'text-slate-600'}`}>
                 {tab.label}
               </Text>
             </TouchableOpacity>
@@ -126,43 +125,53 @@ export default function WeightDiscrepancyScreen() {
           const extraCharge = item.discrepancy_amount || Math.round(parseFloat(diff) * 45);
 
           return (
-            <View className="bg-white rounded-3xl p-5 mb-3.5 border border-slate-100 shadow-xs">
+            <View className="shadow-xs mb-3.5 rounded-3xl border border-slate-100 bg-white p-5">
               {/* Header */}
-              <View className="flex-row items-center justify-between pb-3.5 border-b border-slate-100">
+              <View className="flex-row items-center justify-between border-b border-slate-100 pb-3.5">
                 <View className="flex-row items-center gap-2.5">
-                  <View className="w-10 h-10 rounded-xl bg-slate-50 items-center justify-center p-1 border border-slate-100">
+                  <View className="h-10 w-10 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 p-1">
                     <CourierLogo name={item.courier || 'Courier'} />
                   </View>
                   <View>
-                    <Text className="text-sm font-black text-slate-900">{item.courier || 'Carrier'}</Text>
-                    <Text className="text-xs text-slate-400 font-semibold mt-0.5">AWB: {item.awb}</Text>
+                    <Text className="font-black text-sm text-slate-900">
+                      {item.courier || 'Carrier'}
+                    </Text>
+                    <Text className="mt-0.5 font-semibold text-xs text-slate-400">
+                      AWB: {item.awb}
+                    </Text>
                   </View>
                 </View>
 
-                <View className="bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200">
-                  <Text className="text-[10px] font-black text-rose-700 uppercase">
+                <View className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1">
+                  <Text className="font-black text-[10px] uppercase text-rose-700">
                     +{diff} KG DIFF
                   </Text>
                 </View>
               </View>
 
               {/* Weight Comparison Grid */}
-              <View className="py-3.5 flex-row items-center justify-between bg-slate-50 rounded-2xl p-3.5 my-3 border border-slate-100">
+              <View className="my-3 flex-row items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3.5 py-3.5">
                 <View>
-                  <Text className="text-[10px] font-bold text-slate-400">ENTERED WT</Text>
-                  <Text className="text-sm font-black text-slate-800 mt-0.5">{enteredWeight} kg</Text>
+                  <Text className="font-bold text-[10px] text-slate-400">ENTERED WT</Text>
+                  <Text className="mt-0.5 font-black text-sm text-slate-800">
+                    {enteredWeight} kg
+                  </Text>
                 </View>
 
                 <Feather name="arrow-right" size={14} color="#94A3B8" />
 
                 <View>
-                  <Text className="text-[10px] font-bold text-slate-400">COURIER WT</Text>
-                  <Text className="text-sm font-black text-rose-600 mt-0.5">{chargedWeight} kg</Text>
+                  <Text className="font-bold text-[10px] text-slate-400">COURIER WT</Text>
+                  <Text className="mt-0.5 font-black text-sm text-rose-600">
+                    {chargedWeight} kg
+                  </Text>
                 </View>
 
                 <View className="border-l border-slate-200 pl-3">
-                  <Text className="text-[10px] font-bold text-slate-400">EXTRA CHARGE</Text>
-                  <Text className="text-sm font-black text-slate-950 mt-0.5">{formatRate(extraCharge)}</Text>
+                  <Text className="font-bold text-[10px] text-slate-400">EXTRA CHARGE</Text>
+                  <Text className="mt-0.5 font-black text-sm text-slate-950">
+                    {formatRate(extraCharge)}
+                  </Text>
                 </View>
               </View>
 
@@ -171,17 +180,15 @@ export default function WeightDiscrepancyScreen() {
                 <TouchableOpacity
                   onPress={() => handleAcceptDiscrepancy(item)}
                   activeOpacity={0.8}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 items-center justify-center"
-                >
-                  <Text className="text-xs font-black text-slate-700">Accept Charge</Text>
+                  className="flex-1 items-center justify-center rounded-xl bg-slate-100 py-2.5">
+                  <Text className="font-black text-xs text-slate-700">Accept Charge</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => handleRaiseDispute(item)}
                   activeOpacity={0.8}
-                  className="flex-1 py-2.5 rounded-xl bg-violet-600 items-center justify-center shadow-sm shadow-violet-500/20"
-                >
-                  <Text className="text-xs font-black text-white">Raise Dispute</Text>
+                  className="flex-1 items-center justify-center rounded-xl bg-violet-600 py-2.5 shadow-sm shadow-violet-500/20">
+                  <Text className="font-black text-xs text-white">Raise Dispute</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -197,17 +204,18 @@ export default function WeightDiscrepancyScreen() {
 
       {/* Dispute Modal */}
       <Modal visible={disputeModalVisible} transparent animationType="fade">
-        <View className="flex-1 bg-black/60 items-center justify-center px-6">
-          <View className="w-full bg-white rounded-3xl p-6 border border-slate-100 shadow-xl">
-            <View className="flex-row items-center justify-between mb-4">
-              <Text className="text-lg font-black text-slate-900">Raise Weight Dispute</Text>
+        <View className="flex-1 items-center justify-center bg-black/60 px-6">
+          <View className="w-full rounded-3xl border border-slate-100 bg-white p-6 shadow-xl">
+            <View className="mb-4 flex-row items-center justify-between">
+              <Text className="font-black text-lg text-slate-900">Raise Weight Dispute</Text>
               <TouchableOpacity onPress={() => setDisputeModalVisible(false)}>
                 <Feather name="x" size={20} color="#64748B" />
               </TouchableOpacity>
             </View>
 
-            <Text className="text-xs font-medium text-slate-500 mb-3">
-              Explain why the courier billed weight is incorrect. You can attach scale photos or invoice receipts.
+            <Text className="mb-3 font-medium text-xs text-slate-500">
+              Explain why the courier billed weight is incorrect. You can attach scale photos or
+              invoice receipts.
             </Text>
 
             <TextInput
@@ -216,22 +224,20 @@ export default function WeightDiscrepancyScreen() {
               placeholder="e.g. Package was weighed with dead weight 0.5kg, dimensions 10x10x10cm."
               placeholderTextColor="#94A3B8"
               multiline
-              className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs font-medium text-slate-900 min-h-[90px] mb-4 text-top"
+              className="text-top mb-4 min-h-[90px] rounded-2xl border border-slate-200 bg-slate-50 p-3.5 font-medium text-xs text-slate-900"
             />
 
             <View className="flex-row gap-2.5">
               <TouchableOpacity
                 onPress={() => setDisputeModalVisible(false)}
-                className="flex-1 py-3 rounded-xl bg-slate-100 items-center"
-              >
-                <Text className="text-xs font-bold text-slate-700">Cancel</Text>
+                className="flex-1 items-center rounded-xl bg-slate-100 py-3">
+                <Text className="font-bold text-xs text-slate-700">Cancel</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleConfirmDispute}
-                className="flex-1 py-3 rounded-xl bg-violet-600 items-center shadow-sm shadow-violet-500/20"
-              >
-                <Text className="text-xs font-black text-white">Submit Dispute</Text>
+                className="flex-1 items-center rounded-xl bg-violet-600 py-3 shadow-sm shadow-violet-500/20">
+                <Text className="font-black text-xs text-white">Submit Dispute</Text>
               </TouchableOpacity>
             </View>
           </View>

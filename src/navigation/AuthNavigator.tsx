@@ -19,8 +19,7 @@ export default function AuthNavigator() {
       screenOptions={{
         headerShown: false,
         animation: 'slide_from_right',
-      }}
-    >
+      }}>
       <Stack.Screen name="Splash" component={SplashScreen} />
       <Stack.Screen name="Onboarding" component={OnboardingScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />

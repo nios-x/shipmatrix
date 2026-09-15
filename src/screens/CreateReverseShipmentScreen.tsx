@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,11 +9,17 @@ import { api, routes } from '../lib/api';
 import { useUser } from '../lib/useUser';
 import { RateCard } from '../components/RateCard';
 import { formatCurrency, formatRate } from '../lib/format';
+import { parseRates, type RateResult } from '../lib/rates';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
 import { usePincode } from '../lib/usePincode';
-import { bookingKey, isWarehouseComplete, generateOrderId, EMPTY_WAREHOUSE } from '../lib/shipments';
+import {
+  bookingKey,
+  isWarehouseComplete,
+  generateOrderId,
+  EMPTY_WAREHOUSE,
+} from '../lib/shipments';
 import { WarehouseForm } from '../components/WarehouseForm';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
@@ -35,12 +35,7 @@ import {
 
 type Step = 'form' | 'rates' | 'success';
 
-interface RateItem {
-  carrier_id: string;
-  carrier_name: string;
-  freight_charge: number;
-  estimated_days?: number;
-}
+type RateItem = RateResult;
 
 export default function CreateReverseShipmentScreen() {
   const insets = useSafeAreaInsets();
@@ -79,8 +74,10 @@ export default function CreateReverseShipmentScreen() {
   // Defaults to the saved warehouse; an edit takes over as an override so the
   // profile value can load in without an effect racing the user's typing.
   const [warehouseEdit, setWarehouseEdit] = useState<WarehouseData | null>(null);
-  const warehouse: WarehouseData =
-    warehouseEdit ?? { ...EMPTY_WAREHOUSE, ...(user?.warehouseData || {}) };
+  const warehouse: WarehouseData = warehouseEdit ?? {
+    ...EMPTY_WAREHOUSE,
+    ...(user?.warehouseData || {}),
+  };
 
   // The customer's city/state resolve from their pincode; derived so a typed
   // value always takes precedence.
@@ -124,12 +121,10 @@ export default function CreateReverseShipmentScreen() {
         codAmount: '0',
       });
       if (data.success && Array.isArray(data.data)) {
-        setRates(data.data.map((r: any) => ({
-          carrier_id: r.carrier_id,
-          carrier_name: r.carrier_name || r.carrier_id,
-          freight_charge: r.freight_charge,
-          estimated_days: r.estimated_days,
-        })));
+        // The shared parser reads the server's `display_name` and keeps the
+        // `estimated` flag — mapping by hand here had shown raw carrier slugs
+        // and let unbookable estimates through to a failed booking.
+        setRates(parseRates(data.data));
         setStep('rates');
       } else {
         toast.error('Error', 'Could not fetch rates.');
@@ -144,8 +139,20 @@ export default function CreateReverseShipmentScreen() {
   /** Guards first, then confirm — the return is billed the moment it books. */
   const handleBook = (rate: RateItem) => {
     if (!auth.currentUser) return;
+    // Same guard as the forward booking: an estimate has no courier account
+    // behind it, and the server refuses to book it.
+    if (rate.estimated) {
+      toast.error(
+        'Not Bookable Yet',
+        `${formatRate(rate.freight_charge)} for ${rate.carrier_name} is an estimate — that courier is not connected on the server yet, so it cannot be booked. Please contact support.`
+      );
+      return;
+    }
     if ((user?.walletBalance || 0) < rate.freight_charge) {
-      toast.error('Insufficient Balance', `Need ${formatRate(rate.freight_charge)}, have ${formatCurrency(user?.walletBalance || 0)}`);
+      toast.error(
+        'Insufficient Balance',
+        `Need ${formatRate(rate.freight_charge)}, have ${formatCurrency(user?.walletBalance || 0)}`
+      );
       return;
     }
     if (!isWarehouseComplete(warehouse)) {
@@ -228,11 +235,10 @@ export default function CreateReverseShipmentScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#f8fafc]"
-      style={{ paddingTop: insets.top }}
-    >
+      style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="px-5 py-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => step === 'form' ? navigation.goBack() : setStep('form')}>
+      <View className="flex-row items-center gap-3 px-5 py-4">
+        <TouchableOpacity onPress={() => (step === 'form' ? navigation.goBack() : setStep('form'))}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
         <Text variant="title" className="flex-1">
@@ -243,57 +249,180 @@ export default function CreateReverseShipmentScreen() {
       {loading && step !== 'form' ? (
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-3 mt-2">
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+          className="flex-1 px-5"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <Text className="mb-3 mt-2 font-semibold text-[11px] uppercase tracking-wider text-slate-500">
             Collect From Customer
           </Text>
-          <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
-            <Field label="Customer Name" value={form.customerName} onChange={(v) => update('customerName', v)} placeholder="Name" icon="user" />
-            <Field label="Phone" value={form.customerPhone} onChange={(v) => update('customerPhone', onlyDigits(v, 10))} placeholder="9876543210" icon="phone" keyboardType="number-pad" maxLength={10} autoComplete="tel" />
-            <Field label="Pickup Address" value={form.address} onChange={(v) => update('address', v)} placeholder="Full address" icon="map-pin" multiline />
-            <Field label="Pickup Pincode" value={form.pincode} onChange={(v) => update('pincode', onlyDigits(v, 6))} placeholder="400001" keyboardType="number-pad" maxLength={6} />
+          <View
+            className="mb-4 gap-3 rounded-2xl border border-gray-100 bg-white p-4"
+            style={{ elevation: 1 }}>
+            <Field
+              label="Customer Name"
+              value={form.customerName}
+              onChange={(v) => update('customerName', v)}
+              placeholder="Name"
+              icon="user"
+            />
+            <Field
+              label="Phone"
+              value={form.customerPhone}
+              onChange={(v) => update('customerPhone', onlyDigits(v, 10))}
+              placeholder="9876543210"
+              icon="phone"
+              keyboardType="number-pad"
+              maxLength={10}
+              autoComplete="tel"
+            />
+            <Field
+              label="Pickup Address"
+              value={form.address}
+              onChange={(v) => update('address', v)}
+              placeholder="Full address"
+              icon="map-pin"
+              multiline
+            />
+            <Field
+              label="Pickup Pincode"
+              value={form.pincode}
+              onChange={(v) => update('pincode', onlyDigits(v, 6))}
+              placeholder="400001"
+              keyboardType="number-pad"
+              maxLength={6}
+            />
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="City" value={city} onChange={(v) => update('city', v)} placeholder="City" /></View>
-              <View className="flex-1"><Field label="State" value={state} onChange={(v) => update('state', v)} placeholder="State" /></View>
+              <View className="flex-1">
+                <Field
+                  label="City"
+                  value={city}
+                  onChange={(v) => update('city', v)}
+                  placeholder="City"
+                />
+              </View>
+              <View className="flex-1">
+                <Field
+                  label="State"
+                  value={state}
+                  onChange={(v) => update('state', v)}
+                  placeholder="State"
+                />
+              </View>
             </View>
           </View>
 
-          <View className="flex-row items-center justify-between mb-3">
+          <View className="mb-3 flex-row items-center justify-between">
             <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500">
               Return To Warehouse
             </Text>
             {!isWarehouseComplete(warehouse) && (
-              <View className="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                <Text className="text-[9px] font-black text-amber-700">REQUIRED</Text>
+              <View className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">
+                <Text className="font-black text-[9px] text-amber-700">REQUIRED</Text>
               </View>
             )}
           </View>
-          <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4" style={{ elevation: 1 }}>
+          <View
+            className="mb-4 rounded-2xl border border-gray-100 bg-white p-4"
+            style={{ elevation: 1 }}>
             <WarehouseForm value={warehouse} onChange={setWarehouseEdit} />
           </View>
 
-          <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-3">Package</Text>
-          <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
-            <Field label="Product" value={form.productName} onChange={(v) => update('productName', v)} placeholder="Product name" icon="package" />
+          <Text className="mb-3 font-semibold text-[11px] uppercase tracking-wider text-slate-500">
+            Package
+          </Text>
+          <View
+            className="mb-4 gap-3 rounded-2xl border border-gray-100 bg-white p-4"
+            style={{ elevation: 1 }}>
+            <Field
+              label="Product"
+              value={form.productName}
+              onChange={(v) => update('productName', v)}
+              placeholder="Product name"
+              icon="package"
+            />
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="Weight (kg)" value={form.weight} onChange={(v) => update('weight', onlyDecimal(v, 4, 3))} placeholder="0.5" keyboardType="decimal-pad" maxLength={8} /></View>
-              <View className="flex-1"><Field label="Value (₹)" value={form.orderValue} onChange={(v) => update('orderValue', onlyDigits(v, 8))} placeholder="500" keyboardType="number-pad" maxLength={8} /></View>
+              <View className="flex-1">
+                <Field
+                  label="Weight (kg)"
+                  value={form.weight}
+                  onChange={(v) => update('weight', onlyDecimal(v, 4, 3))}
+                  placeholder="0.5"
+                  keyboardType="decimal-pad"
+                  maxLength={8}
+                />
+              </View>
+              <View className="flex-1">
+                <Field
+                  label="Value (₹)"
+                  value={form.orderValue}
+                  onChange={(v) => update('orderValue', onlyDigits(v, 8))}
+                  placeholder="500"
+                  keyboardType="number-pad"
+                  maxLength={8}
+                />
+              </View>
             </View>
             <View className="flex-row gap-3">
-              <View className="flex-1"><Field label="L (cm)" value={form.length} onChange={(v) => update('length', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
-              <View className="flex-1"><Field label="W (cm)" value={form.breadth} onChange={(v) => update('breadth', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
-              <View className="flex-1"><Field label="H (cm)" value={form.height} onChange={(v) => update('height', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} /></View>
+              <View className="flex-1">
+                <Field
+                  label="L (cm)"
+                  value={form.length}
+                  onChange={(v) => update('length', onlyDecimal(v, 3, 1))}
+                  placeholder="10"
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+              </View>
+              <View className="flex-1">
+                <Field
+                  label="W (cm)"
+                  value={form.breadth}
+                  onChange={(v) => update('breadth', onlyDecimal(v, 3, 1))}
+                  placeholder="10"
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+              </View>
+              <View className="flex-1">
+                <Field
+                  label="H (cm)"
+                  value={form.height}
+                  onChange={(v) => update('height', onlyDecimal(v, 3, 1))}
+                  placeholder="10"
+                  keyboardType="decimal-pad"
+                  maxLength={5}
+                />
+              </View>
             </View>
-            <Field label="Reason" value={form.reason} onChange={(v) => update('reason', v)} placeholder="Customer Return" />
+            <Field
+              label="Reason"
+              value={form.reason}
+              onChange={(v) => update('reason', v)}
+              placeholder="Customer Return"
+            />
           </View>
 
-          <TouchableOpacity onPress={handleGetRates} disabled={loading} activeOpacity={0.8} className={`bg-violet-700 py-4 rounded-xl items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`} style={{ elevation: 4 }}>
-            <Text className="text-white font-raleway-bold text-sm">{loading ? 'Fetching Rates...' : 'Get Return Rates'}</Text>
+          <TouchableOpacity
+            onPress={handleGetRates}
+            disabled={loading}
+            activeOpacity={0.8}
+            className={`mb-8 items-center rounded-xl bg-violet-700 py-4 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
+            style={{ elevation: 4 }}>
+            <Text className="font-raleway-bold text-sm text-white">
+              {loading ? 'Fetching Rates...' : 'Get Return Rates'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       ) : step === 'rates' ? (
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-          <Text variant="label" className="mb-3 mt-2">{rates.length} couriers available</Text>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+          className="flex-1 px-5"
+          showsVerticalScrollIndicator={false}>
+          <Text variant="label" className="mb-3 mt-2">
+            {rates.length} couriers available
+          </Text>
           {rates
             .slice()
             .sort((a, b) => a.freight_charge - b.freight_charge)
@@ -310,15 +439,27 @@ export default function CreateReverseShipmentScreen() {
         </ScrollView>
       ) : (
         <View className="flex-1 items-center justify-center px-8">
-          <View className="bg-emerald-50 border border-emerald-100 w-20 h-20 rounded-3xl items-center justify-center mb-6">
+          <View className="mb-6 h-20 w-20 items-center justify-center rounded-3xl border border-emerald-100 bg-emerald-50">
             <Feather name="check-circle" size={36} color="#059669" />
           </View>
-          <Text className="text-2xl font-raleway-bold text-gray-900 mb-2 tracking-tight">Return Booked!</Text>
-          <Text className="text-gray-500 font-raleway text-sm text-center mb-1">AWB: {result?.awb}</Text>
-          <Text className="text-gray-500 font-raleway text-sm text-center mb-1">Courier: {result?.courier}</Text>
-          <Text className="text-gray-500 font-raleway text-sm text-center mb-6">Charge: {formatRate(result?.charge)}</Text>
-          <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-violet-700 px-8 py-3.5 rounded-xl shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
-            <Text className="text-white font-raleway-bold text-sm">Done</Text>
+          <Text className="mb-2 font-raleway-bold text-2xl tracking-tight text-gray-900">
+            Return Booked!
+          </Text>
+          <Text className="mb-1 text-center font-raleway text-sm text-gray-500">
+            AWB: {result?.awb}
+          </Text>
+          <Text className="mb-1 text-center font-raleway text-sm text-gray-500">
+            Courier: {result?.courier}
+          </Text>
+          <Text className="mb-6 text-center font-raleway text-sm text-gray-500">
+            Charge: {formatRate(result?.charge)}
+          </Text>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.8}
+            className="rounded-xl bg-violet-700 px-8 py-3.5 shadow-md shadow-purple-900/20"
+            style={{ elevation: 3 }}>
+            <Text className="font-raleway-bold text-sm text-white">Done</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -328,18 +469,50 @@ export default function CreateReverseShipmentScreen() {
   );
 }
 
-function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLength, multiline, autoCapitalize, autoComplete }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder: string;
-  icon?: string; keyboardType?: any; maxLength?: number; multiline?: boolean;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters'; autoComplete?: any;
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  icon,
+  keyboardType,
+  maxLength,
+  multiline,
+  autoCapitalize,
+  autoComplete,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  icon?: string;
+  keyboardType?: any;
+  maxLength?: number;
+  multiline?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoComplete?: any;
 }) {
   return (
     <View>
-      <Text className="text-xs font-raleway-bold text-gray-700 mb-1">{label}</Text>
+      <Text className="mb-1 font-raleway-bold text-xs text-gray-700">{label}</Text>
       <View className="relative">
-        {icon && <View className="absolute left-3 top-3.5 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
-        <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} autoCapitalize={autoCapitalize} autoComplete={autoComplete}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-sans  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
+        {icon && (
+          <View className="absolute left-3 top-3.5 z-10">
+            <Feather name={icon as any} size={16} color="#9ca3af" />
+          </View>
+        )}
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor="#9ca3af"
+          keyboardType={keyboardType}
+          maxLength={maxLength}
+          multiline={multiline}
+          autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          className={`rounded-xl border border-gray-200 bg-gray-50/90 ${icon ? 'pl-9' : 'pl-3.5'} py-2.5 pr-3.5 font-sans text-sm  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
+        />
       </View>
     </View>
   );

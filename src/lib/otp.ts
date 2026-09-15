@@ -16,12 +16,11 @@ export interface SendOtpResult {
   resendAfterSeconds: number;
 }
 
-export async function sendOtp(email: string, purpose: OtpPurpose = 'signup'): Promise<SendOtpResult> {
-  const res = await api.post(
-    routes.otpSend,
-    { email: email.trim(), purpose },
-    { skipAuth: true }
-  );
+export async function sendOtp(
+  email: string,
+  purpose: OtpPurpose = 'signup'
+): Promise<SendOtpResult> {
+  const res = await api.post(routes.otpSend, { email: email.trim(), purpose }, { skipAuth: true });
 
   return {
     expiresAt: res.expires_at,

@@ -97,19 +97,18 @@ export default function BillingScreen() {
         invoices.map((inv) => (
           <View
             key={inv.id}
-            className="bg-white rounded-2xl p-4 mb-3 border border-gray-100 flex-row items-center justify-between"
-            style={{ elevation: 1 }}
-          >
-            <View className="flex-row items-start gap-3 flex-1">
-              <View className="w-10 h-10 rounded-xl bg-purple-50 items-center justify-center">
+            className="mb-3 flex-row items-center justify-between rounded-2xl border border-gray-100 bg-white p-4"
+            style={{ elevation: 1 }}>
+            <View className="flex-1 flex-row items-start gap-3">
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-purple-50">
                 <Feather name="file-text" size={18} color="#7c3aed" />
               </View>
               <View className="flex-1">
                 <Text className="font-bold text-gray-900">{inv.label}</Text>
-                <Text className="text-[11px] font-medium text-gray-500 mt-0.5">
+                <Text className="mt-0.5 font-medium text-[11px] text-gray-500">
                   {inv.id} • {inv.shipments} shipment{inv.shipments === 1 ? '' : 's'}
                 </Text>
-                <Text className="text-sm font-black text-gray-900 mt-1.5">
+                <Text className="mt-1.5 font-black text-sm text-gray-900">
                   {formatCurrency(inv.spend)}
                 </Text>
               </View>
@@ -118,9 +117,9 @@ export default function BillingScreen() {
         ))
       )}
 
-      <View className="mt-4 mb-8 bg-blue-50 border border-blue-100 p-4 rounded-2xl flex-row gap-3">
+      <View className="mb-8 mt-4 flex-row gap-3 rounded-2xl border border-blue-100 bg-blue-50 p-4">
         <Feather name="info" size={18} color="#1d4ed8" />
-        <Text className="flex-1 text-[13px] text-blue-800 leading-5">
+        <Text className="flex-1 text-[13px] leading-5 text-blue-800">
           Invoices cover the previous month&apos;s shipping consumption and platform fees.
           {user?.gstNo
             ? ` Input Tax Credit is claimed against GSTIN ${user.gstNo}.`
@@ -134,34 +133,36 @@ export default function BillingScreen() {
     <SectionList
       sections={statementSections}
       keyExtractor={(item) => item.id}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+      contentContainerStyle={{
+        paddingHorizontal: 20,
+        paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+      }}
       showsVerticalScrollIndicator={false}
       stickySectionHeadersEnabled={false}
       renderSectionHeader={({ section }) => (
-        <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-4 mb-2">
+        <Text className="mb-2 mt-4 font-bold text-xs uppercase tracking-wider text-gray-400">
           {section.title}
         </Text>
       )}
       renderItem={({ item }) => (
         <View
-          className="bg-white rounded-2xl p-4 mb-2 border border-gray-100 flex-row items-center justify-between"
-          style={{ elevation: 1 }}
-        >
+          className="mb-2 flex-row items-center justify-between rounded-2xl border border-gray-100 bg-white p-4"
+          style={{ elevation: 1 }}>
           <View className="flex-1 pr-3">
             <Text className="font-semibold text-sm text-gray-900" numberOfLines={1}>
               {item.description || (item.type === 'credit' ? 'Wallet recharge' : 'Shipping charge')}
             </Text>
-            <Text className="text-[10px] text-gray-400 font-medium mt-0.5">
+            <Text className="mt-0.5 font-medium text-[10px] text-gray-400">
               {item.id.slice(0, 8).toUpperCase()}
             </Text>
-            <Text className="text-[11px] text-gray-400 mt-1">{formatDateTime(item.createdAt)}</Text>
+            <Text className="mt-1 text-[11px] text-gray-400">{formatDateTime(item.createdAt)}</Text>
           </View>
           <Text
             className={`font-black text-sm ${
               item.type === 'credit' ? 'text-green-600' : 'text-gray-900'
-            }`}
-          >
-            {item.type === 'credit' ? '+' : '−'}{formatCurrency(Number(item.amount) || 0)}
+            }`}>
+            {item.type === 'credit' ? '+' : '−'}
+            {formatCurrency(Number(item.amount) || 0)}
           </Text>
         </View>
       )}
@@ -173,15 +174,15 @@ export default function BillingScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900">Billing & Invoices</Text>
+        <Text className="font-black text-xl text-gray-900">Billing & Invoices</Text>
       </View>
 
       {/* Tabs */}
-      <View className="flex-row px-5 gap-6 border-b border-gray-200 bg-white">
+      <View className="flex-row gap-6 border-b border-gray-200 bg-white px-5">
         {(
           [
             { key: 'invoices', label: 'Monthly Invoices' },
@@ -194,11 +195,8 @@ export default function BillingScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.7}
-              className={`pb-3 pt-3 border-b-2 ${active ? 'border-violet-600' : 'border-transparent'}`}
-            >
-              <Text
-                className={`text-sm font-bold ${active ? 'text-violet-600' : 'text-gray-500'}`}
-              >
+              className={`border-b-2 pb-3 pt-3 ${active ? 'border-violet-600' : 'border-transparent'}`}>
+              <Text className={`font-bold text-sm ${active ? 'text-violet-600' : 'text-gray-500'}`}>
                 {tab.label}
               </Text>
             </TouchableOpacity>

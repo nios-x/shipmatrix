@@ -21,6 +21,8 @@ export function openCashfreeCheckout(
   _options: CashfreeCheckoutOptions
 ): Promise<CashfreeCheckoutResult> {
   return Promise.reject(
-    new CashfreeError('Card payments are not supported in the web preview. Please use the mobile app.')
+    new CashfreeError(
+      'Card payments are not supported in the web preview. Please use the mobile app.'
+    )
   );
 }

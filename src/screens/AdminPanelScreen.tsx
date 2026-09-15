@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  FlatList,
-  RefreshControl,
-} from 'react-native';
+import { View, TouchableOpacity, FlatList, RefreshControl } from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -94,18 +89,18 @@ export default function AdminPanelScreen() {
   if (denied) {
     return (
       <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-        <View className="px-5 py-4 flex-row items-center gap-3">
+        <View className="flex-row items-center gap-3 px-5 py-4">
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Feather name="arrow-left" size={24} color="#1f2937" />
           </TouchableOpacity>
-          <Text className="text-xl font-black text-gray-900">Admin Panel</Text>
+          <Text className="font-black text-xl text-gray-900">Admin Panel</Text>
         </View>
         <View className="flex-1 items-center justify-center px-10">
-          <View className="w-14 h-14 rounded-2xl bg-red-50 items-center justify-center mb-4">
+          <View className="mb-4 h-14 w-14 items-center justify-center rounded-2xl bg-red-50">
             <Feather name="lock" size={26} color="#ef4444" />
           </View>
-          <Text className="text-base font-black text-gray-900 mb-1.5">Admins only</Text>
-          <Text className="text-sm text-gray-500 font-medium text-center leading-5">
+          <Text className="mb-1.5 font-black text-base text-gray-900">Admins only</Text>
+          <Text className="text-center font-medium text-sm leading-5 text-gray-500">
             This account does not have administrator access.
           </Text>
         </View>
@@ -116,41 +111,41 @@ export default function AdminPanelScreen() {
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
         <View className="flex-1">
-          <Text className="text-xl font-black text-gray-900">Admin Panel</Text>
-          <Text className="text-xs text-gray-400 font-medium">System Administration</Text>
+          <Text className="font-black text-xl text-gray-900">Admin Panel</Text>
+          <Text className="font-medium text-xs text-gray-400">System Administration</Text>
         </View>
-        <View className="bg-red-100 px-2.5 py-1 rounded-full">
-          <Text className="text-[10px] font-black text-red-600 uppercase">Superadmin</Text>
+        <View className="rounded-full bg-red-100 px-2.5 py-1">
+          <Text className="font-black text-[10px] uppercase text-red-600">Superadmin</Text>
         </View>
       </View>
 
       {/* Tabs */}
-      <View className="flex-row mx-5 mb-4 bg-gray-100 rounded-xl p-1">
+      <View className="mx-5 mb-4 flex-row rounded-xl bg-gray-100 p-1">
         <TouchableOpacity
           onPress={() => setActiveTab('users')}
-          className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'users' ? 'bg-white shadow-sm' : ''}`}
-        >
-          <Text className={`text-xs font-bold ${activeTab === 'users' ? 'text-gray-900' : 'text-gray-500'}`}>
+          className={`flex-1 items-center rounded-lg py-2.5 ${activeTab === 'users' ? 'bg-white shadow-sm' : ''}`}>
+          <Text
+            className={`font-bold text-xs ${activeTab === 'users' ? 'text-gray-900' : 'text-gray-500'}`}>
             Users ({users.length})
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => setActiveTab('complaints')}
-          className={`flex-1 py-2.5 rounded-lg items-center ${activeTab === 'complaints' ? 'bg-white shadow-sm' : ''}`}
-        >
-          <Text className={`text-xs font-bold ${activeTab === 'complaints' ? 'text-gray-900' : 'text-gray-500'}`}>
+          className={`flex-1 items-center rounded-lg py-2.5 ${activeTab === 'complaints' ? 'bg-white shadow-sm' : ''}`}>
+          <Text
+            className={`font-bold text-xs ${activeTab === 'complaints' ? 'text-gray-900' : 'text-gray-500'}`}>
             Complaints ({complaints.length})
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* Search */}
-      <View className="px-5 mb-4">
+      <View className="mb-4 px-5">
         <View className="relative">
           <View className="absolute left-3 top-3 z-10">
             <Feather name="search" size={16} color="#9ca3af" />
@@ -160,7 +155,7 @@ export default function AdminPanelScreen() {
             onChangeText={setSearch}
             placeholder="Search users by name, email, company..."
             placeholderTextColor="#9ca3af"
-            className="bg-white border border-gray-200 rounded-xl pl-9 pr-4 py-2.5 text-sm font-medium text-gray-900"
+            className="rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 font-medium text-sm text-gray-900"
           />
         </View>
       </View>
@@ -171,25 +166,36 @@ export default function AdminPanelScreen() {
         <FlatList
           data={filteredUsers}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 14,
+            paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+          }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#7c3aed']} />
           }
           renderItem={({ item }) => (
-            <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="font-bold text-gray-900 text-sm">{item.name || 'Unnamed'}</Text>
-                <View className={`px-2 py-0.5 rounded ${item.role === 'admin' ? 'bg-red-100' : 'bg-blue-100'}`}>
-                  <Text className={`text-[10px] font-bold uppercase ${item.role === 'admin' ? 'text-red-700' : 'text-blue-700'}`}>
+            <View
+              className="mb-3 rounded-2xl border border-gray-100 bg-white p-4"
+              style={{ elevation: 1 }}>
+              <View className="mb-2 flex-row items-center justify-between">
+                <Text className="font-bold text-sm text-gray-900">{item.name || 'Unnamed'}</Text>
+                <View
+                  className={`rounded px-2 py-0.5 ${item.role === 'admin' ? 'bg-red-100' : 'bg-blue-100'}`}>
+                  <Text
+                    className={`font-bold text-[10px] uppercase ${item.role === 'admin' ? 'text-red-700' : 'text-blue-700'}`}>
                     {item.role || 'user'}
                   </Text>
                 </View>
               </View>
               <Text className="text-xs text-gray-500">{item.email}</Text>
-              {item.companyName && <Text className="text-xs text-gray-400 mt-0.5">{item.companyName}</Text>}
-              <View className="flex-row items-center justify-between mt-3 pt-2 border-t border-gray-50">
+              {item.companyName && (
+                <Text className="mt-0.5 text-xs text-gray-400">{item.companyName}</Text>
+              )}
+              <View className="mt-3 flex-row items-center justify-between border-t border-gray-50 pt-2">
                 <Text className="text-xs text-gray-400">Balance</Text>
-                <Text className="text-sm font-black text-gray-900">{formatCurrency(item.walletBalance || 0)}</Text>
+                <Text className="font-black text-sm text-gray-900">
+                  {formatCurrency(item.walletBalance || 0)}
+                </Text>
               </View>
             </View>
           )}
@@ -198,14 +204,21 @@ export default function AdminPanelScreen() {
         <FlatList
           data={complaints}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 14,
+            paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+          }}
           renderItem={({ item }) => (
-            <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
-              <Text className="font-bold text-gray-900 text-sm">{item.subject || 'Complaint'}</Text>
-              <Text className="text-xs text-gray-500 mt-1">{item.message}</Text>
+            <View
+              className="mb-3 rounded-2xl border border-gray-100 bg-white p-4"
+              style={{ elevation: 1 }}>
+              <Text className="font-bold text-sm text-gray-900">{item.subject || 'Complaint'}</Text>
+              <Text className="mt-1 text-xs text-gray-500">{item.message}</Text>
               {item.adminReply && (
-                <View className="bg-purple-50 p-2.5 rounded-lg mt-2">
-                  <Text className="text-xs font-bold text-purple-700">Reply: {item.adminReply}</Text>
+                <View className="mt-2 rounded-lg bg-purple-50 p-2.5">
+                  <Text className="font-bold text-xs text-purple-700">
+                    Reply: {item.adminReply}
+                  </Text>
                 </View>
               )}
             </View>
@@ -213,7 +226,7 @@ export default function AdminPanelScreen() {
           ListEmptyComponent={
             <View className="items-center py-16">
               <Feather name="inbox" size={40} color="#d1d5db" />
-              <Text className="text-gray-400 font-medium mt-3">No complaints</Text>
+              <Text className="mt-3 font-medium text-gray-400">No complaints</Text>
             </View>
           }
         />

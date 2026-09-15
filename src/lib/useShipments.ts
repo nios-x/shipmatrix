@@ -23,26 +23,17 @@ export function useShipments() {
         return;
       }
 
-      const q = query(
-        collection(db, `users/${user.uid}/shipments`),
-        orderBy('createdAt', 'desc')
-      );
+      const q = query(collection(db, `users/${user.uid}/shipments`), orderBy('createdAt', 'desc'));
 
       unsubscribeSnapshot = onSnapshot(
         q,
         (snapshot) => {
-          const data = snapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() } as Shipment)
-          );
+          const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Shipment);
           setShipments(data);
           setLoading(false);
         },
         (error) => {
-          handleFirestoreError(
-            error,
-            OperationType.LIST,
-            `users/${user.uid}/shipments`
-          );
+          handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/shipments`);
           setLoading(false);
         }
       );

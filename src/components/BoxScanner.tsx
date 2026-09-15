@@ -399,10 +399,14 @@ function LiveCamera({
     setShooting(true);
     try {
       const photo = await camera.current.takePictureAsync({ quality: 0.85, exif: true });
-      if (photo?.uri) onCaptured(photo);
+      if (photo?.uri) {
+        onCaptured(photo);
+        return;
+      }
     } catch {
-      setShooting(false);
+      // Falls through: the seller can simply try the shutter again.
     }
+    setShooting(false);
   };
 
   if (!permission) {

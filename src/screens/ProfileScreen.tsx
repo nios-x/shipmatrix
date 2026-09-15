@@ -16,7 +16,8 @@ import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 // Same public form the old website links from Profile > KYC Verification —
 // there's no in-app KYC flow yet, so submission still happens on Google's side.
-const KYC_FORM_URL = 'https://docs.google.com/forms/d/1dCgIQofuxRFSbbqGbAhy6rSzMulyLNwjKMBDZqzdhvc/viewform';
+const KYC_FORM_URL =
+  'https://docs.google.com/forms/d/1dCgIQofuxRFSbbqGbAhy6rSzMulyLNwjKMBDZqzdhvc/viewform';
 
 const PRIVACY_POLICY_URL = 'https://shipmatrix.in/privacy-policy';
 
@@ -44,15 +45,39 @@ interface MenuItem {
 const MENU_SECTIONS: { items: MenuItem[] }[] = [
   {
     items: [
-      { icon: 'shield', label: 'Admin Panel', color: '#ef4444', screen: 'AdminPanel', highlight: true },
+      {
+        icon: 'shield',
+        label: 'Admin Panel',
+        color: '#ef4444',
+        screen: 'AdminPanel',
+        highlight: true,
+      },
     ],
   },
   {
     items: [
       { icon: 'settings', label: 'Settings & Preferences', color: '#3b82f6', screen: 'Settings' },
-      { icon: 'bell', label: 'Notifications', color: '#ec4899', screen: 'Notifications', tab: 'HomeTab' },
-      { icon: 'credit-card', label: 'Billing & Invoices', color: '#22c55e', screen: 'Billing', tab: 'WalletTab' },
-      { icon: 'dollar-sign', label: 'COD Remittance', color: '#10b981', screen: 'CodRemittance', tab: 'WalletTab' },
+      {
+        icon: 'bell',
+        label: 'Notifications',
+        color: '#ec4899',
+        screen: 'Notifications',
+        tab: 'HomeTab',
+      },
+      {
+        icon: 'credit-card',
+        label: 'Billing & Invoices',
+        color: '#22c55e',
+        screen: 'Billing',
+        tab: 'WalletTab',
+      },
+      {
+        icon: 'dollar-sign',
+        label: 'COD Remittance',
+        color: '#10b981',
+        screen: 'CodRemittance',
+        tab: 'WalletTab',
+      },
       { icon: 'file-text', label: 'KYC Verification', color: '#f59e0b', screen: 'KycVerification' },
       { icon: 'rotate-ccw', label: 'Returns', color: '#06b6d4', screen: 'Returns' },
       { icon: 'help-circle', label: 'Help & Support', color: '#8b5cf6', screen: 'Support' },
@@ -149,12 +174,10 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
         <View className="flex-1">
-          <Text className="text-xl font-black text-slate-900 tracking-tight">
-            Profile
-          </Text>
-          <Text className="text-xs text-slate-500 font-medium mt-0.5">
+          <Text className="font-black text-xl tracking-tight text-slate-900">Profile</Text>
+          <Text className="mt-0.5 font-medium text-xs text-slate-500">
             Manage your account & services
           </Text>
         </View>
@@ -162,8 +185,7 @@ export default function ProfileScreen() {
         <TouchableOpacity
           onPress={() => navigation.navigate('Settings')}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
-        >
+          className="h-10 w-10 items-center justify-center rounded-xl border border-violet-100 bg-violet-50">
           <Feather name="settings" size={16} color="#7C3AED" />
         </TouchableOpacity>
       </View>
@@ -174,13 +196,10 @@ export default function ProfileScreen() {
           paddingTop: 16,
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
-        <View
-          className="bg-white rounded-3xl p-5 mb-4 flex-row items-center gap-4 border border-slate-100 shadow-xs"
-        >
-          <View className="w-14 h-14 rounded-2xl bg-violet-600 items-center justify-center shadow-sm shadow-violet-500/25">
+        <View className="shadow-xs mb-4 flex-row items-center gap-4 rounded-3xl border border-slate-100 bg-white p-5">
+          <View className="h-14 w-14 items-center justify-center rounded-2xl bg-violet-600 shadow-sm shadow-violet-500/25">
             <Text className="font-black text-xl text-white">
               {(user?.name || user?.email || '?').charAt(0).toUpperCase()}
             </Text>
@@ -188,17 +207,15 @@ export default function ProfileScreen() {
           <View className="flex-1">
             {/* Until the snapshot lands there is nothing to show, and the
                 fallbacks read as though the account itself were empty. */}
-            <Text className="font-black text-lg text-slate-900 tracking-tight">
+            <Text className="font-black text-lg tracking-tight text-slate-900">
               {user?.name || (loading ? 'Loading…' : 'User')}
             </Text>
-            <Text className="text-xs text-slate-400 font-medium mt-0.5">
+            <Text className="mt-0.5 font-medium text-xs text-slate-400">
               {user?.email || (loading ? '' : 'No email')}
             </Text>
             {user?.companyName && (
-              <View className="bg-violet-50 px-2 py-0.5 rounded-md mt-1 self-start border border-violet-100">
-                <Text className="font-bold text-[11px] text-violet-700">
-                  {user.companyName}
-                </Text>
+              <View className="mt-1 self-start rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5">
+                <Text className="font-bold text-[11px] text-violet-700">{user.companyName}</Text>
               </View>
             )}
           </View>
@@ -208,8 +225,7 @@ export default function ProfileScreen() {
         {MENU_SECTIONS.map((section, si) => (
           <View
             key={si}
-            className="bg-white rounded-3xl mb-4 overflow-hidden border border-slate-100 shadow-xs"
-          >
+            className="shadow-xs mb-4 overflow-hidden rounded-3xl border border-slate-100 bg-white">
             {section.items.map((item, ii) => {
               const isAdmin = item.highlight;
               const isKyc = item.screen === 'KycVerification';
@@ -223,30 +239,28 @@ export default function ProfileScreen() {
                   key={ii}
                   onPress={() => (isKyc ? handleKycClick() : navigateTo(item))}
                   activeOpacity={0.7}
-                  className={`px-4 py-3.5 flex-row items-center justify-between ${
+                  className={`flex-row items-center justify-between px-4 py-3.5 ${
                     ii < section.items.length - 1 ? 'border-b border-slate-100' : ''
-                  }`}
-                >
+                  }`}>
                   {isAdmin && (
                     <View
-                      className="absolute left-0 top-1/2 h-8 w-1 bg-red-500 rounded-r-full"
+                      className="absolute left-0 top-1/2 h-8 w-1 rounded-r-full bg-red-500"
                       style={{ transform: [{ translateY: -16 }] }}
                     />
                   )}
                   <View className="flex-row items-center gap-3.5">
                     <View
-                      className="w-9 h-9 rounded-xl items-center justify-center"
-                      style={{ backgroundColor: item.color + '15' }}
-                    >
+                      className="h-9 w-9 items-center justify-center rounded-xl"
+                      style={{ backgroundColor: item.color + '15' }}>
                       <Feather name={item.icon as any} size={18} color={item.color} />
                     </View>
-                    <Text className="font-bold text-slate-800 text-sm">
-                      {item.label}
-                    </Text>
+                    <Text className="font-bold text-sm text-slate-800">{item.label}</Text>
                   </View>
                   {kycBadge ? (
-                    <View className={`px-2 py-0.5 rounded-md ${kycBadge.bg}`}>
-                      <Text className={`text-[11px] font-bold ${kycBadge.text}`}>{kycBadge.label}</Text>
+                    <View className={`rounded-md px-2 py-0.5 ${kycBadge.bg}`}>
+                      <Text className={`font-bold text-[11px] ${kycBadge.text}`}>
+                        {kycBadge.label}
+                      </Text>
                     </View>
                   ) : (
                     <Feather name="chevron-right" size={18} color="#94A3B8" />
@@ -258,14 +272,13 @@ export default function ProfileScreen() {
         ))}
 
         {/* Logout */}
-        <View className="bg-white border border-rose-100 rounded-2xl mb-4 overflow-hidden">
+        <View className="mb-4 overflow-hidden rounded-2xl border border-rose-100 bg-white">
           <TouchableOpacity
             onPress={() => setShowLogoutModal(true)}
             activeOpacity={0.7}
-            className="px-5 py-3.5 flex-row items-center justify-center gap-2 bg-rose-50/40"
-          >
+            className="flex-row items-center justify-center gap-2 bg-rose-50/40 px-5 py-3.5">
             <Feather name="log-out" size={18} color="#E11D48" />
-            <Text className="font-bold text-rose-600 text-sm">Logout</Text>
+            <Text className="font-bold text-sm text-rose-600">Logout</Text>
           </TouchableOpacity>
         </View>
 
@@ -274,9 +287,8 @@ export default function ProfileScreen() {
           onPress={() => setShowDeleteConfirm(true)}
           activeOpacity={0.6}
           disabled={deleting}
-          className="mb-8 items-center"
-        >
-          <Text className="text-xs font-semibold text-slate-400">
+          className="mb-8 items-center">
+          <Text className="font-semibold text-xs text-slate-400">
             {deleting ? 'Deleting account…' : 'Delete Account'}
           </Text>
         </TouchableOpacity>

@@ -155,62 +155,56 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
         decelerationRate="fast"
         getItemLayout={getItemLayout}
         renderItem={({ item }) => (
-          <View style={{ width: CAROUSEL_WIDTH }} className="px-1 py-1 w-[90%]">
+          <View style={{ width: CAROUSEL_WIDTH }} className="w-[90%] px-1 py-1">
             <TouchableOpacity
               activeOpacity={0.92}
               onPress={() => item.action(navigation)}
-              className="rounded-3xl overflow-hidden  shadow-md shadow-indigo-950/20"
-            >
+              className="overflow-hidden rounded-3xl  shadow-md shadow-indigo-950/20">
               <LinearGradient
                 colors={item.gradientColors}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                className=" justify-between min-h-[190px] relative"
-              >
+                className=" relative min-h-[190px] justify-between">
                 {/* Top Tag & Decorative Icon */}
-                <View className="flex-row items-center justify-between pt-3 pl-4 pr-3 pb-3">
+                <View className="flex-row items-center justify-between pb-3 pl-4 pr-3 pt-3">
                   <View
                     style={{ backgroundColor: item.badgeBg }}
-                    className=" py-1.5 rounded-full flex-row items-center gap-1.5 px-4"
-                  >
+                    className=" flex-row items-center gap-1.5 rounded-full px-4 py-1.5">
                     <Feather name={item.tagIcon} size={12} color={item.badgeTextColor} />
                     <Text
                       style={{ color: item.badgeTextColor }}
-                      className="text-[10px] font-black uppercase tracking-wider"
-                    >
+                      className="font-black text-[10px] uppercase tracking-wider">
                       {item.tag}
                     </Text>
                   </View>
 
-                  <View className="w-8 h-8 rounded-full bg-white/15 items-center justify-center">
+                  <View className="h-8 w-8 items-center justify-center rounded-full bg-white/15">
                     <Feather name="arrow-up-right" size={15} color="#FFFFFF" />
                   </View>
                 </View>
 
                 {/* Title & Description */}
                 <View className="">
-                  <Text className="text-xl font-black text-white tracking-tight leading-6 px-4">
+                  <Text className="px-4 font-black text-xl leading-6 tracking-tight text-white">
                     {item.title}
                   </Text>
-                  <Text className="text-xs text-white/85 font-medium mt-1.5 leading-5 px-4" numberOfLines={2}>
+                  <Text
+                    className="mt-1.5 px-4 font-medium text-xs leading-5 text-white/85"
+                    numberOfLines={2}>
                     {item.description}
                   </Text>
                 </View>
 
                 {/* Bottom CTA Bar */}
-                <View className="flex-row items-center justify-between pt-3  p-4">
-                  <View className="bg-white px-4 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm">
-                    <Text className="text-xs font-black text-slate-900">
-                      {item.ctaText}
-                    </Text>
+                <View className="flex-row items-center justify-between p-4  pt-3">
+                  <View className="flex-row items-center gap-1.5 rounded-xl bg-white px-4 py-2 shadow-sm">
+                    <Text className="font-black text-xs text-slate-900">{item.ctaText}</Text>
                     <Feather name="arrow-right" size={13} color="#0F172A" />
                   </View>
 
                   <View className="flex-row items-center gap-1.5">
                     <Feather name="shield" size={12} color="rgba(255,255,255,0.75)" />
-                    <Text className="text-[10px] font-bold text-white/75">
-                      ShipMatrix Verified
-                    </Text>
+                    <Text className="font-bold text-[10px] text-white/75">ShipMatrix Verified</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -220,14 +214,15 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
       />
 
       {/* Pagination Dots */}
-      <View className="flex-row items-center justify-center gap-1.5 mt-3.5">
+      <View className="mt-3.5 flex-row items-center justify-center gap-1.5">
         {CAROUSEL_SLIDES.map((_, i) => {
           const isActive = i === activeIndex;
           return (
             <View
               key={i}
-              className={`h-1.5 rounded-full transition-all duration-300 ${isActive ? 'w-6 bg-violet-600' : 'w-1.5 bg-slate-200'
-                }`}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                isActive ? 'w-6 bg-violet-600' : 'w-1.5 bg-slate-200'
+              }`}
             />
           );
         })}
@@ -236,44 +231,35 @@ function HeroPromoCarousel({ navigation }: { navigation: any }) {
   );
 }
 
-function StatusCard({
-  title,
-  count,
-  color,
-}: {
-  title: string;
-  count: number;
-  color: string;
-}) {
+function StatusCard({ title, count, color }: { title: string; count: number; color: string }) {
   return (
     <LinearGradient
-      colors={["#ffffff", "#f8f7ff"]}
+      colors={['#ffffff', '#f8f7ff']}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       className="w-full border border-violet-100/80"
       style={{
         borderRadius: 22,
-        overflow: "hidden",
-        shadowColor: "#6366f1",
+        overflow: 'hidden',
+        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.06,
         shadowRadius: 14,
         elevation: 3,
-      }}
-    >
+      }}>
       <View className="p-4">
         {/* Header */}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
             <View className={`h-2.5 w-2.5 rounded-full ${color}`} />
 
-            <Text className="text-[11px] font-raleway-bold uppercase tracking-wider text-gray-500">
+            <Text className="font-raleway-bold text-[11px] uppercase tracking-wider text-gray-500">
               {title}
             </Text>
           </View>
 
-          <View className="rounded-full bg-violet-50 px-2 py-0.5 border border-violet-100/60">
-            <Text className="text-[9px] font-raleway-bold uppercase tracking-wider text-violet-600">
+          <View className="rounded-full border border-violet-100/60 bg-violet-50 px-2 py-0.5">
+            <Text className="font-raleway-bold text-[9px] uppercase tracking-wider text-violet-600">
               Status
             </Text>
           </View>
@@ -281,19 +267,17 @@ function StatusCard({
 
         {/* Count */}
         <View className="mt-4 flex-row items-baseline justify-between">
-          <Text className="text-[36px] font-raleway-black leading-none tracking-tight text-gray-950">
+          <Text className="font-raleway-black text-[36px] leading-none tracking-tight text-gray-950">
             {count}
           </Text>
 
-          <Text className="text-[11px] font-raleway text-gray-400">
-            Total
-          </Text>
+          <Text className="font-raleway text-[11px] text-gray-400">Total</Text>
         </View>
 
         {/* Progress */}
         <View className="mt-4 h-1.5 overflow-hidden rounded-full bg-gray-100">
           <LinearGradient
-            colors={["#8b5cf6", "#6366f1", "#06b6d4"]}
+            colors={['#8b5cf6', '#6366f1', '#06b6d4']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             className="h-full w-[65%] rounded-full"
@@ -318,20 +302,14 @@ function QuickAction({
   onPress?: () => void;
 }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.7}
-      className="items-center gap-2 w-[22%]"
-    >
+    <TouchableOpacity onPress={onPress} activeOpacity={0.7} className="w-[22%] items-center gap-2">
       <View
-        className={`w-14 h-14 rounded-2xl items-center justify-center border border-slate-100 ${bgColor} shadow-xs`}
-      >
+        className={`h-14 w-14 items-center justify-center rounded-2xl border border-slate-100 ${bgColor} shadow-xs`}>
         <Feather name={iconName as any} size={20} color={iconColor} />
       </View>
       <Text
-        className="text-[11px] font-bold text-slate-700 tracking-tight text-center"
-        numberOfLines={1}
-      >
+        className="text-center font-bold text-[11px] tracking-tight text-slate-700"
+        numberOfLines={1}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -373,14 +351,14 @@ export default function DashboardScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
         <View className="flex-row items-center gap-2.5">
           <Logo size={34} />
           <View>
-            <Text className="text-[19px] leading-[22px] font-raleway-black text-slate-900 tracking-tight">
+            <Text className="font-raleway-black text-[19px] leading-[22px] tracking-tight text-slate-900">
               ShipMatrix
             </Text>
-            <Text className="text-[11px] leading-[15px] font-raleway-medium text-slate-500">
+            <Text className="font-raleway-medium text-[11px] leading-[15px] text-slate-500">
               Multi-Courier Logistics Platform
             </Text>
           </View>
@@ -389,12 +367,11 @@ export default function DashboardScreen() {
         <TouchableOpacity
           onPress={() => navigation.navigate('Notifications')}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
-        >
+          className="h-10 w-10 items-center justify-center rounded-xl border border-violet-100 bg-violet-50">
           <Feather name="bell" size={17} color="#7C3AED" />
           {unreadCount > 0 && (
-            <View className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 items-center justify-center border-2 border-white">
-              <Text className="text-[9px] font-black text-white">
+            <View className="absolute -right-1 -top-1 h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-rose-500 px-1">
+              <Text className="font-black text-[9px] text-white">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </View>
@@ -416,66 +393,43 @@ export default function DashboardScreen() {
             colors={['#7C3AED']}
             tintColor="#7C3AED"
           />
-        }
-      >
+        }>
         {/* Dynamic Hero Carousel */}
         <HeroPromoCarousel navigation={navigation} />
 
         {/* Courier Partners Strip */}
-        <View className="bg-white border border-slate-100 rounded-2xl py-2.5 px-4 mb-6 shadow-xs">
+        <View className="shadow-xs mb-6 rounded-2xl border border-slate-100 bg-white px-4 py-2.5">
           <View className="flex-row items-center justify-between">
-            {['DELHIVERY', 'BLUEDART', 'XPRESSBEES', 'SHADOWFAX', 'EKART'].map(
-              (name, i) => (
-                <React.Fragment key={name}>
-                  <Text className="font-black text-slate-800 text-[10px] tracking-wider">
-                    {name}
-                  </Text>
-                  {i < 4 && (
-                    <View className="w-1 h-1 rounded-full bg-slate-300" />
-                  )}
-                </React.Fragment>
-              )
-            )}
+            {['DELHIVERY', 'BLUEDART', 'XPRESSBEES', 'SHADOWFAX', 'EKART'].map((name, i) => (
+              <React.Fragment key={name}>
+                <Text className="font-black text-[10px] tracking-wider text-slate-800">{name}</Text>
+                {i < 4 && <View className="h-1 w-1 rounded-full bg-slate-300" />}
+              </React.Fragment>
+            ))}
           </View>
         </View>
 
         {/* Status Cards */}
-        <View className="gap-3 mb-6">
+        <View className="mb-6 gap-3">
           {/* Row 1 */}
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <StatusCard
-                title="Booked"
-                count={statusCounts.booked}
-                color="bg-blue-500"
-              />
+              <StatusCard title="Booked" count={statusCounts.booked} color="bg-blue-500" />
             </View>
 
             <View className="flex-1">
-              <StatusCard
-                title="In Transit"
-                count={statusCounts.inTransit}
-                color="bg-amber-500"
-              />
+              <StatusCard title="In Transit" count={statusCounts.inTransit} color="bg-amber-500" />
             </View>
           </View>
 
           {/* Row 2 */}
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <StatusCard
-                title="Delivered"
-                count={statusCounts.delivered}
-                color="bg-green-500"
-              />
+              <StatusCard title="Delivered" count={statusCounts.delivered} color="bg-green-500" />
             </View>
 
             <View className="flex-1">
-              <StatusCard
-                title="NDR / RTO"
-                count={statusCounts.ndr}
-                color="bg-red-500"
-              />
+              <StatusCard title="NDR / RTO" count={statusCounts.ndr} color="bg-red-500" />
             </View>
           </View>
         </View>
@@ -483,15 +437,15 @@ export default function DashboardScreen() {
         {/* Quick Actions */}
         <View className="mb-4">
           <View className="mb-3.5 flex-row items-center justify-between px-1">
-            <Text className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            <Text className="font-bold text-xs uppercase tracking-wider text-slate-400">
               Quick Actions
             </Text>
-            <Text className="text-[10px] font-bold text-violet-700 uppercase tracking-wide">
+            <Text className="font-bold text-[10px] uppercase tracking-wide text-violet-700">
               10 Shortcuts
             </Text>
           </View>
 
-          <View className="flex-row flex-wrap justify-between gap-y-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-xs">
+          <View className="shadow-xs flex-row flex-wrap justify-between gap-y-4 rounded-3xl border border-slate-100 bg-white p-4">
             <QuickAction
               title="Ship Now"
               iconName="send"

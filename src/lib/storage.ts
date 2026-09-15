@@ -29,10 +29,7 @@ export const safeSetItem = async (
   }
 };
 
-export const safeRemoveItem = async (
-  _type: 'local' | 'session',
-  key: string
-): Promise<void> => {
+export const safeRemoveItem = async (_type: 'local' | 'session', key: string): Promise<void> => {
   try {
     await AsyncStorage.removeItem(key);
   } catch {

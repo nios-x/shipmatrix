@@ -76,11 +76,17 @@ export default function B2bCargoScreen() {
       return;
     }
     if (!shipperName || !shipperPhone || !shipperAddress || !shipperPincode) {
-      toast.warning('Missing Shipper Details', 'Please complete shipper details including pincode.');
+      toast.warning(
+        'Missing Shipper Details',
+        'Please complete shipper details including pincode.'
+      );
       return;
     }
     if (!consigneeName || !consigneePhone || !consigneeAddress || !consigneePincode) {
-      toast.warning('Missing Consignee Details', 'Please complete consignee details including pincode.');
+      toast.warning(
+        'Missing Consignee Details',
+        'Please complete consignee details including pincode.'
+      );
       return;
     }
     if (!weight || parseFloat(weight) <= 0) {
@@ -144,17 +150,24 @@ export default function B2bCargoScreen() {
           mpsCount: payload.package.mpsCount,
           weight: payload.package.weight,
         });
-        toast.success('B2B Cargo Created!', `Manifest created with AWB: ${res.awb || res.parent_awb}`);
+        toast.success(
+          'B2B Cargo Created!',
+          `Manifest created with AWB: ${res.awb || res.parent_awb}`
+        );
       } else {
         toast.error(
           'Manifest Not Created',
-          res?.ReturnMessage || res?.message || 'The courier did not confirm this booking. Nothing was charged.'
+          res?.ReturnMessage ||
+            res?.message ||
+            'The courier did not confirm this booking. Nothing was charged.'
         );
       }
     } catch (err: any) {
       toast.error(
         'Manifest Not Created',
-        err instanceof ApiError ? err.message : 'Could not reach the server. Check your connection and try again.'
+        err instanceof ApiError
+          ? err.message
+          : 'Could not reach the server. Check your connection and try again.'
       );
     } finally {
       setLoading(false);
@@ -188,24 +201,25 @@ export default function B2bCargoScreen() {
   if (!B2B_CARGO_ENABLED) {
     return (
       <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
-        <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center gap-3">
+        <View className="flex-row items-center gap-3 border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
-          <Text className="text-xl font-black text-slate-900 tracking-tight">B2B Cargo Shipping</Text>
+          <Text className="font-black text-xl tracking-tight text-slate-900">
+            B2B Cargo Shipping
+          </Text>
         </View>
         <View className="flex-1 items-center justify-center px-8">
-          <View className="w-16 h-16 rounded-2xl bg-violet-50 items-center justify-center border border-violet-100 mb-4">
+          <View className="mb-4 h-16 w-16 items-center justify-center rounded-2xl border border-violet-100 bg-violet-50">
             <Feather name="package" size={26} color="#7C3AED" />
           </View>
-          <Text className="text-base font-black text-slate-900 text-center mb-1.5">
+          <Text className="mb-1.5 text-center font-black text-base text-slate-900">
             B2B Cargo is not live yet
           </Text>
-          <Text className="text-sm text-slate-500 text-center leading-5">
+          <Text className="text-center text-sm leading-5 text-slate-500">
             Bulk cargo shipping is being finalized. Contact support to enable it for your account.
           </Text>
         </View>
@@ -217,24 +231,22 @@ export default function B2bCargoScreen() {
     <KeyboardAvoidingView
       className="flex-1 bg-[#F8FAFC]"
       style={{ paddingTop: insets.top }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3 flex-1">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
+        <View className="flex-1 flex-row items-center gap-3">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
+            <Text className="font-black text-xl tracking-tight text-slate-900">
               B2B Cargo Shipping
             </Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            <Text className="mt-0.5 font-medium text-xs text-slate-500">
               Create a bulk/cargo shipment via XpressBees
             </Text>
           </View>
@@ -243,8 +255,7 @@ export default function B2bCargoScreen() {
         <TouchableOpacity
           onPress={handleReset}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
-        >
+          className="h-10 w-10 items-center justify-center rounded-xl border border-violet-100 bg-violet-50">
           <Feather name="rotate-ccw" size={16} color="#7C3AED" />
         </TouchableOpacity>
       </View>
@@ -256,59 +267,63 @@ export default function B2bCargoScreen() {
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
+        keyboardShouldPersistTaps="handled">
         {/* Manifest Result Success Box */}
         {manifestResult && (
-          <View className="bg-emerald-50 rounded-3xl p-5 border border-emerald-200 mb-5 shadow-xs">
-            <View className="flex-row items-center gap-2.5 mb-3">
-              <View className="w-8 h-8 rounded-full bg-emerald-100 items-center justify-center">
+          <View className="shadow-xs mb-5 rounded-3xl border border-emerald-200 bg-emerald-50 p-5">
+            <View className="mb-3 flex-row items-center gap-2.5">
+              <View className="h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
                 <Feather name="check-circle" size={18} color="#059669" />
               </View>
-              <Text className="text-base font-black text-emerald-950">
+              <Text className="font-black text-base text-emerald-950">
                 B2B Cargo Manifest Created
               </Text>
             </View>
 
-            <View className="bg-white rounded-2xl p-4 border border-emerald-100 gap-2">
+            <View className="gap-2 rounded-2xl border border-emerald-100 bg-white p-4">
               <View className="flex-row justify-between">
-                <Text className="text-xs font-bold text-slate-500">Parent AWB</Text>
-                <Text className="text-xs font-black font-mono text-emerald-700">{manifestResult.awb}</Text>
+                <Text className="font-bold text-xs text-slate-500">Parent AWB</Text>
+                <Text className="font-black font-mono text-xs text-emerald-700">
+                  {manifestResult.awb}
+                </Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-xs font-bold text-slate-500">Route Mode</Text>
-                <Text className="text-xs font-bold text-slate-800">{manifestResult.routeMode}</Text>
+                <Text className="font-bold text-xs text-slate-500">Route Mode</Text>
+                <Text className="font-bold text-xs text-slate-800">{manifestResult.routeMode}</Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-xs font-bold text-slate-500">Booking Mode</Text>
-                <Text className="text-xs font-bold text-slate-800">{manifestResult.bookingMode}</Text>
+                <Text className="font-bold text-xs text-slate-500">Booking Mode</Text>
+                <Text className="font-bold text-xs text-slate-800">
+                  {manifestResult.bookingMode}
+                </Text>
               </View>
               <View className="flex-row justify-between">
-                <Text className="text-xs font-bold text-slate-500">MPS Boxes</Text>
-                <Text className="text-xs font-bold text-slate-800">{manifestResult.mpsCount} box(es)</Text>
+                <Text className="font-bold text-xs text-slate-500">MPS Boxes</Text>
+                <Text className="font-bold text-xs text-slate-800">
+                  {manifestResult.mpsCount} box(es)
+                </Text>
               </View>
             </View>
           </View>
         )}
 
         {/* ─── 1. Shipping Details ─── */}
-        <Text className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2.5">
+        <Text className="mb-2.5 font-black text-xs uppercase tracking-wider text-slate-400">
           Shipping Details
         </Text>
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-5 gap-4">
+        <View className="shadow-xs mb-5 gap-4 rounded-3xl border border-slate-100 bg-white p-5">
           {/* Route Mode */}
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1.5">Route Mode</Text>
+            <Text className="mb-1.5 font-bold text-[11px] text-slate-700">Route Mode</Text>
             <View className="flex-row gap-2.5">
               <TouchableOpacity
                 onPress={() => setRouteMode('surface')}
                 activeOpacity={0.8}
-                className={`flex-1 py-3 px-3 rounded-xl border flex-row items-center gap-2 ${
+                className={`flex-1 flex-row items-center gap-2 rounded-xl border px-3 py-3 ${
                   routeMode === 'surface'
-                    ? 'bg-violet-50 border-violet-600'
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-              >
+                    ? 'border-violet-600 bg-violet-50'
+                    : 'border-slate-200 bg-slate-50'
+                }`}>
                 <Feather
                   name="truck"
                   size={15}
@@ -316,25 +331,23 @@ export default function B2bCargoScreen() {
                 />
                 <View className="flex-1">
                   <Text
-                    className={`text-xs font-bold ${
+                    className={`font-bold text-xs ${
                       routeMode === 'surface' ? 'text-violet-900' : 'text-slate-700'
-                    }`}
-                  >
+                    }`}>
                     Surface Cargo
                   </Text>
-                  <Text className="text-[10px] text-slate-400 font-mono">(9169...)</Text>
+                  <Text className="font-mono text-[10px] text-slate-400">(9169...)</Text>
                 </View>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={() => setRouteMode('air')}
                 activeOpacity={0.8}
-                className={`flex-1 py-3 px-3 rounded-xl border flex-row items-center gap-2 ${
+                className={`flex-1 flex-row items-center gap-2 rounded-xl border px-3 py-3 ${
                   routeMode === 'air'
-                    ? 'bg-violet-50 border-violet-600'
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-              >
+                    ? 'border-violet-600 bg-violet-50'
+                    : 'border-slate-200 bg-slate-50'
+                }`}>
                 <Feather
                   name="send"
                   size={15}
@@ -342,13 +355,12 @@ export default function B2bCargoScreen() {
                 />
                 <View className="flex-1">
                   <Text
-                    className={`text-xs font-bold ${
+                    className={`font-bold text-xs ${
                       routeMode === 'air' ? 'text-violet-900' : 'text-slate-700'
-                    }`}
-                  >
+                    }`}>
                     Air Cargo
                   </Text>
-                  <Text className="text-[10px] text-slate-400 font-mono">(7167...)</Text>
+                  <Text className="font-mono text-[10px] text-slate-400">(7167...)</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -356,7 +368,7 @@ export default function B2bCargoScreen() {
 
           {/* Booking Mode */}
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1.5">Booking Mode</Text>
+            <Text className="mb-1.5 font-bold text-[11px] text-slate-700">Booking Mode</Text>
             <View className="flex-row gap-2.5">
               {(['credit', 'topay'] as const).map((bm) => {
                 const isSelected = bookingMode === bm;
@@ -365,17 +377,15 @@ export default function B2bCargoScreen() {
                     key={bm}
                     onPress={() => setBookingMode(bm)}
                     activeOpacity={0.8}
-                    className={`flex-1 py-2.5 rounded-xl border items-center justify-center ${
+                    className={`flex-1 items-center justify-center rounded-xl border py-2.5 ${
                       isSelected
-                        ? 'bg-violet-600 border-violet-600 shadow-sm shadow-violet-500/20'
-                        : 'bg-slate-50 border-slate-200'
-                    }`}
-                  >
+                        ? 'border-violet-600 bg-violet-600 shadow-sm shadow-violet-500/20'
+                        : 'border-slate-200 bg-slate-50'
+                    }`}>
                     <Text
-                      className={`text-xs font-bold ${
+                      className={`font-bold text-xs ${
                         isSelected ? 'text-white' : 'text-slate-700'
-                      }`}
-                    >
+                      }`}>
                       {bm === 'credit' ? 'Credit' : 'ToPay'}
                     </Text>
                   </TouchableOpacity>
@@ -386,88 +396,86 @@ export default function B2bCargoScreen() {
 
           {/* Invoice Value */}
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1.5">
-              Invoice Value (₹)
-            </Text>
-            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
-              <Text className="text-xs font-bold text-slate-500 mr-1.5">₹</Text>
+            <Text className="mb-1.5 font-bold text-[11px] text-slate-700">Invoice Value (₹)</Text>
+            <View className="flex-row items-center rounded-xl border border-slate-200 bg-slate-50 px-3 focus:border-violet-500">
+              <Text className="mr-1.5 font-bold text-xs text-slate-500">₹</Text>
               <TextInput
                 value={invoiceValue}
                 onChangeText={setInvoiceValue}
                 placeholder="e.g. 5000"
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
-                className="flex-1 py-2.5 text-xs font-bold text-slate-900"
+                className="flex-1 py-2.5 font-bold text-xs text-slate-900"
               />
             </View>
           </View>
         </View>
 
         {/* ─── 2. Shipper Details ─── */}
-        <Text className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2.5">
+        <Text className="mb-2.5 font-black text-xs uppercase tracking-wider text-slate-400">
           Shipper Details
         </Text>
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-5 gap-3.5">
+        <View className="shadow-xs mb-5 gap-3.5 rounded-3xl border border-slate-100 bg-white p-5">
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Company/Sender Name</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Company/Sender Name</Text>
             <TextInput
               value={shipperName}
               onChangeText={setShipperName}
               placeholder="e.g. Acme Industrial Ltd"
               placeholderTextColor="#94A3B8"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Phone Number</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Phone Number</Text>
             <TextInput
               value={shipperPhone}
               onChangeText={setShipperPhone}
               placeholder="9876543210"
               placeholderTextColor="#94A3B8"
               keyboardType="phone-pad"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Address</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Address</Text>
             <TextInput
               value={shipperAddress}
               onChangeText={setShipperAddress}
               placeholder="Warehouse / Factory Address"
               placeholderTextColor="#94A3B8"
               multiline
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900 min-h-[50px]"
+              className="min-h-[50px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">City</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">City</Text>
               <TextInput
                 value={shipperCity}
                 onChangeText={setShipperCity}
                 placeholder="Mumbai"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">State</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">State</Text>
               <TextInput
                 value={shipperState}
                 onChangeText={setShipperState}
                 placeholder="Maharashtra"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
               />
             </View>
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Pincode (6 digits)</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Pincode (6 digits)</Text>
             <TextInput
               value={shipperPincode}
               onChangeText={setShipperPincode}
@@ -475,76 +483,76 @@ export default function B2bCargoScreen() {
               placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
               maxLength={6}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-bold text-xs text-slate-900"
             />
           </View>
         </View>
 
         {/* ─── 3. Consignee Details ─── */}
-        <Text className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2.5">
+        <Text className="mb-2.5 font-black text-xs uppercase tracking-wider text-slate-400">
           Consignee Details
         </Text>
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-5 gap-3.5">
+        <View className="shadow-xs mb-5 gap-3.5 rounded-3xl border border-slate-100 bg-white p-5">
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Company/Receiver Name</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Company/Receiver Name</Text>
             <TextInput
               value={consigneeName}
               onChangeText={setConsigneeName}
               placeholder="e.g. Horizon Enterprises"
               placeholderTextColor="#94A3B8"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Phone Number</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Phone Number</Text>
             <TextInput
               value={consigneePhone}
               onChangeText={setConsigneePhone}
               placeholder="9876543210"
               placeholderTextColor="#94A3B8"
               keyboardType="phone-pad"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Address</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Address</Text>
             <TextInput
               value={consigneeAddress}
               onChangeText={setConsigneeAddress}
               placeholder="Delivery Facility / Warehouse Address"
               placeholderTextColor="#94A3B8"
               multiline
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900 min-h-[50px]"
+              className="min-h-[50px] rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
             />
           </View>
 
           <View className="flex-row gap-3">
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">City</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">City</Text>
               <TextInput
                 value={consigneeCity}
                 onChangeText={setConsigneeCity}
                 placeholder="New Delhi"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
               />
             </View>
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">State</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">State</Text>
               <TextInput
                 value={consigneeState}
                 onChangeText={setConsigneeState}
                 placeholder="Delhi"
                 placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium text-slate-900"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-medium text-xs text-slate-900"
               />
             </View>
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Pincode (6 digits)</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Pincode (6 digits)</Text>
             <TextInput
               value={consigneePincode}
               onChangeText={setConsigneePincode}
@@ -552,75 +560,75 @@ export default function B2bCargoScreen() {
               placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
               maxLength={6}
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-bold text-xs text-slate-900"
             />
           </View>
         </View>
 
         {/* ─── 4. Package Dimensions ─── */}
-        <Text className="text-xs font-black text-slate-400 uppercase tracking-wider mb-2.5">
+        <Text className="mb-2.5 font-black text-xs uppercase tracking-wider text-slate-400">
           Package Dimensions
         </Text>
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-6 gap-3.5">
+        <View className="shadow-xs mb-6 gap-3.5 rounded-3xl border border-slate-100 bg-white p-5">
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">Total Weight (KG)</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">Total Weight (KG)</Text>
             <TextInput
               value={weight}
               onChangeText={setWeight}
               placeholder="e.g. 50"
               placeholderTextColor="#94A3B8"
               keyboardType="decimal-pad"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-bold text-xs text-slate-900"
             />
           </View>
 
           <View className="flex-row gap-2">
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">Length (CM)</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">Length (CM)</Text>
               <TextInput
                 value={length}
                 onChangeText={setLength}
                 placeholder="10"
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 text-center"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center font-bold text-xs text-slate-900"
               />
             </View>
 
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">Breadth (CM)</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">Breadth (CM)</Text>
               <TextInput
                 value={breadth}
                 onChangeText={setBreadth}
                 placeholder="10"
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 text-center"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center font-bold text-xs text-slate-900"
               />
             </View>
 
             <View className="flex-1">
-              <Text className="text-[11px] font-bold text-slate-700 mb-1">Height (CM)</Text>
+              <Text className="mb-1 font-bold text-[11px] text-slate-700">Height (CM)</Text>
               <TextInput
                 value={height}
                 onChangeText={setHeight}
                 placeholder="10"
                 placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 text-center"
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-center font-bold text-xs text-slate-900"
               />
             </View>
           </View>
 
           <View>
-            <Text className="text-[11px] font-bold text-slate-700 mb-1">MPS Count (Boxes)</Text>
+            <Text className="mb-1 font-bold text-[11px] text-slate-700">MPS Count (Boxes)</Text>
             <TextInput
               value={mpsCount}
               onChangeText={setMpsCount}
               placeholder="1"
               placeholderTextColor="#94A3B8"
               keyboardType="number-pad"
-              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-bold text-xs text-slate-900"
             />
           </View>
         </View>
@@ -630,51 +638,49 @@ export default function B2bCargoScreen() {
           onPress={handleCreateManifest}
           disabled={loading}
           activeOpacity={0.8}
-          className={`bg-violet-600 py-4 rounded-2xl items-center flex-row justify-center gap-2 shadow-md shadow-violet-500/25 mb-6 ${
+          className={`mb-6 flex-row items-center justify-center gap-2 rounded-2xl bg-violet-600 py-4 shadow-md shadow-violet-500/25 ${
             loading ? 'opacity-70' : ''
-          }`}
-        >
+          }`}>
           {loading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
             <>
-              <Text className="text-white font-black text-sm">
-                Create B2B Cargo Manifest
-              </Text>
+              <Text className="font-black text-sm text-white">Create B2B Cargo Manifest</Text>
               <Feather name="arrow-right" size={16} color="#FFFFFF" />
             </>
           )}
         </TouchableOpacity>
 
         {/* ─── 6. XpressBees API Integration Info Box ─── */}
-        <View className="bg-slate-900 rounded-3xl p-5 mb-6 border border-slate-800">
-          <View className="flex-row items-center gap-2 mb-2">
+        <View className="mb-6 rounded-3xl border border-slate-800 bg-slate-900 p-5">
+          <View className="mb-2 flex-row items-center gap-2">
             <Feather name="zap" size={16} color="#A78BFA" />
-            <Text className="text-xs font-black text-white uppercase tracking-wider">
+            <Text className="font-black text-xs uppercase tracking-wider text-white">
               XpressBees API Integration
             </Text>
           </View>
 
-          <Text className="text-xs text-slate-400 font-medium mb-3 leading-5">
-            This form integrates directly with the XpressBees POSTShipmentService AddCargoManifestDetails API endpoint.
+          <Text className="mb-3 font-medium text-xs leading-5 text-slate-400">
+            This form integrates directly with the XpressBees POSTShipmentService
+            AddCargoManifestDetails API endpoint.
           </Text>
 
           <View className="gap-2 border-t border-slate-800 pt-3">
             <View className="flex-row items-start gap-2">
               <Text className="text-xs text-violet-400">•</Text>
-              <Text className="text-xs text-slate-300 flex-1 leading-4">
+              <Text className="flex-1 text-xs leading-4 text-slate-300">
                 Automatic Parent AWB allocation based on mode (Air: 7167..., Surface: 9169...)
               </Text>
             </View>
             <View className="flex-row items-start gap-2">
               <Text className="text-xs text-violet-400">•</Text>
-              <Text className="text-xs text-slate-300 flex-1 leading-4">
+              <Text className="flex-1 text-xs leading-4 text-slate-300">
                 MPS (Multi-Piece Shipment) support up to 10 boxes
               </Text>
             </View>
             <View className="flex-row items-start gap-2">
               <Text className="text-xs text-violet-400">•</Text>
-              <Text className="text-xs text-slate-300 flex-1 leading-4">
+              <Text className="flex-1 text-xs leading-4 text-slate-300">
                 Credit and ToPay booking modes
               </Text>
             </View>

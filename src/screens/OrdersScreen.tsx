@@ -1,10 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,15 +35,7 @@ import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Nav = NativeStackNavigationProp<OrdersStackParamList, 'Orders'>;
 
-const FILTER_TABS = [
-  'All',
-  'Booked',
-  'In Transit',
-  'Delivered',
-  'NDR',
-  'RTO',
-  'Cancelled',
-];
+const FILTER_TABS = ['All', 'Booked', 'In Transit', 'Delivered', 'NDR', 'RTO', 'Cancelled'];
 
 /**
  * Tabs group the courier status vocabulary rather than matching it literally —
@@ -91,28 +78,15 @@ function FilterTab({
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
-      className={`px-3.5 py-2 rounded-xl border flex-row items-center gap-1.5 ${
-        active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
-      }`}
-    >
-      <Text
-        className={`text-xs font-bold ${
-          active ? 'text-white' : 'text-slate-600'
-        }`}
-      >
+      className={`flex-row items-center gap-1.5 rounded-xl border px-3.5 py-2 ${
+        active ? 'border-slate-900 bg-slate-900' : 'border-slate-200 bg-white'
+      }`}>
+      <Text className={`font-bold text-xs ${active ? 'text-white' : 'text-slate-600'}`}>
         {label}
       </Text>
       {typeof count === 'number' && (
-        <View
-          className={`px-1.5 py-0.5 rounded-full ${
-            active ? 'bg-white/20' : 'bg-slate-100'
-          }`}
-        >
-          <Text
-            className={`text-[9px] font-black ${
-              active ? 'text-white' : 'text-slate-600'
-            }`}
-          >
+        <View className={`rounded-full px-1.5 py-0.5 ${active ? 'bg-white/20' : 'bg-slate-100'}`}>
+          <Text className={`font-black text-[9px] ${active ? 'text-white' : 'text-slate-600'}`}>
             {count}
           </Text>
         </View>
@@ -176,11 +150,11 @@ export default function OrdersScreen() {
       const BATCH = 5;
       for (let i = 0; i < active.length; i += BATCH) {
         await Promise.all(
-          active.slice(i, i + BATCH).map((s) =>
-            api
-              .post(`/api/v1/shipments/sync/${s.awb}`, { courier: s.courier })
-              .catch(() => null)
-          )
+          active
+            .slice(i, i + BATCH)
+            .map((s) =>
+              api.post(`/api/v1/shipments/sync/${s.awb}`, { courier: s.courier }).catch(() => null)
+            )
         );
       }
     } finally {
@@ -203,7 +177,7 @@ export default function OrdersScreen() {
   const [cancelling, setCancelling] = useState(false);
 
   const cancelTarget = cancelTargetId
-    ? shipments.find((s) => s.id === cancelTargetId) ?? null
+    ? (shipments.find((s) => s.id === cancelTargetId) ?? null)
     : null;
 
   /**
@@ -240,49 +214,48 @@ export default function OrdersScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => navigation.navigate('OrderDetails', { shipmentId: item.id })}
-        className="bg-white rounded-2xl p-4 mb-3 border border-slate-100 shadow-xs"
-      >
-        <View className="flex-row items-center justify-between mb-3">
+        className="shadow-xs mb-3 rounded-2xl border border-slate-100 bg-white p-4">
+        <View className="mb-3 flex-row items-center justify-between">
           <View className="flex-row items-center gap-3">
             <CourierLogo name={item.courier || 'Unknown'} />
             <View>
-              <Text className="font-black text-slate-900 text-sm">
+              <Text className="font-black text-sm text-slate-900">
                 {item.courier || 'Unknown Courier'}
               </Text>
-              <Text className="text-xs text-slate-400 font-medium mt-0.5">
+              <Text className="mt-0.5 font-medium text-xs text-slate-400">
                 AWB: {item.awb || 'N/A'}
               </Text>
             </View>
           </View>
-          <View className={`px-2.5 py-1 rounded-full ${bgClass}`}>
-            <Text className={`text-[10px] font-black uppercase tracking-wider ${textClass}`}>
+          <View className={`rounded-full px-2.5 py-1 ${bgClass}`}>
+            <Text className={`font-black text-[10px] uppercase tracking-wider ${textClass}`}>
               {item.status || 'Unknown'}
             </Text>
           </View>
         </View>
 
-        <View className="flex-row items-center justify-between pt-3 border-t border-slate-100">
+        <View className="flex-row items-center justify-between border-t border-slate-100 pt-3">
           <View className="flex-1">
-            <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <Text className="font-bold text-[10px] uppercase tracking-wider text-slate-400">
               Customer
             </Text>
-            <Text className="text-sm font-semibold text-slate-800 mt-0.5" numberOfLines={1}>
+            <Text className="mt-0.5 font-semibold text-sm text-slate-800" numberOfLines={1}>
               {item.customerName || 'N/A'}
             </Text>
           </View>
           <View className="flex-1 items-center">
-            <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <Text className="font-bold text-[10px] uppercase tracking-wider text-slate-400">
               Product
             </Text>
-            <Text className="text-sm font-semibold text-slate-800 mt-0.5" numberOfLines={1}>
+            <Text className="mt-0.5 font-semibold text-sm text-slate-800" numberOfLines={1}>
               {item.productName || 'N/A'}
             </Text>
           </View>
           <View className="flex-1 items-end">
-            <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+            <Text className="font-bold text-[10px] uppercase tracking-wider text-slate-400">
               Payment
             </Text>
-            <Text className="text-sm font-semibold text-slate-800 mt-0.5">
+            <Text className="mt-0.5 font-semibold text-sm text-slate-800">
               {isCod(item) ? `COD ${formatCurrency(codValue(item))}` : 'PREPAID'}
             </Text>
           </View>
@@ -295,10 +268,9 @@ export default function OrdersScreen() {
           <TouchableOpacity
             onPress={() => setCancelTargetId(item.id)}
             activeOpacity={0.8}
-            className="h-10 mt-3 rounded-xl bg-rose-50 border border-rose-100 flex-row items-center justify-center gap-2"
-          >
+            className="mt-3 h-10 flex-row items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50">
             <Feather name="x-circle" size={14} color="#E11D48" />
-            <Text className="text-xs font-raleway-bold text-rose-600">Cancel Order</Text>
+            <Text className="font-raleway-bold text-xs text-rose-600">Cancel Order</Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -310,12 +282,10 @@ export default function OrdersScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
         <View className="flex-1">
-          <Text className="text-xl font-black text-slate-900 tracking-tight">
-            Orders
-          </Text>
-          <Text className="text-xs text-slate-500 font-medium mt-0.5">
+          <Text className="font-black text-xl tracking-tight text-slate-900">Orders</Text>
+          <Text className="mt-0.5 font-medium text-xs text-slate-500">
             {shipments.length > 0
               ? `${shipments.length} total orders tracked`
               : 'Manage and track your shipments'}
@@ -326,17 +296,16 @@ export default function OrdersScreen() {
         <TouchableOpacity
           onPress={() => navigation.navigate('CreateShipment', {})}
           activeOpacity={0.8}
-          className="h-10 px-4 rounded-xl bg-violet-600 flex-row items-center gap-1.5 shadow-sm shadow-violet-500/20"
-        >
+          className="h-10 flex-row items-center gap-1.5 rounded-xl bg-violet-600 px-4 shadow-sm shadow-violet-500/20">
           <Feather name="plus" size={15} color="#FFFFFF" />
-          <Text className="text-xs font-black text-white">Ship</Text>
+          <Text className="font-black text-xs text-white">Ship</Text>
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
-      <View className="px-4 pt-3.5 mb-2.5">
-        <View className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-xs flex-row items-center">
-          <View className="w-8 h-8 rounded-xl bg-slate-50 items-center justify-center">
+      <View className="mb-2.5 px-4 pt-3.5">
+        <View className="shadow-xs flex-row items-center rounded-2xl border border-slate-100 bg-white p-2.5">
+          <View className="h-8 w-8 items-center justify-center rounded-xl bg-slate-50">
             <Feather name="search" size={15} color="#64748B" />
           </View>
           <TextInput
@@ -344,13 +313,12 @@ export default function OrdersScreen() {
             onChangeText={setSearchQuery}
             placeholder="Search orders, AWB, customer, courier..."
             placeholderTextColor="#94A3B8"
-            className="flex-1 ml-2 text-xs font-semibold text-slate-800 py-0"
+            className="ml-2 flex-1 py-0 font-semibold text-xs text-slate-800"
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
               onPress={() => setSearchQuery('')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Feather name="x-circle" size={15} color="#94A3B8" />
             </TouchableOpacity>
           )}

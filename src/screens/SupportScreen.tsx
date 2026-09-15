@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -42,7 +49,11 @@ export default function SupportScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [messages, setMessages] = useState<Message[]>([
-    { id: '0', role: 'assistant', content: 'Hi! How can I help you today? Ask me anything about ShipMatrix.' },
+    {
+      id: '0',
+      role: 'assistant',
+      content: 'Hi! How can I help you today? Ask me anything about ShipMatrix.',
+    },
   ]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -91,12 +102,15 @@ export default function SupportScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3 border-b border-gray-100">
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 bg-[#f8fafc]"
+      style={{ paddingTop: insets.top }}>
+      <View className="flex-row items-center gap-3 border-b border-gray-100 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900">Support</Text>
+        <Text className="font-black text-xl text-gray-900">Support</Text>
       </View>
 
       <FlatList
@@ -105,7 +119,8 @@ export default function SupportScreen() {
         contentContainerStyle={{ padding: 20, gap: 12 }}
         renderItem={({ item }) => (
           <View className={`max-w-[85%] ${item.role === 'user' ? 'self-end' : 'self-start'}`}>
-            <View className={`px-4 py-3 rounded-2xl ${item.role === 'user' ? 'bg-violet-700 rounded-br-md' : 'bg-white border border-gray-100 rounded-bl-md'}`}>
+            <View
+              className={`rounded-2xl px-4 py-3 ${item.role === 'user' ? 'rounded-br-md bg-violet-700' : 'rounded-bl-md border border-gray-100 bg-white'}`}>
               <Text className={`text-sm ${item.role === 'user' ? 'text-white' : 'text-gray-800'}`}>
                 {renderMarkdown(item.content, item.role === 'user')}
               </Text>
@@ -116,7 +131,7 @@ export default function SupportScreen() {
         // frozen and people send the message again.
         ListFooterComponent={
           sending ? (
-            <View className="self-start max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-md bg-white border border-gray-100 flex-row items-center gap-2">
+            <View className="max-w-[85%] flex-row items-center gap-2 self-start rounded-2xl rounded-bl-md border border-gray-100 bg-white px-4 py-3">
               <ActivityIndicator size="small" color="#7C3AED" />
               <Text className="text-sm text-gray-500">Thinking…</Text>
             </View>
@@ -128,17 +143,20 @@ export default function SupportScreen() {
           composer has to reserve its height itself; padding for the safe-area
           inset alone leaves it sitting underneath, unreachable. */}
       <View
-        className="px-5 py-3 border-t border-gray-100 bg-white flex-row items-center gap-3"
+        className="flex-row items-center gap-3 border-t border-gray-100 bg-white px-5 py-3"
         style={{ paddingBottom: insets.bottom + BAR_HEIGHT + 12 }}>
         <TextInput
           value={input}
           onChangeText={setInput}
           placeholder="Type a message..."
           placeholderTextColor="#9ca3af"
-          className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-900"
+          className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 font-medium text-sm text-gray-900"
           onSubmitEditing={handleSend}
         />
-        <TouchableOpacity onPress={handleSend} disabled={sending} className="bg-violet-700 w-10 h-10 rounded-xl items-center justify-center">
+        <TouchableOpacity
+          onPress={handleSend}
+          disabled={sending}
+          className="h-10 w-10 items-center justify-center rounded-xl bg-violet-700">
           <Feather name="send" size={18} color="white" />
         </TouchableOpacity>
       </View>

@@ -38,9 +38,7 @@ export const API_BASE_URL = trim(
  * only works in a debug build; release builds block cleartext traffic on
  * Android.
  */
-export const SERVICES_BASE_URL = trim(
-  process.env.EXPO_PUBLIC_PAYMENTS_URL || API_BASE_URL
-);
+export const SERVICES_BASE_URL = trim(process.env.EXPO_PUBLIC_PAYMENTS_URL || API_BASE_URL);
 
 /** An absolute URL on the services host. */
 const svc = (path: string) => `${SERVICES_BASE_URL}${path}`;
@@ -188,10 +186,7 @@ function describeError(data: any, status: number): string {
  * - JSON serialization/deserialization
  * - Error handling
  */
-async function apiRequest<T = any>(
-  endpoint: string,
-  options: ApiOptions = {}
-): Promise<T> {
+async function apiRequest<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
   const {
     method = 'GET',
     body,
@@ -201,9 +196,7 @@ async function apiRequest<T = any>(
   } = options;
 
   // Build full URL
-  const url = endpoint.startsWith('http')
-    ? endpoint
-    : `${API_BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   // Build headers
   const requestHeaders: Record<string, string> = {

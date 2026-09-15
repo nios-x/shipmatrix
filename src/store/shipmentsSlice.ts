@@ -35,6 +35,5 @@ const shipmentsSlice = createSlice({
   },
 });
 
-export const { setShipments, setLoading, setSearchQuery, setStatusFilter } =
-  shipmentsSlice.actions;
+export const { setShipments, setLoading, setSearchQuery, setStatusFilter } = shipmentsSlice.actions;
 export default shipmentsSlice.reducer;

@@ -37,7 +37,9 @@ async function getDeviceId(): Promise<string> {
   return id;
 }
 
-async function ensureAndroidChannel(Notifications: NonNullable<ReturnType<typeof getNotifications>>) {
+async function ensureAndroidChannel(
+  Notifications: NonNullable<ReturnType<typeof getNotifications>>
+) {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync('default', {
     name: 'Default',

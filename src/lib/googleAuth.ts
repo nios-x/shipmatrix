@@ -4,11 +4,7 @@ import { isRunningInExpoGo } from 'expo';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { exchangeCodeAsync } from 'expo-auth-session';
-import {
-  GoogleAuthProvider,
-  signInWithCredential,
-  signInWithPopup,
-} from 'firebase/auth';
+import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from 'firebase/auth';
 import { auth } from './firebase';
 import { ensureUserProfile } from './userProfile';
 import { toast } from './alert';
@@ -70,8 +66,7 @@ const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_I
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 
 /** The OAuth client this platform signs in with; '' when none is configured. */
-const nativeClientId =
-  Platform.OS === 'ios' ? GOOGLE_IOS_CLIENT_ID : GOOGLE_ANDROID_CLIENT_ID;
+const nativeClientId = Platform.OS === 'ios' ? GOOGLE_IOS_CLIENT_ID : GOOGLE_ANDROID_CLIENT_ID;
 
 /** Expo Go cannot receive this app's OAuth redirect; see the note above. */
 const isExpoGo = isRunningInExpoGo();
@@ -154,9 +149,7 @@ function describeAuthError(code?: string | null, description?: string | null): s
 }
 
 /** Exchange a Google ID token for a Firebase session and provision the user. */
-async function completeFirebaseSignIn(
-  idToken: string
-): Promise<GoogleSignInResult> {
+async function completeFirebaseSignIn(idToken: string): Promise<GoogleSignInResult> {
   const credential = GoogleAuthProvider.credential(idToken);
   const userCred = await signInWithCredential(auth, credential);
 

@@ -32,8 +32,7 @@ function LoadingScreen() {
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#FAFAFA',
-      }}
-    >
+      }}>
       <ActivityIndicator size="large" color="#7c3aed" />
     </View>
   );
@@ -58,9 +57,7 @@ function profileFromAuth(firebaseUser: AuthUser): User {
 
 export default function RootNavigator() {
   const dispatch = useDispatch();
-  const { isAuthenticated, isLoading } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { isAuthenticated, isLoading } = useSelector((state: RootState) => state.auth);
 
   usePushNotifications();
 
@@ -101,11 +98,7 @@ export default function RootNavigator() {
             // `auth.currentUser` was still set, with nothing said and nothing
             // to retry — Firestore tears this listener down after an error.
             // Keep the session on what Auth already told us.
-            handleFirestoreError(
-              error,
-              OperationType.GET,
-              `users/${firebaseUser.uid}`
-            );
+            handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
             dispatch(setUser(profileFromAuth(firebaseUser)));
             // Say so, because the stand-in carries a zero balance and no
             // company. Letting that render unannounced would report a wallet as

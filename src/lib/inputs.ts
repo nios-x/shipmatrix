@@ -50,7 +50,10 @@ export function onlyDecimal(value: string, intDigits = 4, decimals = 2): string 
   if (firstDot === -1) return cleaned.slice(0, intDigits);
 
   const whole = cleaned.slice(0, firstDot).slice(0, intDigits);
-  const fraction = cleaned.slice(firstDot + 1).replace(/\./g, '').slice(0, decimals);
+  const fraction = cleaned
+    .slice(firstDot + 1)
+    .replace(/\./g, '')
+    .slice(0, decimals);
   return `${whole}.${fraction}`;
 }
 

@@ -1,11 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -50,7 +44,10 @@ type Step = 'form' | 'rates' | 'booking';
 
 type RateItem = RateResult;
 
-export default function CreateShipmentScreen({ navigation: propNavigation, route: propRoute }: any = {}) {
+export default function CreateShipmentScreen({
+  navigation: propNavigation,
+  route: propRoute,
+}: any = {}) {
   const insets = useSafeAreaInsets();
   const hookNavigation = useNavigation<any>();
   const hookRoute = useRoute<any>();
@@ -330,27 +327,58 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
-      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5 mt-3">
+      <Text className="mb-2.5 mt-3 font-semibold text-[11px] uppercase tracking-wider text-slate-500">
         Customer Details
       </Text>
-      <View
-        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
-
-      >
-        <InputField label="Name" value={form.customerName} onChangeText={(v) => updateField('customerName', singleSpaced(v))} placeholder="Customer name" icon="user" autoCapitalize="words" maxLength={120} />
-        <InputField label="Phone" value={form.customerPhone} onChangeText={(v) => updateField('customerPhone', onlyDigits(v, 10))} placeholder="9876543210" icon="phone" keyboardType="number-pad" maxLength={10} autoComplete="tel" />
-        <InputField label="Email" value={form.customerEmail} onChangeText={(v) => updateField('customerEmail', v.trim())} placeholder="customer@email.com" icon="mail" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} autoComplete="email" maxLength={160} />
+      <View className="mb-4 gap-3 rounded-2xl border border-gray-100/90 bg-white p-4">
+        <InputField
+          label="Name"
+          value={form.customerName}
+          onChangeText={(v) => updateField('customerName', singleSpaced(v))}
+          placeholder="Customer name"
+          icon="user"
+          autoCapitalize="words"
+          maxLength={120}
+        />
+        <InputField
+          label="Phone"
+          value={form.customerPhone}
+          onChangeText={(v) => updateField('customerPhone', onlyDigits(v, 10))}
+          placeholder="9876543210"
+          icon="phone"
+          keyboardType="number-pad"
+          maxLength={10}
+          autoComplete="tel"
+        />
+        <InputField
+          label="Email"
+          value={form.customerEmail}
+          onChangeText={(v) => updateField('customerEmail', v.trim())}
+          placeholder="customer@email.com"
+          icon="mail"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
+          maxLength={160}
+        />
       </View>
 
       {/* Delivery Address */}
-      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5">
+      <Text className="mb-2.5 font-semibold text-[11px] uppercase tracking-wider text-slate-500">
         Delivery Address
       </Text>
-      <View
-        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 gap-3"
-
-      >
-        <InputField label="Address" value={form.address} onChangeText={(v) => updateField('address', singleSpaced(v))} placeholder="Full address" icon="map-pin" multiline autoCapitalize="words" maxLength={500} />
+      <View className="mb-4 gap-3 rounded-2xl border border-gray-100/90 bg-white p-4">
+        <InputField
+          label="Address"
+          value={form.address}
+          onChangeText={(v) => updateField('address', singleSpaced(v))}
+          placeholder="Full address"
+          icon="map-pin"
+          multiline
+          autoCapitalize="words"
+          maxLength={500}
+        />
         <InputField
           label={resolvingCity ? 'Delivery Pincode (looking up…)' : 'Delivery Pincode'}
           value={form.pincode}
@@ -361,26 +389,40 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         />
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="City" value={city} onChangeText={(v) => updateField('city', singleSpaced(v))} placeholder="City" autoCapitalize="words" maxLength={80} />
+            <InputField
+              label="City"
+              value={city}
+              onChangeText={(v) => updateField('city', singleSpaced(v))}
+              placeholder="City"
+              autoCapitalize="words"
+              maxLength={80}
+            />
           </View>
           <View className="flex-1">
-            <InputField label="State" value={state} onChangeText={(v) => updateField('state', singleSpaced(v))} placeholder="State" autoCapitalize="words" maxLength={80} />
+            <InputField
+              label="State"
+              value={state}
+              onChangeText={(v) => updateField('state', singleSpaced(v))}
+              placeholder="State"
+              autoCapitalize="words"
+              maxLength={80}
+            />
           </View>
         </View>
       </View>
 
       {/* Pickup Warehouse */}
-      <View className="flex-row items-center justify-between mb-2.5">
+      <View className="mb-2.5 flex-row items-center justify-between">
         <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500">
           Pickup Warehouse
         </Text>
         {!isWarehouseComplete(warehouse) && (
-          <View className="bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-            <Text className="text-[9px] font-black text-amber-700">REQUIRED</Text>
+          <View className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5">
+            <Text className="font-black text-[9px] text-amber-700">REQUIRED</Text>
           </View>
         )}
       </View>
-      <View className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-4">
+      <View className="mb-4 rounded-2xl border border-gray-100/90 bg-white p-4">
         <WarehouseForm
           value={warehouse}
           onChange={setWarehouseEdit}
@@ -390,31 +432,69 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Package Details */}
-      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5">
+      <Text className="mb-2.5 font-semibold text-[11px] uppercase tracking-wider text-slate-500">
         Package Details
       </Text>
-      <View
-        className="bg-white rounded-2xl p-4 border border-gray-100/90 mb-5 gap-3"
-
-      >
-        <InputField label="Product Name" value={form.productName} onChangeText={(v) => updateField('productName', v)} placeholder="Product description" icon="package" />
+      <View className="mb-5 gap-3 rounded-2xl border border-gray-100/90 bg-white p-4">
+        <InputField
+          label="Product Name"
+          value={form.productName}
+          onChangeText={(v) => updateField('productName', v)}
+          placeholder="Product description"
+          icon="package"
+        />
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="Weight (kg)" value={form.weight} onChangeText={(v) => updateField('weight', onlyDecimal(v, 4, 3))} placeholder="0.5" keyboardType="decimal-pad" maxLength={8} />
+            <InputField
+              label="Weight (kg)"
+              value={form.weight}
+              onChangeText={(v) => updateField('weight', onlyDecimal(v, 4, 3))}
+              placeholder="0.5"
+              keyboardType="decimal-pad"
+              maxLength={8}
+            />
           </View>
           <View className="flex-1">
-            <InputField label="Order Value (₹)" value={form.orderValue} onChangeText={(v) => updateField('orderValue', onlyDigits(v, 8))} placeholder="500" keyboardType="number-pad" maxLength={8} />
+            <InputField
+              label="Order Value (₹)"
+              value={form.orderValue}
+              onChangeText={(v) => updateField('orderValue', onlyDigits(v, 8))}
+              placeholder="500"
+              keyboardType="number-pad"
+              maxLength={8}
+            />
           </View>
         </View>
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <InputField label="L (cm)" value={form.length} onChangeText={(v) => updateField('length', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
+            <InputField
+              label="L (cm)"
+              value={form.length}
+              onChangeText={(v) => updateField('length', onlyDecimal(v, 3, 1))}
+              placeholder="10"
+              keyboardType="decimal-pad"
+              maxLength={5}
+            />
           </View>
           <View className="flex-1">
-            <InputField label="W (cm)" value={form.breadth} onChangeText={(v) => updateField('breadth', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
+            <InputField
+              label="W (cm)"
+              value={form.breadth}
+              onChangeText={(v) => updateField('breadth', onlyDecimal(v, 3, 1))}
+              placeholder="10"
+              keyboardType="decimal-pad"
+              maxLength={5}
+            />
           </View>
           <View className="flex-1">
-            <InputField label="H (cm)" value={form.height} onChangeText={(v) => updateField('height', onlyDecimal(v, 3, 1))} placeholder="10" keyboardType="decimal-pad" maxLength={5} />
+            <InputField
+              label="H (cm)"
+              value={form.height}
+              onChangeText={(v) => updateField('height', onlyDecimal(v, 3, 1))}
+              placeholder="10"
+              keyboardType="decimal-pad"
+              maxLength={5}
+            />
           </View>
         </View>
 
@@ -441,15 +521,18 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         )}
 
         {/* Payment Method */}
-        <Text className="text-xs font-semibold text-gray-700 mb-1">Payment Method</Text>
+        <Text className="mb-1 font-semibold text-xs text-gray-700">Payment Method</Text>
         <View className="flex-row gap-3">
           {(['Prepaid', 'COD'] as const).map((type) => (
             <TouchableOpacity
               key={type}
               onPress={() => updateField('paymentMethod', type)}
               activeOpacity={0.8}
-              className={`flex-1 py-3 rounded-xl border items-center ${form.paymentMethod === type ? 'bg-violet-700 border-purple-900' : 'bg-white border-gray-200'
-                }`}
+              className={`flex-1 items-center rounded-xl border py-3 ${
+                form.paymentMethod === type
+                  ? 'border-purple-900 bg-violet-700'
+                  : 'border-gray-200 bg-white'
+              }`}
               // Shadow lives in `style`, not `className`: NativeWind's interop
               // drops the React Navigation context when a touchable's className
               // is a conditional template literal containing shadow utilities.
@@ -463,9 +546,9 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                       elevation: 2,
                     }
                   : undefined
-              }
-            >
-              <Text className={`font-semibold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
+              }>
+              <Text
+                className={`font-semibold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}
               </Text>
             </TouchableOpacity>
@@ -473,15 +556,20 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         </View>
 
         {form.paymentMethod === 'COD' && (
-          <View className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-            <Text className="text-[11px] font-sans text-amber-800 leading-4">
-              {formatCurrency(parseFloat(form.orderValue) || 0)} will be collected from the customer on delivery,
-              based on the order value above.
+          <View className="rounded-xl border border-amber-100 bg-amber-50 px-3 py-2.5">
+            <Text className="font-sans text-[11px] leading-4 text-amber-800">
+              {formatCurrency(parseFloat(form.orderValue) || 0)} will be collected from the customer
+              on delivery, based on the order value above.
             </Text>
           </View>
         )}
 
-        <InputField label="Order ID (Optional)" value={form.orderId} onChangeText={(v) => updateField('orderId', v)} placeholder="ORD-12345" />
+        <InputField
+          label="Order ID (Optional)"
+          value={form.orderId}
+          onChangeText={(v) => updateField('orderId', v)}
+          placeholder="ORD-12345"
+        />
       </View>
 
       {/* Get Rates Button */}
@@ -489,10 +577,9 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         onPress={handleGetRates}
         disabled={loading}
         activeOpacity={0.8}
-        className={`bg-violet-700 py-4 rounded-full items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
-        style={{ elevation: 4 }}
-      >
-        <Text className="text-white font-semibold text-sm">
+        className={`mb-8 items-center rounded-full bg-violet-700 py-4 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
+        style={{ elevation: 4 }}>
+        <Text className="font-semibold text-sm text-white">
           {loading ? 'Fetching Rates...' : 'Get Shipping Rates'}
         </Text>
       </TouchableOpacity>
@@ -501,8 +588,14 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
   const renderRates = () => {
     const cheapestRate = rates.length > 0 ? Math.min(...rates.map((r) => r.freight_charge)) : 0;
-    const fastestDays = rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
-    const parcel = weightBreakdown(form.weight, form.length || 10, form.breadth || 10, form.height || 10);
+    const fastestDays =
+      rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
+    const parcel = weightBreakdown(
+      form.weight,
+      form.length || 10,
+      form.breadth || 10,
+      form.height || 10
+    );
 
     return (
       <ScrollView
@@ -514,8 +607,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
           paddingTop: 12,
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* Route + parcel summary: what these quotes were priced on. */}
         <View className="mb-3 flex-row items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-4 py-3">
           <View className="flex-row items-center gap-2">
@@ -552,34 +644,39 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
   const renderBookingSuccess = () => (
     <View className="flex-1 items-center justify-center px-8">
-      <View className="bg-emerald-100 w-20 h-20 rounded-full items-center justify-center mb-6 border border-emerald-200">
+      <View className="mb-6 h-20 w-20 items-center justify-center rounded-full border border-emerald-200 bg-emerald-100">
         <Feather name="check-circle" size={40} color="#059669" />
       </View>
-      <Text className="text-2xl font-bold tracking-tight text-slate-900 mb-2 text-center">
+      <Text className="mb-2 text-center font-bold text-2xl tracking-tight text-slate-900">
         Shipment Booked!
       </Text>
-      <Text className="text-slate-500 text-center mb-2 font-medium text-sm">
-        AWB: <Text className="font-semibold text-slate-900" selectable>{bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}</Text>
+      <Text className="mb-2 text-center font-medium text-sm text-slate-500">
+        AWB:{' '}
+        <Text className="font-semibold text-slate-900" selectable>
+          {bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}
+        </Text>
       </Text>
-      <Text className="text-slate-500 text-center mb-1 font-medium text-sm">
+      <Text className="mb-1 text-center font-medium text-sm text-slate-500">
         Courier: <Text className="font-semibold text-slate-900">{bookingResult?.courier}</Text>
       </Text>
-      <Text className="text-slate-500 text-center mb-6 font-medium text-sm">
-        Charge: <Text className="font-semibold text-slate-900">{formatRate(bookingResult?.charge)}</Text>
+      <Text className="mb-6 text-center font-medium text-sm text-slate-500">
+        Charge:{' '}
+        <Text className="font-semibold text-slate-900">{formatRate(bookingResult?.charge)}</Text>
         {/* The freight is shown either way, but on COD nothing left the wallet
             — saying only "Charge: ₹80" next to an unchanged balance reads as a
             deduction that failed to appear. `walletCharged` is the server's own
             figure, so this cannot drift from what was actually taken. */}
         {bookingResult?.walletCharged === 0 && (
-          <Text className="text-emerald-700 font-semibold"> · not deducted (COD)</Text>
+          <Text className="font-semibold text-emerald-700"> · not deducted (COD)</Text>
         )}
       </Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Orders')}
         activeOpacity={0.85}
-        className="bg-violet-600 px-8 h-12 justify-center rounded-xl"
-      >
-        <Text variant="button" className="text-white">Back to Orders</Text>
+        className="h-12 justify-center rounded-xl bg-violet-600 px-8">
+        <Text variant="button" className="text-white">
+          Back to Orders
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -588,20 +685,16 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#F8FAFC]"
-      style={{ paddingTop: insets.top }}
-    >
+      style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3 flex-1">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
+        <View className="flex-1 flex-row items-center gap-3">
           <TouchableOpacity
             onPress={() =>
-              step === 'form'
-                ? navigation.goBack()
-                : setStep(step === 'rates' ? 'form' : 'rates')
+              step === 'form' ? navigation.goBack() : setStep(step === 'rates' ? 'form' : 'rates')
             }
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
@@ -626,7 +719,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
       {/* Progress Stepper */}
       {step !== 'booking' && (
-        <View className="flex-row items-center px-5 py-3 bg-white border-b border-slate-100 mb-2">
+        <View className="mb-2 flex-row items-center border-b border-slate-100 bg-white px-5 py-3">
           {[
             { label: 'Details', active: step === 'form', done: step === 'rates' },
             { label: 'Courier', active: step === 'rates', done: false },
@@ -634,32 +727,30 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
             <React.Fragment key={item.label}>
               <View className="flex-row items-center">
                 <View
-                  className={`w-6 h-6 rounded-full items-center justify-center ${item.active || item.done ? 'bg-violet-600' : 'bg-slate-100'
-                    }`}
-                >
+                  className={`h-6 w-6 items-center justify-center rounded-full ${
+                    item.active || item.done ? 'bg-violet-600' : 'bg-slate-100'
+                  }`}>
                   {item.done ? (
                     <Feather name="check" size={12} color="#FFFFFF" />
                   ) : (
                     <Text
-                      className={`text-[11px] font-bold ${item.active ? 'text-white' : 'text-slate-500'
-                        }`}
-                    >
+                      className={`font-bold text-[11px] ${
+                        item.active ? 'text-white' : 'text-slate-500'
+                      }`}>
                       {index + 1}
                     </Text>
                   )}
                 </View>
 
                 <Text
-                  className={`ml-2 text-[13px] font-semibold ${item.active ? 'text-slate-900' : 'text-slate-500'
-                    }`}
-                >
+                  className={`ml-2 font-semibold text-[13px] ${
+                    item.active ? 'text-slate-900' : 'text-slate-500'
+                  }`}>
                   {item.label}
                 </Text>
               </View>
 
-              {index === 0 && (
-                <View className="h-[1px] bg-slate-200 flex-1 mx-3" />
-              )}
+              {index === 0 && <View className="mx-3 h-[1px] flex-1 bg-slate-200" />}
             </React.Fragment>
           ))}
         </View>
@@ -708,7 +799,7 @@ function InputField({
 }) {
   return (
     <View>
-      <Text className="text-xs font-semibold text-gray-700 mb-1">{label}</Text>
+      <Text className="mb-1 font-semibold text-xs text-gray-700">{label}</Text>
       <View className="relative">
         {icon && (
           <View className="absolute left-3 top-3.5 z-10">
@@ -727,7 +818,7 @@ function InputField({
           maxLength={maxLength}
           multiline={multiline}
           style={{ textAlignVertical: multiline ? 'top' : 'center' }}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
+          className={`rounded-xl border border-gray-200 bg-gray-50/90 ${icon ? 'pl-9' : 'pl-3.5'} py-2.5 pr-3.5 text-sm  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`}
         />
       </View>
     </View>

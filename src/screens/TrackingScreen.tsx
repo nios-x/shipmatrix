@@ -119,14 +119,18 @@ export default function TrackingScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
-        <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-xl bg-white border border-gray-100 items-center justify-center shadow-xs">
+      <View className="flex-row items-center gap-3 px-5 py-4">
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          className="shadow-xs h-10 w-10 items-center justify-center rounded-xl border border-gray-100 bg-white">
           <Feather name="arrow-left" size={20} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-raleway-bold text-gray-900 tracking-tight">Track Shipment</Text>
+        <Text className="font-raleway-bold text-xl tracking-tight text-gray-900">
+          Track Shipment
+        </Text>
       </View>
 
-      <View className="px-5 mb-4">
+      <View className="mb-4 px-5">
         <View className="flex-row gap-3">
           <TextInput
             value={awb}
@@ -135,10 +139,15 @@ export default function TrackingScreen() {
             placeholderTextColor="#9ca3af"
             autoCapitalize="characters"
             autoCorrect={false}
-            className="flex-1 bg-white border border-gray-200/80 rounded-xl px-4 py-3 text-sm font-raleway text-gray-900 shadow-sm"
+            className="flex-1 rounded-xl border border-gray-200/80 bg-white px-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
             onSubmitEditing={() => handleTrack()}
           />
-          <TouchableOpacity onPress={() => handleTrack()} disabled={tracking} activeOpacity={0.8} className="bg-violet-700 px-5 rounded-xl items-center justify-center shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
+          <TouchableOpacity
+            onPress={() => handleTrack()}
+            disabled={tracking}
+            activeOpacity={0.8}
+            className="items-center justify-center rounded-xl bg-violet-700 px-5 shadow-md shadow-purple-900/20"
+            style={{ elevation: 3 }}>
             <Feather name="search" size={20} color="white" />
           </TouchableOpacity>
         </View>
@@ -146,38 +155,63 @@ export default function TrackingScreen() {
 
       {tracking && <LoadingSpinner message="Tracking shipment..." />}
       {error ? (
-        <View className="mx-5 bg-rose-50 border border-rose-100 p-4 rounded-2xl mb-4">
-          <Text className="text-rose-600 text-sm font-raleway text-center">{error}</Text>
+        <View className="mx-5 mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4">
+          <Text className="text-center font-raleway text-sm text-rose-600">{error}</Text>
         </View>
       ) : null}
 
       {shipmentInfo && (
-        <View className="mx-5 bg-white rounded-2xl p-4 border border-gray-100/90 mb-4 shadow-sm" style={{ elevation: 2 }}>
-          <Text className="font-raleway-bold text-gray-900 text-base">{shipmentInfo.courier || 'Courier'}</Text>
-          <Text className="text-xs font-raleway text-gray-400 mt-0.5" selectable>AWB: {shipmentInfo.awb}</Text>
+        <View
+          className="mx-5 mb-4 rounded-2xl border border-gray-100/90 bg-white p-4 shadow-sm"
+          style={{ elevation: 2 }}>
+          <Text className="font-raleway-bold text-base text-gray-900">
+            {shipmentInfo.courier || 'Courier'}
+          </Text>
+          <Text className="mt-0.5 font-raleway text-xs text-gray-400" selectable>
+            AWB: {shipmentInfo.awb}
+          </Text>
           {shipmentInfo.status && (
-            <View className="bg-purple-50 border border-purple-100 px-3 py-1 rounded-full mt-2.5 self-start">
-              <Text className="text-xs font-raleway-bold text-purple-700 uppercase tracking-wider">{shipmentInfo.status}</Text>
+            <View className="mt-2.5 self-start rounded-full border border-purple-100 bg-purple-50 px-3 py-1">
+              <Text className="font-raleway-bold text-xs uppercase tracking-wider text-purple-700">
+                {shipmentInfo.status}
+              </Text>
             </View>
           )}
         </View>
       )}
 
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+        className="flex-1 px-5"
+        showsVerticalScrollIndicator={false}>
         {shipmentInfo && events.length === 0 && !tracking ? (
-          <Text className="text-sm font-raleway text-gray-400 italic py-2">No tracking history available yet.</Text>
+          <Text className="py-2 font-raleway text-sm italic text-gray-400">
+            No tracking history available yet.
+          </Text>
         ) : null}
         {events.map((event, index) => (
-          <View key={index} className="flex-row mb-1">
-            <View className="items-center mr-4 w-6">
-              <View className={`w-3.5 h-3.5 rounded-full ${index === 0 ? 'bg-violet-700 shadow-sm shadow-purple-900/40' : 'bg-gray-300'}`} />
-              {index < events.length - 1 && <View className="w-0.5 flex-1 bg-gray-200 mt-1" />}
+          <View key={index} className="mb-1 flex-row">
+            <View className="mr-4 w-6 items-center">
+              <View
+                className={`h-3.5 w-3.5 rounded-full ${index === 0 ? 'bg-violet-700 shadow-sm shadow-purple-900/40' : 'bg-gray-300'}`}
+              />
+              {index < events.length - 1 && <View className="mt-1 w-0.5 flex-1 bg-gray-200" />}
             </View>
             <View className="flex-1 pb-6">
-              <Text className="font-raleway-bold text-gray-900 text-sm">{event.status}</Text>
-              {event.location && <Text className="text-xs font-raleway text-gray-500 mt-0.5">{event.location}</Text>}
-              {event.timestamp && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{formatDateTime(event.timestamp, event.timestamp)}</Text>}
-              {event.description && <Text className="text-xs font-raleway text-gray-400 mt-0.5">{event.description}</Text>}
+              <Text className="font-raleway-bold text-sm text-gray-900">{event.status}</Text>
+              {event.location && (
+                <Text className="mt-0.5 font-raleway text-xs text-gray-500">{event.location}</Text>
+              )}
+              {event.timestamp && (
+                <Text className="mt-0.5 font-raleway text-xs text-gray-400">
+                  {formatDateTime(event.timestamp, event.timestamp)}
+                </Text>
+              )}
+              {event.description && (
+                <Text className="mt-0.5 font-raleway text-xs text-gray-400">
+                  {event.description}
+                </Text>
+              )}
             </View>
           </View>
         ))}

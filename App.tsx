@@ -46,7 +46,8 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
     const link = document.createElement('link');
     link.id = 'raleway-google-font-link';
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap';
+    link.href =
+      'https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap';
     document.head.appendChild(link);
   }
 
@@ -102,7 +103,13 @@ function App() {
 
   if (!fontsLoaded && Platform.OS !== 'web') {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFA' }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: '#FAFAFA',
+        }}>
         <ActivityIndicator size="large" color="#7c3aed" />
       </View>
     );

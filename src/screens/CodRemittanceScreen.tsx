@@ -68,7 +68,9 @@ export default function CodRemittanceScreen() {
     const pendingList = codOrders.filter((s) => !isRemitted(s));
     const settledList = codOrders
       .filter(isRemitted)
-      .sort((a, b) => (toDate(b.remittedAt)?.getTime() || 0) - (toDate(a.remittedAt)?.getTime() || 0));
+      .sort(
+        (a, b) => (toDate(b.remittedAt)?.getTime() || 0) - (toDate(a.remittedAt)?.getTime() || 0)
+      );
 
     const sum = (list: Shipment[]) => list.reduce((total, s) => total + codValue(s), 0);
 
@@ -105,32 +107,34 @@ export default function CodRemittanceScreen() {
   const rows = activeTab === 'pending' ? pending : settled;
 
   const renderRow = ({ item }: { item: Shipment }) => (
-    <View className="bg-white rounded-2xl p-4 mb-3 border border-gray-100" style={{ elevation: 1 }}>
+    <View className="mb-3 rounded-2xl border border-gray-100 bg-white p-4" style={{ elevation: 1 }}>
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="font-bold text-gray-900 text-sm">AWB: {item.awb || 'N/A'}</Text>
-          <Text className="text-[11px] text-gray-500 mt-0.5" numberOfLines={1}>
+          <Text className="font-bold text-sm text-gray-900">AWB: {item.awb || 'N/A'}</Text>
+          <Text className="mt-0.5 text-[11px] text-gray-500" numberOfLines={1}>
             {item.isCodRemittance ? item.description : `To: ${destinationLabel(item)}`}
           </Text>
         </View>
-        <View className={`px-2 py-0.5 rounded-md ${isRemitted(item) ? 'bg-green-100' : 'bg-orange-100'}`}>
+        <View
+          className={`rounded-md px-2 py-0.5 ${isRemitted(item) ? 'bg-green-100' : 'bg-orange-100'}`}>
           <Text
-            className={`text-[10px] font-bold uppercase ${
+            className={`font-bold text-[10px] uppercase ${
               isRemitted(item) ? 'text-green-700' : 'text-orange-700'
-            }`}
-          >
+            }`}>
             {isRemitted(item) ? 'Settled' : 'Pending'}
           </Text>
         </View>
       </View>
 
-      <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
+      <View className="mt-3 flex-row items-center justify-between border-t border-gray-100 pt-3">
         <Text className="text-xs text-gray-500">COD Amount</Text>
         <Text className="font-black text-gray-900">{formatCurrency(codValue(item))}</Text>
       </View>
 
       {isRemitted(item) && item.remittedAt && (
-        <Text className="text-[10px] text-gray-400 mt-2">Paid on {formatDate(item.remittedAt)}</Text>
+        <Text className="mt-2 text-[10px] text-gray-400">
+          Paid on {formatDate(item.remittedAt)}
+        </Text>
       )}
     </View>
   );
@@ -141,35 +145,38 @@ export default function CodRemittanceScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#f8fafc]"
-      style={{ paddingTop: insets.top }}
-    >
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      style={{ paddingTop: insets.top }}>
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900">COD Remittance</Text>
+        <Text className="font-black text-xl text-gray-900">COD Remittance</Text>
       </View>
 
       {/* Summary */}
-      <View className="flex-row gap-3 px-5 mb-4">
-        <View className="flex-1 bg-blue-50 border border-blue-100 rounded-2xl p-3.5">
-          <Text className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
+      <View className="mb-4 flex-row gap-3 px-5">
+        <View className="flex-1 rounded-2xl border border-blue-100 bg-blue-50 p-3.5">
+          <Text className="font-bold text-[10px] uppercase tracking-wider text-blue-600">
             Next Settlement
           </Text>
-          <Text className="text-xl font-black text-blue-900 mt-1">{formatCurrency(pendingAmount)}</Text>
-          <Text className="text-[11px] text-blue-500 mt-0.5">{pending.length} orders pending</Text>
+          <Text className="mt-1 font-black text-xl text-blue-900">
+            {formatCurrency(pendingAmount)}
+          </Text>
+          <Text className="mt-0.5 text-[11px] text-blue-500">{pending.length} orders pending</Text>
         </View>
-        <View className="flex-1 bg-green-50 border border-green-100 rounded-2xl p-3.5">
-          <Text className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
+        <View className="flex-1 rounded-2xl border border-green-100 bg-green-50 p-3.5">
+          <Text className="font-bold text-[10px] uppercase tracking-wider text-green-600">
             Total Settled
           </Text>
-          <Text className="text-xl font-black text-green-900 mt-1">{formatCurrency(settledAmount)}</Text>
-          <Text className="text-[11px] text-green-500 mt-0.5">{settled.length} orders paid</Text>
+          <Text className="mt-1 font-black text-xl text-green-900">
+            {formatCurrency(settledAmount)}
+          </Text>
+          <Text className="mt-0.5 text-[11px] text-green-500">{settled.length} orders paid</Text>
         </View>
       </View>
 
       {/* Tabs */}
-      <View className="px-5 mb-3">
+      <View className="mb-3 px-5">
         <View className="flex-row gap-2">
           {TABS.map((tab) => {
             const active = activeTab === tab.key;
@@ -178,12 +185,12 @@ export default function CodRemittanceScreen() {
                 key={tab.key}
                 onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.7}
-                className={`flex-1 flex-row items-center justify-center gap-1.5 py-2.5 rounded-xl border ${
-                  active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
-                }`}
-              >
+                className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl border py-2.5 ${
+                  active ? 'border-slate-900 bg-slate-900' : 'border-slate-200 bg-white'
+                }`}>
                 <Feather name={tab.icon} size={12} color={active ? '#FFFFFF' : '#64748B'} />
-                <Text className={`text-[11px] font-bold ${active ? 'text-white' : 'text-slate-600'}`}>
+                <Text
+                  className={`font-bold text-[11px] ${active ? 'text-white' : 'text-slate-600'}`}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -194,9 +201,11 @@ export default function CodRemittanceScreen() {
 
       {activeTab === 'bank' ? (
         <ScrollView className="flex-1 px-5" keyboardShouldPersistTaps="handled">
-          <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-6" style={{ elevation: 1 }}>
-            <View className="flex-row items-center gap-3 mb-4">
-              <View className="w-10 h-10 rounded-xl bg-indigo-100 items-center justify-center">
+          <View
+            className="mb-6 rounded-2xl border border-gray-100 bg-white p-5"
+            style={{ elevation: 1 }}>
+            <View className="mb-4 flex-row items-center gap-3">
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-indigo-100">
                 <Feather name="credit-card" size={18} color="#4f46e5" />
               </View>
               <View>
@@ -205,27 +214,29 @@ export default function CodRemittanceScreen() {
               </View>
             </View>
 
-            <Text className="text-xs font-bold text-gray-700 mb-1">Account Holder Name</Text>
+            <Text className="mb-1 font-bold text-xs text-gray-700">Account Holder Name</Text>
             <TextInput
               value={bankDetails.accountName}
               onChangeText={(v) => setBankDetails((p) => ({ ...p, accountName: v.toUpperCase() }))}
               placeholder="JOHN DOE"
               placeholderTextColor="#9ca3af"
               autoCapitalize="characters"
-              className="border-2 border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-900 mb-4"
+              className="mb-4 rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900"
             />
 
-            <Text className="text-xs font-bold text-gray-700 mb-1">Account Number</Text>
+            <Text className="mb-1 font-bold text-xs text-gray-700">Account Number</Text>
             <TextInput
               value={bankDetails.accountNumber}
-              onChangeText={(v) => setBankDetails((p) => ({ ...p, accountNumber: v.replace(/[^0-9]/g, '') }))}
+              onChangeText={(v) =>
+                setBankDetails((p) => ({ ...p, accountNumber: v.replace(/[^0-9]/g, '') }))
+              }
               placeholder="e.g. 1234567890"
               placeholderTextColor="#9ca3af"
               keyboardType="number-pad"
-              className="border-2 border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-900 mb-4"
+              className="mb-4 rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900"
             />
 
-            <Text className="text-xs font-bold text-gray-700 mb-1">IFSC Code</Text>
+            <Text className="mb-1 font-bold text-xs text-gray-700">IFSC Code</Text>
             <TextInput
               value={bankDetails.ifsc}
               onChangeText={(v) => setBankDetails((p) => ({ ...p, ifsc: v.toUpperCase() }))}
@@ -233,16 +244,15 @@ export default function CodRemittanceScreen() {
               placeholderTextColor="#9ca3af"
               autoCapitalize="characters"
               maxLength={11}
-              className="border-2 border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-900 mb-5"
+              className="mb-5 rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900"
             />
 
             <TouchableOpacity
               onPress={handleSaveBankDetails}
               disabled={saving}
               activeOpacity={0.8}
-              className={`bg-indigo-600 rounded-xl py-3 items-center ${saving ? 'opacity-70' : ''}`}
-            >
-              <Text className="text-white font-bold">
+              className={`items-center rounded-xl bg-indigo-600 py-3 ${saving ? 'opacity-70' : ''}`}>
+              <Text className="font-bold text-white">
                 {saving ? 'Saving…' : 'Securely Save Details'}
               </Text>
             </TouchableOpacity>
@@ -252,7 +262,10 @@ export default function CodRemittanceScreen() {
         <FlatList
           data={rows}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+          contentContainerStyle={{
+            paddingHorizontal: 14,
+            paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+          }}
           showsVerticalScrollIndicator={false}
           renderItem={renderRow}
           ListEmptyComponent={

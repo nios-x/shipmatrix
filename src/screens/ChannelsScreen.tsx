@@ -38,7 +38,10 @@ const TABS: { key: Channel; label: string; icon: keyof typeof Feather.glyphMap }
 
 /** Strips protocol and trailing slash so the API always receives a bare host. */
 const cleanDomain = (value: string) =>
-  value.replace(/^https?:\/\//, '').replace(/\/$/, '').trim();
+  value
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+    .trim();
 
 function Field({
   label,
@@ -47,15 +50,15 @@ function Field({
 }: { label: string; hint?: string } & React.ComponentProps<typeof TextInput>) {
   return (
     <View className="mb-4">
-      <Text className="text-xs font-bold text-gray-700 mb-1">{label}</Text>
+      <Text className="mb-1 font-bold text-xs text-gray-700">{label}</Text>
       <TextInput
         placeholderTextColor="#9ca3af"
         autoCapitalize="none"
         autoCorrect={false}
-        className="border-2 border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-gray-900"
+        className="rounded-xl border-2 border-gray-200 bg-gray-50 px-4 py-2.5 text-gray-900"
         {...props}
       />
-      {!!hint && <Text className="text-[11px] text-gray-400 mt-1">{hint}</Text>}
+      {!!hint && <Text className="mt-1 text-[11px] text-gray-400">{hint}</Text>}
     </View>
   );
 }
@@ -213,10 +216,9 @@ export default function ChannelsScreen() {
       const fetched: any[] = data.orders || [];
 
       const fresh = fetched
-        .filter((o) =>
-          !existingIds.has(
-            String(source === 'shopify' ? o.name || o.order_number || o.id : o.id)
-          )
+        .filter(
+          (o) =>
+            !existingIds.has(String(source === 'shopify' ? o.name || o.order_number || o.id : o.id))
         )
         .sort(
           (a, b) =>
@@ -271,8 +273,7 @@ export default function ChannelsScreen() {
         orderValue,
         codAmount: isCOD ? orderValue : 0,
         productName: order.line_items?.map((i: any) => i.name).join(', ') || 'Shopify Order',
-        productQty:
-          order.line_items?.reduce((a: number, i: any) => a + (i.quantity || 1), 0) || 1,
+        productQty: order.line_items?.reduce((a: number, i: any) => a + (i.quantity || 1), 0) || 1,
         lineItems: order.line_items || [],
         weight,
         length: side,
@@ -367,18 +368,17 @@ export default function ChannelsScreen() {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#f8fafc]"
-      style={{ paddingTop: insets.top }}
-    >
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      style={{ paddingTop: insets.top }}>
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900">Sales Channels</Text>
+        <Text className="font-black text-xl text-gray-900">Sales Channels</Text>
       </View>
 
       {/* Tabs */}
-      <View className="px-5 mb-4">
-        <View className="flex-row bg-gray-100 rounded-xl p-1">
+      <View className="mb-4 px-5">
+        <View className="flex-row rounded-xl bg-gray-100 p-1">
           {TABS.map((tab) => {
             const active = activeTab === tab.key;
             return (
@@ -390,15 +390,12 @@ export default function ChannelsScreen() {
                   setOrders([]);
                 }}
                 activeOpacity={0.7}
-                className={`flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-lg ${
+                className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-lg py-2 ${
                   active ? 'bg-white' : ''
                 }`}
-                style={active ? { elevation: 1 } : undefined}
-              >
+                style={active ? { elevation: 1 } : undefined}>
                 <Feather name={tab.icon} size={13} color={active ? '#111827' : '#6b7280'} />
-                <Text
-                  className={`text-xs font-bold ${active ? 'text-gray-900' : 'text-gray-500'}`}
-                >
+                <Text className={`font-bold text-xs ${active ? 'text-gray-900' : 'text-gray-500'}`}>
                   {tab.label}
                 </Text>
               </TouchableOpacity>
@@ -411,58 +408,58 @@ export default function ChannelsScreen() {
         className="flex-1 px-5"
         contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
         keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {activeTab === 'custom' ? (
-          <View className="bg-white rounded-2xl p-5 border border-gray-100" style={{ elevation: 1 }}>
-            <View className="w-12 h-12 rounded-2xl bg-blue-50 items-center justify-center mb-3">
+          <View
+            className="rounded-2xl border border-gray-100 bg-white p-5"
+            style={{ elevation: 1 }}>
+            <View className="mb-3 h-12 w-12 items-center justify-center rounded-2xl bg-blue-50">
               <Feather name="code" size={22} color="#3b82f6" />
             </View>
-            <Text className="font-bold text-gray-900 text-base mb-1">Custom API</Text>
-            <Text className="text-sm text-gray-500 leading-5 mb-4">
+            <Text className="mb-1 font-bold text-base text-gray-900">Custom API</Text>
+            <Text className="mb-4 text-sm leading-5 text-gray-500">
               Push orders directly from your own system using the ShipMatrix REST API. Authenticate
               with the API key on your profile.
             </Text>
             <TouchableOpacity
               onPress={() => navigation.navigate('ProfileTab', { screen: 'ApiDocs' })}
               activeOpacity={0.8}
-              className="bg-violet-700 py-3 rounded-xl items-center"
-            >
-              <Text className="text-white font-bold text-sm">View API Documentation</Text>
+              className="items-center rounded-xl bg-violet-700 py-3">
+              <Text className="font-bold text-sm text-white">View API Documentation</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             {/* Connection status */}
             <View
-              className={`rounded-2xl p-4 mb-4 border flex-row items-center gap-3 ${
-                connected ? 'bg-emerald-50 border-emerald-100' : 'bg-gray-50 border-gray-200'
-              }`}
-            >
+              className={`mb-4 flex-row items-center gap-3 rounded-2xl border p-4 ${
+                connected ? 'border-emerald-100 bg-emerald-50' : 'border-gray-200 bg-gray-50'
+              }`}>
               <Feather
                 name={connected ? 'check-circle' : 'alert-circle'}
                 size={18}
                 color={connected ? '#059669' : '#9ca3af'}
               />
               <Text
-                className={`flex-1 text-sm font-bold ${
+                className={`flex-1 font-bold text-sm ${
                   connected ? 'text-emerald-800' : 'text-gray-500'
-                }`}
-              >
+                }`}>
                 {connected ? 'Store connected' : 'Not connected yet'}
               </Text>
               {connected && (
                 <TouchableOpacity onPress={handleDisconnect} disabled={saving} activeOpacity={0.7}>
-                  <Text className="text-xs font-bold text-red-600">Disconnect</Text>
+                  <Text className="font-bold text-xs text-red-600">Disconnect</Text>
                 </TouchableOpacity>
               )}
             </View>
 
             {/* Credentials */}
-            <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4" style={{ elevation: 1 }}>
+            <View
+              className="mb-4 rounded-2xl border border-gray-100 bg-white p-5"
+              style={{ elevation: 1 }}>
               {activeTab === 'shopify' ? (
                 <>
-                  <Text className="font-bold text-gray-900 mb-3">Shopify Credentials</Text>
+                  <Text className="mb-3 font-bold text-gray-900">Shopify Credentials</Text>
                   <Field
                     label="Store Domain"
                     value={shopify.domain}
@@ -482,16 +479,15 @@ export default function ChannelsScreen() {
                     onPress={handleSaveShopify}
                     disabled={saving}
                     activeOpacity={0.8}
-                    className={`bg-violet-700 py-3 rounded-xl items-center ${saving ? 'opacity-70' : ''}`}
-                  >
-                    <Text className="text-white font-bold text-sm">
+                    className={`items-center rounded-xl bg-violet-700 py-3 ${saving ? 'opacity-70' : ''}`}>
+                    <Text className="font-bold text-sm text-white">
                       {saving ? 'Connecting…' : 'Save & Register Webhooks'}
                     </Text>
                   </TouchableOpacity>
                 </>
               ) : (
                 <>
-                  <Text className="font-bold text-gray-900 mb-3">WooCommerce Credentials</Text>
+                  <Text className="mb-3 font-bold text-gray-900">WooCommerce Credentials</Text>
                   <Field
                     label="Store URL"
                     value={woo.domain}
@@ -517,9 +513,8 @@ export default function ChannelsScreen() {
                     onPress={handleSaveWoo}
                     disabled={saving}
                     activeOpacity={0.8}
-                    className={`bg-violet-700 py-3 rounded-xl items-center ${saving ? 'opacity-70' : ''}`}
-                  >
-                    <Text className="text-white font-bold text-sm">
+                    className={`items-center rounded-xl bg-violet-700 py-3 ${saving ? 'opacity-70' : ''}`}>
+                    <Text className="font-bold text-sm text-white">
                       {saving ? 'Saving…' : 'Save Credentials'}
                     </Text>
                   </TouchableOpacity>
@@ -528,30 +523,34 @@ export default function ChannelsScreen() {
             </View>
 
             {/* Sync */}
-            <View className="bg-white rounded-2xl p-5 border border-gray-100" style={{ elevation: 1 }}>
-              <View className="flex-row items-center justify-between mb-3">
+            <View
+              className="rounded-2xl border border-gray-100 bg-white p-5"
+              style={{ elevation: 1 }}>
+              <View className="mb-3 flex-row items-center justify-between">
                 <Text className="font-bold text-gray-900">Import Orders</Text>
                 <TouchableOpacity
                   onPress={fetchOrders}
                   disabled={loadingOrders || !connected}
                   activeOpacity={0.7}
-                  className="flex-row items-center gap-1.5"
-                >
+                  className="flex-row items-center gap-1.5">
                   {loadingOrders ? (
                     <ActivityIndicator size="small" color="#7c3aed" />
                   ) : (
-                    <Feather name="refresh-cw" size={14} color={connected ? '#7c3aed' : '#d1d5db'} />
+                    <Feather
+                      name="refresh-cw"
+                      size={14}
+                      color={connected ? '#7c3aed' : '#d1d5db'}
+                    />
                   )}
                   <Text
-                    className={`text-xs font-bold ${connected ? 'text-violet-700' : 'text-gray-300'}`}
-                  >
+                    className={`font-bold text-xs ${connected ? 'text-violet-700' : 'text-gray-300'}`}>
                     Sync
                   </Text>
                 </TouchableOpacity>
               </View>
 
               {orders.length === 0 ? (
-                <Text className="text-sm text-gray-400 py-3">
+                <Text className="py-3 text-sm text-gray-400">
                   {connected
                     ? 'Tap Sync to pull new orders from your store.'
                     : 'Connect your store to import orders.'}
@@ -563,22 +562,21 @@ export default function ChannelsScreen() {
                     return (
                       <View
                         key={`${mapped.orderId}-${i}`}
-                        className="border-b border-gray-100 py-3"
-                      >
+                        className="border-b border-gray-100 py-3">
                         <View className="flex-row items-center justify-between">
-                          <Text className="font-bold text-gray-900 text-sm">#{mapped.orderId}</Text>
-                          <Text className="font-black text-gray-900 text-sm">
+                          <Text className="font-bold text-sm text-gray-900">#{mapped.orderId}</Text>
+                          <Text className="font-black text-sm text-gray-900">
                             {formatCurrency(Math.round(mapped.orderValue))}
                           </Text>
                         </View>
-                        <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>
+                        <Text className="mt-0.5 text-xs text-gray-500" numberOfLines={1}>
                           {mapped.customerName} · {mapped.city || 'Unknown city'}
                         </Text>
                       </View>
                     );
                   })}
                   {orders.length > 5 && (
-                    <Text className="text-xs text-gray-400 text-center py-2">
+                    <Text className="py-2 text-center text-xs text-gray-400">
                       +{orders.length - 5} more
                     </Text>
                   )}
@@ -587,11 +585,10 @@ export default function ChannelsScreen() {
                     onPress={importAll}
                     disabled={importing}
                     activeOpacity={0.8}
-                    className={`bg-violet-700 py-3 rounded-xl items-center mt-4 ${
+                    className={`mt-4 items-center rounded-xl bg-violet-700 py-3 ${
                       importing ? 'opacity-70' : ''
-                    }`}
-                  >
-                    <Text className="text-white font-bold text-sm">
+                    }`}>
+                    <Text className="font-bold text-sm text-white">
                       {importing ? 'Importing…' : `Import ${orders.length} order(s) as drafts`}
                     </Text>
                   </TouchableOpacity>

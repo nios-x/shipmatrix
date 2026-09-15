@@ -10,7 +10,13 @@ import { EmptyState } from '../components/EmptyState';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { resolveLabelUrl, LabelError } from '../lib/labels';
-import { isRto, isDelivered, normalizeStatus, formatDate, destinationLabel } from '../lib/shipments';
+import {
+  isRto,
+  isDelivered,
+  normalizeStatus,
+  formatDate,
+  destinationLabel,
+} from '../lib/shipments';
 import type { Shipment } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -55,46 +61,47 @@ export default function ReturnsScreen() {
     return (
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => item.awb && navigation.navigate('HomeTab', {
-          screen: 'Tracking',
-          params: { awb: item.awb },
-        })}
-        className="bg-white rounded-2xl p-4 mb-3 border border-gray-100"
-        style={{ elevation: 1 }}
-      >
+        onPress={() =>
+          item.awb &&
+          navigation.navigate('HomeTab', {
+            screen: 'Tracking',
+            params: { awb: item.awb },
+          })
+        }
+        className="mb-3 rounded-2xl border border-gray-100 bg-white p-4"
+        style={{ elevation: 1 }}>
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-3 flex-1 pr-2">
+          <View className="flex-1 flex-row items-center gap-3 pr-2">
             <CourierLogo name={item.courierName || item.courier || ''} />
             <View className="flex-1">
-              <Text className="font-bold text-gray-900 text-sm" numberOfLines={1}>
+              <Text className="font-bold text-sm text-gray-900" numberOfLines={1}>
                 {item.courierName || item.courier || 'Courier'}
               </Text>
-              <Text className="text-xs text-gray-400 mt-0.5">AWB: {item.awb || 'Pending'}</Text>
+              <Text className="mt-0.5 text-xs text-gray-400">AWB: {item.awb || 'Pending'}</Text>
             </View>
           </View>
 
           <View
-            className={`px-2.5 py-1 rounded-lg ${
+            className={`rounded-lg px-2.5 py-1 ${
               delivered ? 'bg-emerald-100' : item.isReverse ? 'bg-violet-100' : 'bg-red-100'
-            }`}
-          >
+            }`}>
             <Text
-              className={`text-[10px] font-bold uppercase ${
+              className={`font-bold text-[10px] uppercase ${
                 delivered ? 'text-emerald-700' : item.isReverse ? 'text-violet-700' : 'text-red-700'
-              }`}
-            >
+              }`}>
               {normalizeStatus(item) || 'Unknown'}
             </Text>
           </View>
         </View>
 
-        <View className="mt-3 pt-3 border-t border-gray-100 flex-row items-center justify-between">
+        <View className="mt-3 flex-row items-center justify-between border-t border-gray-100 pt-3">
           <View className="flex-1 pr-3">
             <Text className="text-[11px] text-gray-500" numberOfLines={1}>
               {item.isReverse ? 'From' : 'To'}: {destinationLabel(item)}
             </Text>
-            <Text className="text-[11px] text-gray-400 mt-0.5">
-              {item.isReverse ? 'Reverse pickup' : 'Return to origin'} · {formatDate(item.createdAt)}
+            <Text className="mt-0.5 text-[11px] text-gray-400">
+              {item.isReverse ? 'Reverse pickup' : 'Return to origin'} ·{' '}
+              {formatDate(item.createdAt)}
             </Text>
           </View>
 
@@ -102,10 +109,9 @@ export default function ReturnsScreen() {
             <TouchableOpacity
               onPress={() => openLabel(item)}
               activeOpacity={0.7}
-              className="flex-row items-center gap-1.5 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg"
-            >
+              className="flex-row items-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5">
               <Feather name="download" size={12} color="#4b5563" />
-              <Text className="text-[11px] font-bold text-gray-700">Label</Text>
+              <Text className="font-bold text-[11px] text-gray-700">Label</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -117,25 +123,28 @@ export default function ReturnsScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900 flex-1">Returns</Text>
+        <Text className="flex-1 font-black text-xl text-gray-900">Returns</Text>
         <TouchableOpacity
           onPress={() =>
-            navigation.navigate('OrdersTab', { screen: 'CreateReverseShipment', initial: false, params: {} })
+            navigation.navigate('OrdersTab', {
+              screen: 'CreateReverseShipment',
+              initial: false,
+              params: {},
+            })
           }
           activeOpacity={0.8}
-          className="bg-violet-700 px-4 py-2 rounded-xl flex-row items-center gap-1"
-        >
+          className="flex-row items-center gap-1 rounded-xl bg-violet-700 px-4 py-2">
           <Feather name="plus" size={14} color="white" />
-          <Text className="text-white font-bold text-xs">New Return</Text>
+          <Text className="font-bold text-xs text-white">New Return</Text>
         </TouchableOpacity>
       </View>
 
       {/* Tabs */}
-      <View className="px-5 mb-3 flex-row gap-2">
+      <View className="mb-3 flex-row gap-2 px-5">
         {TABS.map((tab) => {
           const active = activeTab === tab.key;
           const count =
@@ -145,15 +154,16 @@ export default function ReturnsScreen() {
               key={tab.key}
               onPress={() => setActiveTab(tab.key)}
               activeOpacity={0.7}
-              className={`flex-row items-center gap-1.5 px-3.5 py-2 rounded-xl border ${
-                active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
-              }`}
-            >
-              <Text className={`text-xs font-bold ${active ? 'text-white' : 'text-slate-600'}`}>
+              className={`flex-row items-center gap-1.5 rounded-xl border px-3.5 py-2 ${
+                active ? 'border-slate-900 bg-slate-900' : 'border-slate-200 bg-white'
+              }`}>
+              <Text className={`font-bold text-xs ${active ? 'text-white' : 'text-slate-600'}`}>
                 {tab.label}
               </Text>
-              <View className={`px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-slate-100'}`}>
-                <Text className={`text-[9px] font-black ${active ? 'text-white' : 'text-slate-600'}`}>
+              <View
+                className={`rounded-full px-1.5 py-0.5 ${active ? 'bg-white/20' : 'bg-slate-100'}`}>
+                <Text
+                  className={`font-black text-[9px] ${active ? 'text-white' : 'text-slate-600'}`}>
                   {count}
                 </Text>
               </View>
@@ -165,7 +175,10 @@ export default function ReturnsScreen() {
       <FlatList
         data={rows}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 14,
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+        }}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
         ListEmptyComponent={

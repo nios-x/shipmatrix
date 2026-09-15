@@ -1,12 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Pressable,
-  Animated,
-  StyleSheet,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
+import { View, Pressable, Animated, StyleSheet, Platform, LayoutChangeEvent } from 'react-native';
 import { Text } from '../components/ui/Text';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -17,18 +17,14 @@ export function LoadingSpinner({
     <View className="items-center justify-center gap-3">
       <ActivityIndicator size={size} color="#7c3aed" />
       {message && (
-        <Text className="font-raleway text-xs text-gray-500 tracking-wide">{message}</Text>
+        <Text className="font-raleway text-xs tracking-wide text-gray-500">{message}</Text>
       )}
     </View>
   );
 
   if (fullScreen) {
-    return (
-      <View className="flex-1 items-center justify-center bg-[#f8fafc]">
-        {content}
-      </View>
-    );
+    return <View className="flex-1 items-center justify-center bg-[#f8fafc]">{content}</View>;
   }
 
-  return <View className="py-8 items-center justify-center">{content}</View>;
+  return <View className="items-center justify-center py-8">{content}</View>;
 }

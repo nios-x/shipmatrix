@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, writeBatch } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  writeBatch,
+} from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { handleFirestoreError, OperationType } from './firebase-utils';
 import type { Notification } from '../types';
@@ -31,9 +39,7 @@ export function useNotifications() {
       unsubscribeSnapshot = onSnapshot(
         q,
         (snapshot) => {
-          setNotifications(
-            snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as Notification))
-          );
+          setNotifications(snapshot.docs.map((d) => ({ id: d.id, ...d.data() }) as Notification));
           setLoading(false);
         },
         (error) => {

@@ -39,7 +39,8 @@
         "expo-camera",
         {
           "cameraPermission": "ShipMatrix uses the camera to measure your parcel. Photos stay on your phone.",
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": false
         }
       ],
       [
@@ -49,7 +50,19 @@
           "color": "#7C3AED"
         }
       ],
-      "@sentry/react-native"
+      "@sentry/react-native",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": ["armeabi-v7a", "arm64-v8a"],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "useLegacyPackaging": true,
+            "extraProguardRules": "-keep class com.cashfree.** { *; }\n-dontwarn com.cashfree.**\n-dontwarn com.google.mlkit.**"
+          }
+        }
+      ]
     ],
     "scheme": [
       "shipmatrix",

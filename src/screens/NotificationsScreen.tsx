@@ -23,7 +23,11 @@ const FILTERS = [
 ];
 
 /** Maps a notification category (or a legacy `type`) to its icon + colour. */
-function iconFor(n: Notification): { name: keyof typeof Feather.glyphMap; color: string; bg: string } {
+function iconFor(n: Notification): {
+  name: keyof typeof Feather.glyphMap;
+  color: string;
+  bg: string;
+} {
   const category = n.category || '';
   if (category === 'Wallet Alerts' || n.type === 'refund')
     return { name: 'credit-card', color: '#22c55e', bg: '#dcfce7' };
@@ -71,38 +75,38 @@ export default function NotificationsScreen() {
       <TouchableOpacity
         activeOpacity={item.actionLink ? 0.7 : 1}
         onPress={() => (item.actionLink ? handleAction(item) : markAsRead(item.id))}
-        className={`rounded-2xl p-4 mb-3 border flex-row gap-3 ${
-          item.read ? 'bg-white border-gray-100' : 'bg-violet-50/40 border-violet-100'
+        className={`mb-3 flex-row gap-3 rounded-2xl border p-4 ${
+          item.read ? 'border-gray-100 bg-white' : 'border-violet-100 bg-violet-50/40'
         }`}
-        style={{ elevation: 1 }}
-      >
+        style={{ elevation: 1 }}>
         <View
-          className="w-9 h-9 rounded-xl items-center justify-center"
-          style={{ backgroundColor: icon.bg }}
-        >
+          className="h-9 w-9 items-center justify-center rounded-xl"
+          style={{ backgroundColor: icon.bg }}>
           <Feather name={icon.name} size={17} color={icon.color} />
         </View>
 
         <View className="flex-1">
           <View className="flex-row items-start justify-between gap-2">
-            <Text className="text-sm font-bold text-gray-900 flex-1">{item.title || 'Notification'}</Text>
-            {!item.read && <View className="w-2 h-2 rounded-full bg-violet-600 mt-1.5" />}
+            <Text className="flex-1 font-bold text-sm text-gray-900">
+              {item.title || 'Notification'}
+            </Text>
+            {!item.read && <View className="mt-1.5 h-2 w-2 rounded-full bg-violet-600" />}
           </View>
 
           {!!item.message && (
-            <Text className="text-sm text-gray-600 mt-0.5 leading-5">{item.message}</Text>
+            <Text className="mt-0.5 text-sm leading-5 text-gray-600">{item.message}</Text>
           )}
 
-          <View className="flex-row items-center gap-2 mt-2">
+          <View className="mt-2 flex-row items-center gap-2">
             {!!item.category && (
-              <View className="bg-gray-100 px-1.5 py-0.5 rounded">
-                <Text className="text-[9px] font-bold uppercase tracking-wider text-gray-600">
+              <View className="rounded bg-gray-100 px-1.5 py-0.5">
+                <Text className="font-bold text-[9px] uppercase tracking-wider text-gray-600">
                   {item.category}
                 </Text>
               </View>
             )}
             {!!item.createdAt && (
-              <Text className="text-[11px] text-gray-400 font-medium">
+              <Text className="font-medium text-[11px] text-gray-400">
                 {formatDateTime(item.createdAt)}
               </Text>
             )}
@@ -112,9 +116,8 @@ export default function NotificationsScreen() {
             <TouchableOpacity
               onPress={() => handleAction(item)}
               activeOpacity={0.8}
-              className="mt-3 self-start bg-violet-600 px-4 py-2 rounded-lg"
-            >
-              <Text className="text-white text-xs font-bold">{item.actionText}</Text>
+              className="mt-3 self-start rounded-lg bg-violet-600 px-4 py-2">
+              <Text className="font-bold text-xs text-white">{item.actionText}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -126,14 +129,14 @@ export default function NotificationsScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900 flex-1">Notifications</Text>
+        <Text className="flex-1 font-black text-xl text-gray-900">Notifications</Text>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={markAllAsRead} activeOpacity={0.7}>
-            <Text className="text-xs font-bold text-violet-700">Mark all read</Text>
+            <Text className="font-bold text-xs text-violet-700">Mark all read</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -143,8 +146,7 @@ export default function NotificationsScreen() {
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}
-        >
+          contentContainerStyle={{ paddingHorizontal: 20, gap: 8 }}>
           {FILTERS.map((filter) => {
             const active = activeFilter === filter;
             return (
@@ -152,11 +154,9 @@ export default function NotificationsScreen() {
                 key={filter}
                 onPress={() => setActiveFilter(filter)}
                 activeOpacity={0.7}
-                className={`px-4 py-2 rounded-full ${active ? 'bg-violet-100' : 'bg-gray-100'}`}
-              >
+                className={`rounded-full px-4 py-2 ${active ? 'bg-violet-100' : 'bg-gray-100'}`}>
                 <Text
-                  className={`text-xs font-bold ${active ? 'text-violet-700' : 'text-gray-600'}`}
-                >
+                  className={`font-bold text-xs ${active ? 'text-violet-700' : 'text-gray-600'}`}>
                   {filter}
                 </Text>
               </TouchableOpacity>
@@ -168,7 +168,10 @@ export default function NotificationsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
+        contentContainerStyle={{
+          paddingHorizontal: 14,
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+        }}
         showsVerticalScrollIndicator={false}
         renderItem={renderItem}
         ListEmptyComponent={

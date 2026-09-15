@@ -112,7 +112,16 @@ export default function SplashScreen() {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [navigation, logoScale, logoOpacity, textOpacity, taglineOpacity, dot1Scale, dot2Scale, dot3Scale]);
+  }, [
+    navigation,
+    logoScale,
+    logoOpacity,
+    textOpacity,
+    taglineOpacity,
+    dot1Scale,
+    dot2Scale,
+    dot3Scale,
+  ]);
 
   return (
     <View className="flex-1 items-center justify-center bg-[#FAFAFA]">
@@ -122,8 +131,7 @@ export default function SplashScreen() {
           opacity: logoOpacity,
           transform: [{ scale: logoScale }],
           marginBottom: 32,
-        }}
-      >
+        }}>
         <Logo size={128} animated />
       </Animated.View>
 
@@ -142,16 +150,14 @@ export default function SplashScreen() {
               }),
             },
           ],
-        }}
-      >
+        }}>
         <Text
           style={{
             ...fontFace('black'),
             fontSize: 40,
             color: INK,
             letterSpacing: -1.2,
-          }}
-        >
+          }}>
           Ship
         </Text>
         <Text
@@ -160,8 +166,7 @@ export default function SplashScreen() {
             fontSize: 40,
             color: VIOLET,
             letterSpacing: -1.2,
-          }}
-        >
+          }}>
           Matrix
         </Text>
       </Animated.View>
@@ -179,8 +184,7 @@ export default function SplashScreen() {
           paddingHorizontal: 32,
           lineHeight: 20,
           letterSpacing: 0.3,
-        }}
-      >
+        }}>
         It’s time to escape the matrix of logistics.
       </Animated.Text>
 
@@ -192,8 +196,7 @@ export default function SplashScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 10,
-        }}
-      >
+        }}>
         <Animated.View
           style={{
             width: 10,

@@ -15,10 +15,22 @@ const ENDPOINTS = [
   { method: 'GET', path: '/orders/{orderId}', desc: 'Get single order details and metadata' },
   { method: 'POST', path: '/shipments', desc: 'Create forward shipment with partner courier' },
   { method: 'POST', path: '/shipments/reverse', desc: 'Create customer return / reverse pickup' },
-  { method: 'POST', path: '/shipments/{awb}/cancel', desc: 'Cancel booked shipment and release AWB' },
+  {
+    method: 'POST',
+    path: '/shipments/{awb}/cancel',
+    desc: 'Cancel booked shipment and release AWB',
+  },
   { method: 'POST', path: '/rates', desc: 'Fetch multi-courier real-time freight rates' },
-  { method: 'GET', path: '/shipments/{awb}/label', desc: 'Download printable shipping label (PDF)' },
-  { method: 'GET', path: '/shipments/{awb}/track', desc: 'Live tracking timeline & checkpoint updates' },
+  {
+    method: 'GET',
+    path: '/shipments/{awb}/label',
+    desc: 'Download printable shipping label (PDF)',
+  },
+  {
+    method: 'GET',
+    path: '/shipments/{awb}/track',
+    desc: 'Live tracking timeline & checkpoint updates',
+  },
   { method: 'GET', path: '/warehouses', desc: 'List registered pickup warehouses' },
   { method: 'POST', path: '/warehouses', desc: 'Add new pickup warehouse address' },
 ];
@@ -38,21 +50,20 @@ export default function ApiDocsScreen() {
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between mb-4">
-        <View className="flex-row items-center gap-3 flex-1">
+      <View className="mb-4 flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
+        <View className="flex-1 flex-row items-center gap-3">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
+            <Text className="font-black text-xl tracking-tight text-slate-900">
               API Documentation
             </Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            <Text className="mt-0.5 font-medium text-xs text-slate-500">
               REST APIs & developer integration keys
             </Text>
           </View>
@@ -64,67 +75,66 @@ export default function ApiDocsScreen() {
         contentContainerStyle={{
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {/* API Key Card */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-4">
-          <View className="flex-row items-center justify-between mb-2.5">
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <View className="shadow-xs mb-4 rounded-3xl border border-slate-100 bg-white p-5">
+          <View className="mb-2.5 flex-row items-center justify-between">
+            <Text className="font-bold text-xs uppercase tracking-wider text-slate-400">
               Your Secret API Key
             </Text>
-            <View className="bg-violet-50 px-2 py-0.5 rounded-md border border-violet-100">
-              <Text className="text-[10px] font-bold text-violet-700">Production</Text>
+            <View className="rounded-md border border-violet-100 bg-violet-50 px-2 py-0.5">
+              <Text className="font-bold text-[10px] text-violet-700">Production</Text>
             </View>
           </View>
 
           <TouchableOpacity
             onPress={() => copyToClipboard(user?.apiKey || '', 'API Key')}
             activeOpacity={0.7}
-            className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 flex-row items-center justify-between"
-          >
-            <Text className="text-xs font-mono font-bold text-slate-800 flex-1 pr-3" numberOfLines={1}>
+            className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <Text
+              className="flex-1 pr-3 font-bold font-mono text-xs text-slate-800"
+              numberOfLines={1}>
               {user?.apiKey ? user.apiKey : 'No API key generated yet'}
             </Text>
-            <View className="w-8 h-8 rounded-xl bg-white border border-slate-200 items-center justify-center">
+            <View className="h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white">
               <Feather name="copy" size={14} color="#64748B" />
             </View>
           </TouchableOpacity>
-          <Text className="text-[11px] text-slate-400 font-medium mt-2">
-            Pass this key in the <Text className="font-mono text-slate-600 font-bold">x-api-key</Text> header for authorized requests.
+          <Text className="mt-2 font-medium text-[11px] text-slate-400">
+            Pass this key in the{' '}
+            <Text className="font-bold font-mono text-slate-600">x-api-key</Text> header for
+            authorized requests.
           </Text>
         </View>
 
         {/* Base URL Card */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-100 shadow-xs mb-5">
-          <View className="flex-row items-center justify-between mb-2.5">
-            <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <View className="shadow-xs mb-5 rounded-3xl border border-slate-100 bg-white p-5">
+          <View className="mb-2.5 flex-row items-center justify-between">
+            <Text className="font-bold text-xs uppercase tracking-wider text-slate-400">
               Base Endpoint URL
             </Text>
             <TouchableOpacity
               onPress={() => copyToClipboard(API_BASE, 'Base URL')}
-              className="flex-row items-center gap-1"
-            >
+              className="flex-row items-center gap-1">
               <Feather name="copy" size={12} color="#7C3AED" />
-              <Text className="text-xs font-bold text-violet-700">Copy</Text>
+              <Text className="font-bold text-xs text-violet-700">Copy</Text>
             </TouchableOpacity>
           </View>
 
-          <View className="bg-slate-950 rounded-2xl p-3.5 border border-slate-800 flex-row items-center justify-between">
-            <Text className="text-emerald-400 text-xs font-mono font-semibold">
-              {API_BASE}
-            </Text>
+          <View className="flex-row items-center justify-between rounded-2xl border border-slate-800 bg-slate-950 p-3.5">
+            <Text className="font-mono font-semibold text-xs text-emerald-400">{API_BASE}</Text>
           </View>
-          <Text className="text-[11px] text-slate-400 font-medium mt-2">
+          <Text className="mt-2 font-medium text-[11px] text-slate-400">
             All endpoints require HTTPS and JSON payload format.
           </Text>
         </View>
 
         {/* Endpoints List Header */}
-        <View className="flex-row items-center justify-between mb-3 px-1">
-          <Text className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <View className="mb-3 flex-row items-center justify-between px-1">
+          <Text className="font-bold text-xs uppercase tracking-wider text-slate-400">
             Available Endpoints ({ENDPOINTS.length})
           </Text>
-          <Text className="text-xs font-bold text-slate-500">v1.0</Text>
+          <Text className="font-bold text-xs text-slate-500">v1.0</Text>
         </View>
 
         {/* Endpoints Cards */}
@@ -133,41 +143,33 @@ export default function ApiDocsScreen() {
           return (
             <View
               key={i}
-              className="bg-white rounded-2xl p-4 mb-3 border border-slate-100 shadow-xs"
-            >
-              <View className="flex-row items-center justify-between mb-1.5">
-                <View className="flex-row items-center gap-2 flex-1 pr-2">
+              className="shadow-xs mb-3 rounded-2xl border border-slate-100 bg-white p-4">
+              <View className="mb-1.5 flex-row items-center justify-between">
+                <View className="flex-1 flex-row items-center gap-2 pr-2">
                   <View
-                    className={`px-2.5 py-1 rounded-lg border ${
-                      isGet
-                        ? 'bg-sky-50 border-sky-200/80'
-                        : 'bg-emerald-50 border-emerald-200/80'
-                    }`}
-                  >
+                    className={`rounded-lg border px-2.5 py-1 ${
+                      isGet ? 'border-sky-200/80 bg-sky-50' : 'border-emerald-200/80 bg-emerald-50'
+                    }`}>
                     <Text
-                      className={`text-[10px] font-black tracking-wider ${
+                      className={`font-black text-[10px] tracking-wider ${
                         isGet ? 'text-sky-700' : 'text-emerald-700'
-                      }`}
-                    >
+                      }`}>
                       {ep.method}
                     </Text>
                   </View>
-                  <Text className="text-xs font-mono font-bold text-slate-900" numberOfLines={1}>
+                  <Text className="font-bold font-mono text-xs text-slate-900" numberOfLines={1}>
                     {ep.path}
                   </Text>
                 </View>
 
                 <TouchableOpacity
                   onPress={() => copyToClipboard(`${API_BASE}${ep.path}`, 'Endpoint URL')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Feather name="copy" size={14} color="#94A3B8" />
                 </TouchableOpacity>
               </View>
 
-              <Text className="text-xs text-slate-500 font-medium mt-0.5">
-                {ep.desc}
-              </Text>
+              <Text className="mt-0.5 font-medium text-xs text-slate-500">{ep.desc}</Text>
             </View>
           );
         })}

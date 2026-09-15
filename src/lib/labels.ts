@@ -31,7 +31,9 @@ export class LabelError extends Error {}
 export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
   const awb = shipment.awb?.trim();
   if (!awb) {
-    throw new LabelError('This order has no AWB yet. The label is created once the courier assigns one.');
+    throw new LabelError(
+      'This order has no AWB yet. The label is created once the courier assigns one.'
+    );
   }
 
   const name = carrier(shipment);
@@ -42,7 +44,9 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
   // which the courier branches below build correctly (and with fresher params).
   const stored = shipment.labelUrl?.trim();
   if (stored && !stored.includes('/api/')) {
-    return stored.startsWith('http') ? stored : apiUrl(stored.startsWith('/') ? stored : `/${stored}`);
+    return stored.startsWith('http')
+      ? stored
+      : apiUrl(stored.startsWith('/') ? stored : `/${stored}`);
   }
 
   // Xpressbees renders the label from the address passed in the query string
@@ -113,5 +117,7 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
   // Anything else falls back to the label the API renders itself. The web app
   // builds this same document in the page as a blob URL, which a phone browser
   // cannot open — this route serves the identical thing over HTTP.
-  return apiUrl(`/api/mock/label/${encodeURIComponent(shipment.courier || shipment.courierName || 'Shipping')}/${enc}`);
+  return apiUrl(
+    `/api/mock/label/${encodeURIComponent(shipment.courier || shipment.courierName || 'Shipping')}/${enc}`
+  );
 }

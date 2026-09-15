@@ -12,9 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import { Feather } from '@expo/vector-icons';
-import {
-  signInWithCustomToken,
-} from 'firebase/auth';
+import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { Logo } from '../components/Logo';
 import { GoogleIcon } from '../components/GoogleIcon';
@@ -87,11 +85,7 @@ export default function SignupScreen() {
   const handleContinue = () => {
     setError('');
 
-    if (
-      !formData.name.trim() ||
-      !formData.email.trim() ||
-      !formData.password
-    ) {
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password) {
       setError('Please fill in all required fields');
       return;
     }
@@ -231,25 +225,23 @@ export default function SignupScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
+      className="flex-1 bg-white">
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View className="justify-center bg-white p-6 mt-8">
+        keyboardShouldPersistTaps="handled">
+        <View className="mt-8 justify-center bg-white p-6">
           {/* Header */}
-          <View className="items-center mb-8 mt-2">
-            <View className="w-14 h-14 bg-purple-50 border border-purple-100 rounded-2xl items-center justify-center mb-3 shadow-xs">
+          <View className="mb-8 mt-2 items-center">
+            <View className="shadow-xs mb-3 h-14 w-14 items-center justify-center rounded-2xl border border-purple-100 bg-purple-50">
               <Logo size={32} />
             </View>
 
-            <Text className="text-2xl font-raleway-bold text-gray-900 text-center tracking-tight">
+            <Text className="text-center font-raleway-bold text-2xl tracking-tight text-gray-900">
               Create Account
             </Text>
 
-            <Text className="text-gray-500 mt-1 text-center font-raleway text-sm">
+            <Text className="mt-1 text-center font-raleway text-sm text-gray-500">
               {step === 1
                 ? 'Create your account to manage shipments'
                 : step === 2
@@ -259,40 +251,35 @@ export default function SignupScreen() {
           </View>
 
           {/* Step Indicator */}
-          <View className="flex-row gap-2 mb-4">
+          <View className="mb-4 flex-row gap-2">
             <View
-              className={`flex-1 h-1 rounded-full ${step >= 1 ? 'bg-violet-700' : 'bg-gray-200'
-                }`}
+              className={`h-1 flex-1 rounded-full ${step >= 1 ? 'bg-violet-700' : 'bg-gray-200'}`}
             />
 
             <View
-              className={`flex-1 h-1 rounded-full ${step >= 2 ? 'bg-violet-700' : 'bg-gray-200'
-                }`}
+              className={`h-1 flex-1 rounded-full ${step >= 2 ? 'bg-violet-700' : 'bg-gray-200'}`}
             />
 
             <View
-              className={`flex-1 h-1 rounded-full ${step >= 3 ? 'bg-violet-700' : 'bg-gray-200'
-                }`}
+              className={`h-1 flex-1 rounded-full ${step >= 3 ? 'bg-violet-700' : 'bg-gray-200'}`}
             />
           </View>
 
-          <Text className="text-center text-xs font-raleway-bold text-gray-400 mb-5">
+          <Text className="mb-5 text-center font-raleway-bold text-xs text-gray-400">
             STEP {step} OF 3
           </Text>
 
           {/* Error */}
           {error ? (
-            <View className="bg-rose-50 border border-rose-100 p-3.5 rounded-xl mb-4">
-              <Text className="text-rose-600 text-sm font-raleway text-center">
-                {error}
-              </Text>
+            <View className="mb-4 rounded-xl border border-rose-100 bg-rose-50 p-3.5">
+              <Text className="text-center font-raleway text-sm text-rose-600">{error}</Text>
             </View>
           ) : null}
 
           {/* STEP 3 — email verification */}
           {step === 3 ? (
             <View>
-              <Text className="text-gray-700 font-raleway-semibold text-sm mb-2">
+              <Text className="mb-2 font-raleway-semibold text-sm text-gray-700">
                 Verification code
               </Text>
 
@@ -309,10 +296,10 @@ export default function SignupScreen() {
                 keyboardType="number-pad"
                 maxLength={OTP_LENGTH}
                 autoFocus
-                className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-raleway-bold text-2xl text-center tracking-[8px] text-gray-900 shadow-sm"
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-center font-raleway-bold text-2xl tracking-[8px] text-gray-900 shadow-sm"
               />
 
-              <Text className="text-gray-500 font-raleway text-xs text-center mt-3">
+              <Text className="mt-3 text-center font-raleway text-xs text-gray-500">
                 The code expires in 10 minutes.
               </Text>
 
@@ -320,12 +307,11 @@ export default function SignupScreen() {
                 onPress={handleResendOtp}
                 disabled={resendIn > 0}
                 activeOpacity={0.7}
-                className="mt-4 py-2"
-              >
+                className="mt-4 py-2">
                 <Text
-                  className={`text-center font-raleway-semibold text-sm ${resendIn > 0 ? 'text-gray-400' : 'text-violet-700'
-                    }`}
-                >
+                  className={`text-center font-raleway-semibold text-sm ${
+                    resendIn > 0 ? 'text-gray-400' : 'text-violet-700'
+                  }`}>
                   {resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
                 </Text>
               </TouchableOpacity>
@@ -340,137 +326,104 @@ export default function SignupScreen() {
                     onPress={handleGoogleSignIn}
                     disabled={googleLoading}
                     activeOpacity={0.8}
-                    className="w-full bg-white border border-gray-200 py-3 rounded-xl flex-row items-center justify-center gap-2.5 shadow-xs mb-4"
-                  >
+                    className="shadow-xs mb-4 w-full flex-row items-center justify-center gap-2.5 rounded-xl border border-gray-200 bg-white py-3">
                     {googleLoading ? (
                       <ActivityIndicator size="small" color="#7c3aed" />
                     ) : (
                       <>
                         <GoogleIcon size={18} />
-                        <Text className="text-gray-800 font-raleway-bold text-xs">
+                        <Text className="font-raleway-bold text-xs text-gray-800">
                           Sign up with Google
                         </Text>
                       </>
                     )}
                   </TouchableOpacity>
 
-                  <View className="flex-row items-center mb-4">
-                    <View className="flex-1 h-[1px] bg-gray-200" />
-                    <Text className="mx-3 text-[11px] font-raleway-bold text-gray-400 uppercase tracking-wider">
+                  <View className="mb-4 flex-row items-center">
+                    <View className="h-[1px] flex-1 bg-gray-200" />
+                    <Text className="mx-3 font-raleway-bold text-[11px] uppercase tracking-wider text-gray-400">
                       OR SIGN UP WITH EMAIL
                     </Text>
-                    <View className="flex-1 h-[1px] bg-gray-200" />
+                    <View className="h-[1px] flex-1 bg-gray-200" />
                   </View>
                 </>
               )}
 
               {/* Full Name */}
               <View className="mb-4">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
-                  Full Name
-                </Text>
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">Full Name</Text>
 
                 <View className="relative">
                   <View className="absolute left-3.5 top-3.5 z-10">
-                    <Feather
-                      name="user"
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    <Feather name="user" size={18} color="#9ca3af" />
                   </View>
 
                   <TextInput
                     value={formData.name}
-                    onChangeText={(value) =>
-                      updateField('name', value)
-                    }
+                    onChangeText={(value) => updateField('name', value)}
                     placeholder="John Doe"
                     placeholderTextColor="#9ca3af"
                     autoCapitalize="words"
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 font-raleway text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
 
               {/* Phone */}
               <View className="mb-4">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
-                  Phone Number
-                </Text>
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">Phone Number</Text>
 
                 <View className="relative">
                   <View className="absolute left-3.5 top-3.5 z-10">
-                    <Feather
-                      name="phone"
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    <Feather name="phone" size={18} color="#9ca3af" />
                   </View>
 
                   <TextInput
                     value={formData.phone}
-                    onChangeText={(value) =>
-                      updateField('phone', value.replace(/\D/g, ''))
-                    }
+                    onChangeText={(value) => updateField('phone', value.replace(/\D/g, ''))}
                     placeholder="9876543210"
                     placeholderTextColor="#9ca3af"
                     keyboardType="phone-pad"
                     maxLength={10}
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 font-raleway text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
 
               {/* Email */}
               <View className="mb-4">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
-                  Email
-                </Text>
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">Email</Text>
 
                 <View className="relative">
                   <View className="absolute left-3.5 top-3.5 z-10">
-                    <Feather
-                      name="mail"
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    <Feather name="mail" size={18} color="#9ca3af" />
                   </View>
 
                   <TextInput
                     value={formData.email}
-                    onChangeText={(value) =>
-                      updateField('email', value)
-                    }
+                    onChangeText={(value) => updateField('email', value)}
                     placeholder="you@example.com"
                     placeholderTextColor="#9ca3af"
                     keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 font-raleway text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
 
               {/* Password */}
               <View className="mb-2">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
-                  Password
-                </Text>
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">Password</Text>
 
                 <View className="relative">
                   <View className="absolute left-3.5 top-3.5 z-10">
-                    <Feather
-                      name="lock"
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    <Feather name="lock" size={18} color="#9ca3af" />
                   </View>
 
                   <TextInput
                     value={formData.password}
-                    onChangeText={(value) =>
-                      updateField('password', value)
-                    }
+                    onChangeText={(value) => updateField('password', value)}
                     placeholder="••••••••"
                     placeholderTextColor="#9ca3af"
                     secureTextEntry={!showPassword}
@@ -484,24 +437,17 @@ export default function SignupScreen() {
                     autoCorrect={false}
                     spellCheck={false}
                     autoComplete="new-password"
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-12 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-12 font-raleway text-sm text-gray-900 shadow-sm"
                   />
 
                   <TouchableOpacity
-                    onPress={() =>
-                      setShowPassword(!showPassword)
-                    }
-                    className="absolute right-3.5 top-3.5"
-                  >
-                    <Feather
-                      name={showPassword ? 'eye-off' : 'eye'}
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    onPress={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-3.5">
+                    <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color="#9ca3af" />
                   </TouchableOpacity>
                 </View>
 
-                <Text className="text-xs font-raleway text-gray-400 mt-1 ml-1">
+                <Text className="ml-1 mt-1 font-raleway text-xs text-gray-400">
                   Minimum 6 characters
                 </Text>
               </View>
@@ -510,93 +456,69 @@ export default function SignupScreen() {
             /* STEP 2 */
             <>
               <View className="mb-5">
-                <Text className="text-xl font-raleway-bold text-gray-900">
-                  Business Details
-                </Text>
+                <Text className="font-raleway-bold text-xl text-gray-900">Business Details</Text>
 
-                <Text className="text-gray-500 font-raleway text-sm mt-1">
+                <Text className="mt-1 font-raleway text-sm text-gray-500">
                   Help us understand your shipping needs
                 </Text>
               </View>
 
               {/* Company Name */}
               <View className="mb-4">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
-                  Company Name
-                </Text>
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">Company Name</Text>
 
                 <View className="relative">
                   <View className="absolute left-3.5 top-3.5 z-10">
-                    <Feather
-                      name="briefcase"
-                      size={18}
-                      color="#9ca3af"
-                    />
+                    <Feather name="briefcase" size={18} color="#9ca3af" />
                   </View>
 
                   <TextInput
                     value={formData.companyName}
-                    onChangeText={(value) =>
-                      updateField('companyName', value)
-                    }
+                    onChangeText={(value) => updateField('companyName', value)}
                     placeholder="Acme Corp"
                     placeholderTextColor="#9ca3af"
-                    className="w-full bg-white border border-gray-200 rounded-xl pl-11 pr-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                    className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 font-raleway text-sm text-gray-900 shadow-sm"
                   />
                 </View>
               </View>
 
               {/* GST */}
               <View className="mb-5">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-1">
+                <Text className="mb-1 font-raleway-bold text-xs text-gray-700">
                   GST Number
-                  <Text className="font-raleway text-gray-400">
-                    {' '}
-                    (Optional)
-                  </Text>
+                  <Text className="font-raleway text-gray-400"> (Optional)</Text>
                 </Text>
 
                 <TextInput
                   value={formData.gstNo}
-                  onChangeText={(value) =>
-                    updateField('gstNo', value.toUpperCase())
-                  }
+                  onChangeText={(value) => updateField('gstNo', value.toUpperCase())}
                   placeholder="22AAAAA0000A1Z5"
                   placeholderTextColor="#9ca3af"
                   autoCapitalize="characters"
-                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
+                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 font-raleway text-sm text-gray-900 shadow-sm"
                 />
               </View>
 
               {/* Monthly Orders */}
               <View className="mb-5">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-2">
-                  Monthly Orders
-                </Text>
+                <Text className="mb-2 font-raleway-bold text-xs text-gray-700">Monthly Orders</Text>
 
                 <View className="flex-row flex-wrap gap-2">
                   {orderOptions.map((option) => {
-                    const selected =
-                      formData.noOfOrders === option;
+                    const selected = formData.noOfOrders === option;
 
                     return (
                       <TouchableOpacity
                         key={option}
-                        onPress={() =>
-                          updateField('noOfOrders', option)
-                        }
+                        onPress={() => updateField('noOfOrders', option)}
                         activeOpacity={0.8}
-                        className={`px-4 py-3 rounded-xl border ${selected
-                          ? 'bg-violet-700 border-purple-600'
-                          : 'bg-white border-gray-200'
-                          }`}
-                      >
+                        className={`rounded-xl border px-4 py-3 ${
+                          selected ? 'border-purple-600 bg-violet-700' : 'border-gray-200 bg-white'
+                        }`}>
                         <Text
-                          className={`font-raleway-semibold text-sm ${selected
-                            ? 'text-white'
-                            : 'text-gray-700'
-                            }`}
-                        >
+                          className={`font-raleway-semibold text-sm ${
+                            selected ? 'text-white' : 'text-gray-700'
+                          }`}>
                           {option}
                         </Text>
                       </TouchableOpacity>
@@ -607,75 +529,49 @@ export default function SignupScreen() {
 
               {/* Company Type */}
               <View className="mb-6">
-                <Text className="text-xs font-raleway-bold text-gray-700 mb-2">
-                  Company Type
-                </Text>
+                <Text className="mb-2 font-raleway-bold text-xs text-gray-700">Company Type</Text>
 
                 <View className="gap-2">
                   {companyOptions.map((option) => {
-                    const selected =
-                      formData.companyType === option.value;
+                    const selected = formData.companyType === option.value;
 
                     return (
                       <TouchableOpacity
                         key={option.value}
-                        onPress={() =>
-                          updateField(
-                            'companyType',
-                            option.value
-                          )
-                        }
+                        onPress={() => updateField('companyType', option.value)}
                         activeOpacity={0.8}
-                        className={`p-3 rounded-xl border ${selected
-                          ? 'bg-violet-700 border-purple-600'
-                          : 'bg-white border-gray-200'
-                          }`}
-                      >
+                        className={`rounded-xl border p-3 ${
+                          selected ? 'border-purple-600 bg-violet-700' : 'border-gray-200 bg-white'
+                        }`}>
                         <View className="flex-row items-center">
                           <View
-                            className={`w-9 h-9 rounded-lg items-center justify-center mr-3 ${selected
-                              ? 'bg-purple-500'
-                              : 'bg-gray-100'
-                              }`}
-                          >
+                            className={`mr-3 h-9 w-9 items-center justify-center rounded-lg ${
+                              selected ? 'bg-purple-500' : 'bg-gray-100'
+                            }`}>
                             <Feather
                               name="briefcase"
                               size={17}
-                              color={
-                                selected
-                                  ? 'white'
-                                  : '#6b7280'
-                              }
+                              color={selected ? 'white' : '#6b7280'}
                             />
                           </View>
 
                           <View className="flex-1">
                             <Text
-                              className={`font-raleway-bold text-sm ${selected
-                                ? 'text-white'
-                                : 'text-gray-800'
-                                }`}
-                            >
+                              className={`font-raleway-bold text-sm ${
+                                selected ? 'text-white' : 'text-gray-800'
+                              }`}>
                               {option.label}
                             </Text>
 
                             <Text
-                              className={`text-xs font-raleway mt-0.5 ${selected
-                                ? 'text-purple-100'
-                                : 'text-gray-500'
-                                }`}
-                            >
+                              className={`mt-0.5 font-raleway text-xs ${
+                                selected ? 'text-purple-100' : 'text-gray-500'
+                              }`}>
                               {option.description}
                             </Text>
                           </View>
 
-                          {selected && (
-                            <Feather
-                              name="check-circle"
-                              size={20}
-                              color="white"
-                            />
-                          )}
+                          {selected && <Feather name="check-circle" size={20} color="white" />}
                         </View>
                       </TouchableOpacity>
                     );
@@ -688,7 +584,7 @@ export default function SignupScreen() {
       </ScrollView>
 
       {/* Bottom Action Bar */}
-      <View className="px-6 pt-4 pb-6 bg-white border-t border-gray-100">
+      <View className="border-t border-gray-100 bg-white px-6 pb-6 pt-4">
         {step === 3 ? (
           <View className="flex-row gap-3">
             <TouchableOpacity
@@ -697,50 +593,34 @@ export default function SignupScreen() {
                 setStep(2);
               }}
               activeOpacity={0.8}
-              className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center justify-center"
-            >
-              <Text className="text-gray-700 font-raleway-bold text-sm">
-                Back
-              </Text>
+              className="flex-1 items-center justify-center rounded-xl bg-gray-100 py-3.5">
+              <Text className="font-raleway-bold text-sm text-gray-700">Back</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleVerifyAndSignup}
               disabled={loading}
               activeOpacity={0.8}
-              className={`flex-[2] bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
-                }`}
-              style={{ elevation: 3 }}
-            >
-              <Text className="text-white font-raleway-bold text-sm">
+              className={`flex-[2] flex-row items-center justify-center gap-2 rounded-xl bg-violet-700 py-3.5 shadow-md shadow-purple-900/20 ${
+                loading ? 'opacity-70' : ''
+              }`}
+              style={{ elevation: 3 }}>
+              <Text className="font-raleway-bold text-sm text-white">
                 {loading ? 'Verifying...' : 'Verify & Create Account'}
               </Text>
 
-              {!loading && (
-                <Feather
-                  name="check"
-                  size={17}
-                  color="white"
-                />
-              )}
+              {!loading && <Feather name="check" size={17} color="white" />}
             </TouchableOpacity>
           </View>
         ) : step === 1 ? (
           <TouchableOpacity
             onPress={handleContinue}
             activeOpacity={0.8}
-            className="w-full bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20"
-            style={{ elevation: 3 }}
-          >
-            <Text className="text-white font-raleway-bold text-sm">
-              Continue
-            </Text>
+            className="w-full flex-row items-center justify-center gap-2 rounded-xl bg-violet-700 py-3.5 shadow-md shadow-purple-900/20"
+            style={{ elevation: 3 }}>
+            <Text className="font-raleway-bold text-sm text-white">Continue</Text>
 
-            <Feather
-              name="arrow-right"
-              size={16}
-              color="white"
-            />
+            <Feather name="arrow-right" size={16} color="white" />
           </TouchableOpacity>
         ) : (
           <View className="flex-row gap-3">
@@ -750,50 +630,33 @@ export default function SignupScreen() {
                 setStep(1);
               }}
               activeOpacity={0.8}
-              className="flex-1 bg-gray-100 py-3.5 rounded-xl items-center justify-center"
-            >
-              <Text className="text-gray-700 font-raleway-bold text-sm">
-                Back
-              </Text>
+              className="flex-1 items-center justify-center rounded-xl bg-gray-100 py-3.5">
+              <Text className="font-raleway-bold text-sm text-gray-700">Back</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleSendOtp}
               disabled={loading}
               activeOpacity={0.8}
-              className={`flex-[2] bg-violet-700 py-3.5 rounded-xl flex-row items-center justify-center gap-2 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''
-                }`}
-              style={{ elevation: 3 }}
-            >
-              <Text className="text-white font-raleway-bold text-sm">
-                {loading
-                  ? 'Sending code...'
-                  : 'Continue'}
+              className={`flex-[2] flex-row items-center justify-center gap-2 rounded-xl bg-violet-700 py-3.5 shadow-md shadow-purple-900/20 ${
+                loading ? 'opacity-70' : ''
+              }`}
+              style={{ elevation: 3 }}>
+              <Text className="font-raleway-bold text-sm text-white">
+                {loading ? 'Sending code...' : 'Continue'}
               </Text>
 
-              {!loading && (
-                <Feather
-                  name="arrow-right"
-                  size={17}
-                  color="white"
-                />
-              )}
+              {!loading && <Feather name="arrow-right" size={17} color="white" />}
             </TouchableOpacity>
           </View>
         )}
 
         {/* Login Link */}
-        <View className="flex-row items-center justify-center mt-5">
-          <Text className="text-xs font-raleway text-gray-500">
-            Already have an account?{' '}
-          </Text>
+        <View className="mt-5 flex-row items-center justify-center">
+          <Text className="font-raleway text-xs text-gray-500">Already have an account? </Text>
 
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Login')}
-          >
-            <Text className="font-raleway-bold text-xs text-purple-600">
-              Login
-            </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text className="font-raleway-bold text-xs text-purple-600">Login</Text>
           </TouchableOpacity>
         </View>
       </View>

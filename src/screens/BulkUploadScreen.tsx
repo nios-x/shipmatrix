@@ -154,7 +154,7 @@ export default function BulkUploadScreen() {
 
   return (
     <View className="flex-1 bg-[#f8fafc]" style={{ paddingTop: insets.top }}>
-      <View className="px-5 py-4 flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 px-5 py-4">
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
@@ -164,14 +164,17 @@ export default function BulkUploadScreen() {
       <ScrollView
         className="flex-1 px-5"
         contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
-        showsVerticalScrollIndicator={false}
-      >
+        showsVerticalScrollIndicator={false}>
         {stage === 'pick' && (
           <>
             {/* Step 1 — template */}
-            <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4" style={{ elevation: 1 }}>
-              <Text className="font-raleway-bold text-gray-900 mb-1">Step 1 · Get the template</Text>
-              <Text className="font-raleway text-sm text-gray-500 mb-4 leading-5">
+            <View
+              className="mb-4 rounded-2xl border border-gray-100 bg-white p-5"
+              style={{ elevation: 1 }}>
+              <Text className="mb-1 font-raleway-bold text-gray-900">
+                Step 1 · Get the template
+              </Text>
+              <Text className="mb-4 font-raleway text-sm leading-5 text-gray-500">
                 Your sheet needs these columns: Customer Name, Customer Phone, Address, Pincode and
                 Weight. City, State, dimensions, Product Name, Order Value and Payment Method are
                 optional.
@@ -179,17 +182,20 @@ export default function BulkUploadScreen() {
               <TouchableOpacity
                 onPress={handleCopyTemplate}
                 activeOpacity={0.8}
-                className="flex-row items-center justify-center gap-2 border border-gray-200 bg-gray-50 py-2.5 rounded-xl"
-              >
+                className="flex-row items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 py-2.5">
                 <Feather name="copy" size={15} color="#7c3aed" />
                 <Text className="font-raleway-bold text-sm text-gray-700">Copy CSV template</Text>
               </TouchableOpacity>
             </View>
 
             {/* Step 2 — upload */}
-            <View className="bg-white rounded-2xl p-5 border border-gray-100" style={{ elevation: 1 }}>
-              <Text className="font-raleway-bold text-gray-900 mb-1">Step 2 · Upload your file</Text>
-              <Text className="font-raleway text-sm text-gray-500 mb-4 leading-5">
+            <View
+              className="rounded-2xl border border-gray-100 bg-white p-5"
+              style={{ elevation: 1 }}>
+              <Text className="mb-1 font-raleway-bold text-gray-900">
+                Step 2 · Upload your file
+              </Text>
+              <Text className="mb-4 font-raleway text-sm leading-5 text-gray-500">
                 Orders are imported as drafts, then you pick a courier and book them from the Orders
                 tab.
               </Text>
@@ -198,20 +204,21 @@ export default function BulkUploadScreen() {
                 onPress={handlePick}
                 disabled={parsing}
                 activeOpacity={0.8}
-                className="border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl p-8 items-center"
-              >
+                className="items-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-8">
                 {parsing ? (
                   <>
                     <ActivityIndicator color="#7c3aed" />
-                    <Text className="font-raleway-bold text-gray-700 mt-3">Reading file…</Text>
+                    <Text className="mt-3 font-raleway-bold text-gray-700">Reading file…</Text>
                   </>
                 ) : (
                   <>
-                    <View className="w-14 h-14 bg-purple-50 border border-purple-100 rounded-2xl items-center justify-center mb-3">
+                    <View className="mb-3 h-14 w-14 items-center justify-center rounded-2xl border border-purple-100 bg-purple-50">
                       <Feather name="upload-cloud" size={26} color="#7c3aed" />
                     </View>
                     <Text className="font-raleway-bold text-gray-800">Select CSV file</Text>
-                    <Text className="font-raleway text-xs text-gray-500 mt-1">Up to 500 orders</Text>
+                    <Text className="mt-1 font-raleway text-xs text-gray-500">
+                      Up to 500 orders
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -221,24 +228,26 @@ export default function BulkUploadScreen() {
 
         {stage === 'review' && (
           <>
-            <View className="bg-white rounded-2xl p-5 border border-gray-100 mb-4" style={{ elevation: 1 }}>
-              <View className="flex-row items-center gap-2 mb-3">
+            <View
+              className="mb-4 rounded-2xl border border-gray-100 bg-white p-5"
+              style={{ elevation: 1 }}>
+              <View className="mb-3 flex-row items-center gap-2">
                 <Feather name="file-text" size={18} color="#2563eb" />
-                <Text className="font-raleway-bold text-gray-900 flex-1" numberOfLines={1}>
+                <Text className="flex-1 font-raleway-bold text-gray-900" numberOfLines={1}>
                   {fileName}
                 </Text>
               </View>
 
               <View className="flex-row gap-3">
-                <View className="flex-1 bg-emerald-50 border border-emerald-100 rounded-xl p-3">
-                  <Text className="text-2xl font-black text-emerald-700">{orders.length}</Text>
-                  <Text className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">
+                <View className="flex-1 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                  <Text className="font-black text-2xl text-emerald-700">{orders.length}</Text>
+                  <Text className="font-bold text-[11px] uppercase tracking-wider text-emerald-600">
                     Ready
                   </Text>
                 </View>
-                <View className="flex-1 bg-amber-50 border border-amber-100 rounded-xl p-3">
-                  <Text className="text-2xl font-black text-amber-700">{errors.length}</Text>
-                  <Text className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">
+                <View className="flex-1 rounded-xl border border-amber-100 bg-amber-50 p-3">
+                  <Text className="font-black text-2xl text-amber-700">{errors.length}</Text>
+                  <Text className="font-bold text-[11px] uppercase tracking-wider text-amber-600">
                     Skipped
                   </Text>
                 </View>
@@ -246,17 +255,17 @@ export default function BulkUploadScreen() {
             </View>
 
             {errors.length > 0 && (
-              <View className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-4">
-                <Text className="font-raleway-bold text-amber-800 text-sm mb-2">
+              <View className="mb-4 rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                <Text className="mb-2 font-raleway-bold text-sm text-amber-800">
                   These rows will be skipped
                 </Text>
                 {errors.slice(0, 8).map((err) => (
-                  <Text key={err} className="font-raleway text-xs text-amber-700 leading-5">
+                  <Text key={err} className="font-raleway text-xs leading-5 text-amber-700">
                     • {err}
                   </Text>
                 ))}
                 {errors.length > 8 && (
-                  <Text className="font-raleway text-xs text-amber-600 mt-1">
+                  <Text className="mt-1 font-raleway text-xs text-amber-600">
                     …and {errors.length - 8} more.
                   </Text>
                 )}
@@ -264,41 +273,40 @@ export default function BulkUploadScreen() {
             )}
 
             {/* Preview */}
-            <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-2.5">
+            <Text className="mb-2.5 font-raleway-bold text-xs uppercase tracking-wider text-gray-400">
               Preview
             </Text>
             {orders.slice(0, 5).map((order, i) => (
               <View
                 key={`${order.orderId}-${i}`}
-                className="bg-white rounded-2xl p-4 mb-2 border border-gray-100"
-                style={{ elevation: 1 }}
-              >
+                className="mb-2 rounded-2xl border border-gray-100 bg-white p-4"
+                style={{ elevation: 1 }}>
                 <View className="flex-row items-center justify-between">
-                  <Text className="font-raleway-bold text-gray-900 text-sm">{order.customerName}</Text>
+                  <Text className="font-raleway-bold text-sm text-gray-900">
+                    {order.customerName}
+                  </Text>
                   <View
-                    className={`px-2 py-0.5 rounded-md ${
+                    className={`rounded-md px-2 py-0.5 ${
                       order.paymentMethod === 'COD' ? 'bg-orange-100' : 'bg-blue-100'
-                    }`}
-                  >
+                    }`}>
                     <Text
-                      className={`text-[10px] font-bold ${
+                      className={`font-bold text-[10px] ${
                         order.paymentMethod === 'COD' ? 'text-orange-700' : 'text-blue-700'
-                      }`}
-                    >
+                      }`}>
                       {order.paymentMethod.toUpperCase()}
                     </Text>
                   </View>
                 </View>
-                <Text className="font-raleway text-xs text-gray-500 mt-1" numberOfLines={1}>
+                <Text className="mt-1 font-raleway text-xs text-gray-500" numberOfLines={1}>
                   {order.address}, {order.pincode}
                 </Text>
-                <Text className="font-raleway text-[11px] text-gray-400 mt-1">
+                <Text className="mt-1 font-raleway text-[11px] text-gray-400">
                   {order.weight} kg · {order.productName}
                 </Text>
               </View>
             ))}
             {orders.length > 5 && (
-              <Text className="font-raleway text-xs text-gray-400 text-center mt-1 mb-3">
+              <Text className="mb-3 mt-1 text-center font-raleway text-xs text-gray-400">
                 +{orders.length - 5} more orders
               </Text>
             )}
@@ -307,27 +315,35 @@ export default function BulkUploadScreen() {
               onPress={handleImport}
               disabled={importing}
               activeOpacity={0.8}
-              className={`bg-violet-700 py-4 rounded-full items-center mt-4 ${importing ? 'opacity-70' : ''}`}
-              style={{ elevation: 4 }}
-            >
-              <Text className="font-raleway-bold text-white text-sm">
-                {importing ? 'Importing…' : `Import ${orders.length} order${orders.length === 1 ? '' : 's'}`}
+              className={`mt-4 items-center rounded-full bg-violet-700 py-4 ${importing ? 'opacity-70' : ''}`}
+              style={{ elevation: 4 }}>
+              <Text className="font-raleway-bold text-sm text-white">
+                {importing
+                  ? 'Importing…'
+                  : `Import ${orders.length} order${orders.length === 1 ? '' : 's'}`}
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={reset} activeOpacity={0.7} className="py-3 items-center mt-1">
-              <Text className="font-raleway-bold text-gray-500 text-sm">Choose a different file</Text>
+            <TouchableOpacity
+              onPress={reset}
+              activeOpacity={0.7}
+              className="mt-1 items-center py-3">
+              <Text className="font-raleway-bold text-sm text-gray-500">
+                Choose a different file
+              </Text>
             </TouchableOpacity>
           </>
         )}
 
         {stage === 'done' && (
-          <View className="bg-white rounded-2xl p-6 border border-gray-100 items-center mt-8" style={{ elevation: 1 }}>
-            <View className="w-16 h-16 bg-green-100 rounded-full items-center justify-center mb-4">
+          <View
+            className="mt-8 items-center rounded-2xl border border-gray-100 bg-white p-6"
+            style={{ elevation: 1 }}>
+            <View className="mb-4 h-16 w-16 items-center justify-center rounded-full bg-green-100">
               <Feather name="check-circle" size={30} color="#16a34a" />
             </View>
-            <Text className="font-raleway-bold text-xl text-gray-900 mb-2">Import complete</Text>
-            <Text className="font-raleway text-sm text-gray-500 text-center mb-6 leading-5">
+            <Text className="mb-2 font-raleway-bold text-xl text-gray-900">Import complete</Text>
+            <Text className="mb-6 text-center font-raleway text-sm leading-5 text-gray-500">
               {importedCount} order{importedCount === 1 ? '' : 's'} added as drafts. Open Orders to
               pick a courier and book them.
             </Text>
@@ -335,15 +351,13 @@ export default function BulkUploadScreen() {
             <TouchableOpacity
               onPress={() => navigation.navigate('OrdersTab')}
               activeOpacity={0.8}
-              className="bg-violet-700 w-full py-3.5 rounded-xl items-center mb-2"
-            >
+              className="mb-2 w-full items-center rounded-xl bg-violet-700 py-3.5">
               <Text className="font-raleway-bold text-white">Go to Orders</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={reset}
               activeOpacity={0.8}
-              className="bg-white border border-gray-300 w-full py-3.5 rounded-xl items-center"
-            >
+              className="w-full items-center rounded-xl border border-gray-300 bg-white py-3.5">
               <Text className="font-raleway-bold text-gray-700">Upload another file</Text>
             </TouchableOpacity>
           </View>

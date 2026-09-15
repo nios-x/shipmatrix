@@ -47,7 +47,9 @@ export async function cancelOrder(shipment: Shipment, reason: string): Promise<n
   }
 
   if (!shipment.awb) {
-    throw new CancelError('This order has no AWB yet, so there is nothing for the courier to cancel.');
+    throw new CancelError(
+      'This order has no AWB yet, so there is nothing for the courier to cancel.'
+    );
   }
 
   try {

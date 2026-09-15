@@ -31,18 +31,12 @@ export function useTransactions() {
       unsubscribeSnapshot = onSnapshot(
         q,
         (snapshot) => {
-          const data = snapshot.docs.map(
-            (doc) => ({ id: doc.id, ...doc.data() } as Transaction)
-          );
+          const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }) as Transaction);
           setTransactions(data);
           setLoading(false);
         },
         (error) => {
-          handleFirestoreError(
-            error,
-            OperationType.LIST,
-            `users/${user.uid}/transactions`
-          );
+          handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/transactions`);
           setLoading(false);
         }
       );

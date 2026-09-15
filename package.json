@@ -28,6 +28,7 @@
     "expo": "~56.0.21",
     "expo-auth-session": "~56.0.18",
     "expo-blur": "~56.0.4",
+    "expo-build-properties": "~56.0.27",
     "expo-camera": "~56.0.8",
     "expo-clipboard": "~56.0.4",
     "expo-constants": "~56.0.25",
@@ -76,5 +77,12 @@
     "typescript": "~6.0.3"
   },
   "main": "node_modules/expo/AppEntry.js",
-  "private": true
+  "private": true,
+  "expo": {
+    "autolinking": {
+      "android": {
+        "buildFromSource": ["expo-camera"]
+      }
+    }
+  }
 }

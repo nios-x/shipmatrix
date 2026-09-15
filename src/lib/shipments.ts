@@ -20,7 +20,9 @@ export function toDate(value: any): Date | null {
 
 export function formatDate(value: any, fallback = '—'): string {
   const d = toDate(value);
-  return d ? d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : fallback;
+  return d
+    ? d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : fallback;
 }
 
 export function formatDateTime(value: any, fallback = '—'): string {
@@ -72,8 +74,24 @@ export function statusPillClasses(shipment: Pick<Shipment, 'status'>): [string, 
 export const BOOKED_STATUS = 'Ready to Pickup';
 
 const BOOKED = ['BOOKED', 'READY TO PICKUP', 'PENDING', 'PROCESSING', 'NEW'];
-const IN_TRANSIT = ['IN TRANSIT', 'SHIPPED', 'PICKUP DONE', 'PICKED UP', 'OUT FOR DELIVERY', 'DISPATCHED'];
-const NDR = ['NDR', 'UNDELIVERED', 'EXCEPTION', 'ATTEMPTED', 'ON HOLD', 'NC', 'NA', 'NOT ATTEMPTED'];
+const IN_TRANSIT = [
+  'IN TRANSIT',
+  'SHIPPED',
+  'PICKUP DONE',
+  'PICKED UP',
+  'OUT FOR DELIVERY',
+  'DISPATCHED',
+];
+const NDR = [
+  'NDR',
+  'UNDELIVERED',
+  'EXCEPTION',
+  'ATTEMPTED',
+  'ON HOLD',
+  'NC',
+  'NA',
+  'NOT ATTEMPTED',
+];
 const RTO = ['RTO', 'RTO IN TRANSIT', 'RTO INITIATED', 'RTO DELIVERED', 'RETURN', 'RETURNED'];
 
 export const isDelivered = (s: Shipment) => normalizeStatus(s) === 'DELIVERED';
@@ -83,8 +101,7 @@ export const isInTransit = (s: Shipment) => IN_TRANSIT.includes(normalizeStatus(
 export const isNdr = (s: Shipment) => NDR.includes(normalizeStatus(s));
 export const isRto = (s: Shipment) => RTO.includes(normalizeStatus(s));
 /** True while the shipment is still moving — not delivered, RTO or cancelled. */
-export const isActive = (s: Shipment) =>
-  !isDelivered(s) && !isRto(s) && !isCancelled(s);
+export const isActive = (s: Shipment) => !isDelivered(s) && !isRto(s) && !isCancelled(s);
 
 /** True when the shipment is collect-on-delivery, whatever casing was stored. */
 export function isCod(s: Shipment): boolean {
@@ -269,5 +286,13 @@ export function warehousePayload(w: WarehouseData) {
 
 /** True when the warehouse has everything the courier APIs require. */
 export function isWarehouseComplete(w?: WarehouseData | null): w is WarehouseData {
-  return !!(w && w.name && w.phone && w.address && /^[1-9][0-9]{5}$/.test(w.pincode || '') && w.city && w.state);
+  return !!(
+    w &&
+    w.name &&
+    w.phone &&
+    w.address &&
+    /^[1-9][0-9]{5}$/.test(w.pincode || '') &&
+    w.city &&
+    w.state
+  );
 }

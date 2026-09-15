@@ -14,13 +14,13 @@ function Field({
 }: { label: string; hint?: string } & React.ComponentProps<typeof TextInput>) {
   return (
     <View className="mb-3">
-      <Text className="text-xs font-bold text-slate-700 mb-1">{label}</Text>
+      <Text className="mb-1 font-bold text-xs text-slate-700">{label}</Text>
       <TextInput
         placeholderTextColor="#94A3B8"
-        className="border border-slate-200 rounded-xl px-3.5 py-2.5 bg-slate-50 text-slate-900 text-sm"
+        className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900"
         {...props}
       />
-      {!!hint && <Text className="text-[11px] text-slate-400 mt-1">{hint}</Text>}
+      {!!hint && <Text className="mt-1 text-[11px] text-slate-400">{hint}</Text>}
     </View>
   );
 }
@@ -93,10 +93,9 @@ export function WarehouseForm({
         <TouchableOpacity
           onPress={() => onChange({ ...value, ...suggestion })}
           activeOpacity={0.7}
-          className="flex-row items-center gap-2 bg-violet-50 border border-violet-100 rounded-xl px-3 py-2 mb-3"
-        >
+          className="mb-3 flex-row items-center gap-2 rounded-xl border border-violet-100 bg-violet-50 px-3 py-2">
           <Feather name="map-pin" size={13} color="#7C3AED" />
-          <Text className="text-[11px] font-bold text-violet-700 flex-1">
+          <Text className="flex-1 font-bold text-[11px] text-violet-700">
             Use {suggestion.city}, {suggestion.state}
           </Text>
         </TouchableOpacity>
@@ -104,10 +103,22 @@ export function WarehouseForm({
 
       <View className="flex-row gap-3">
         <View className="flex-1">
-          <Field label="City" value={value.city} onChangeText={(v) => set('city')(singleSpaced(v))} placeholder="Noida" autoCapitalize="words" />
+          <Field
+            label="City"
+            value={value.city}
+            onChangeText={(v) => set('city')(singleSpaced(v))}
+            placeholder="Noida"
+            autoCapitalize="words"
+          />
         </View>
         <View className="flex-1">
-          <Field label="State" value={value.state} onChangeText={(v) => set('state')(singleSpaced(v))} placeholder="UP" autoCapitalize="words" />
+          <Field
+            label="State"
+            value={value.state}
+            onChangeText={(v) => set('state')(singleSpaced(v))}
+            placeholder="UP"
+            autoCapitalize="words"
+          />
         </View>
       </View>
 
@@ -116,19 +127,18 @@ export function WarehouseForm({
           onPress={onSave}
           disabled={saving || !complete}
           activeOpacity={0.8}
-          className={`flex-row items-center justify-center gap-2 py-3 rounded-xl mt-1 ${
+          className={`mt-1 flex-row items-center justify-center gap-2 rounded-xl py-3 ${
             complete ? 'bg-violet-600' : 'bg-slate-200'
-          }`}
-        >
+          }`}>
           <Feather name="save" size={14} color={complete ? '#FFFFFF' : '#94A3B8'} />
-          <Text className={`text-sm font-bold ${complete ? 'text-white' : 'text-slate-400'}`}>
+          <Text className={`font-bold text-sm ${complete ? 'text-white' : 'text-slate-400'}`}>
             {saving ? 'Saving…' : 'Save Pickup Address'}
           </Text>
         </TouchableOpacity>
       )}
 
       {!complete && (
-        <Text className="text-[11px] text-amber-700 mt-2">
+        <Text className="mt-2 text-[11px] text-amber-700">
           All fields are required before you can book a shipment.
         </Text>
       )}

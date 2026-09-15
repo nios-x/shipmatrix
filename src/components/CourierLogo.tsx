@@ -50,36 +50,30 @@ export function CourierLogo({ name }: CourierLogoProps) {
   if (logoUrl) {
     return (
       <View
-        className="w-12 h-10 rounded-xl items-center justify-center p-1.5 bg-white border border-gray-100 overflow-hidden"
+        className="h-10 w-12 items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white p-1.5"
         style={{
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.04,
           shadowRadius: 3,
           elevation: 1,
-        }}
-      >
-        <Image
-          source={{ uri: logoUrl }}
-          className="w-full h-full"
-          resizeMode="contain"
-        />
+        }}>
+        <Image source={{ uri: logoUrl }} className="h-full w-full" resizeMode="contain" />
       </View>
     );
   }
 
   return (
     <View
-      className="w-12 h-10 rounded-xl items-center justify-center bg-slate-900"
+      className="h-10 w-12 items-center justify-center rounded-xl bg-slate-900"
       style={{
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.06,
         shadowRadius: 3,
         elevation: 1,
-      }}
-    >
-      <Text className="font-raleway-bold text-white text-xs tracking-wider">
+      }}>
+      <Text className="font-raleway-bold text-xs tracking-wider text-white">
         {name ? name.charAt(0).toUpperCase() : 'C'}
       </Text>
     </View>

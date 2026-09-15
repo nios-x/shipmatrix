@@ -97,9 +97,20 @@ export async function analysePhoto(
   try {
     const landscape = (captured.width || 0) >= (captured.height || 0);
     const context = ImageManipulator.manipulate(captured.uri);
-    context.resize(landscape ? { width: ANALYSIS_SIZE } : { height: ANALYSIS_SIZE });
-    const image = await context.renderAsync();
-    const saved = await image.saveAsync({ base64: true, format: SaveFormat.JPEG, compress: 0.92 });
+    let saved;
+    try {
+      context.resize(landscape ? { width: ANALYSIS_SIZE } : { height: ANALYSIS_SIZE });
+      const image = await context.renderAsync();
+      try {
+        saved = await image.saveAsync({ base64: true, format: SaveFormat.JPEG, compress: 0.92 });
+      } finally {
+        image.release();
+      }
+    } finally {
+      // Both hold a native bitmap; a seller retaking photos would otherwise
+      // accumulate full-resolution frames until the next garbage collection.
+      context.release();
+    }
     if (!saved.base64) throw new Error('no pixels');
     photo = { uri: saved.uri, width: saved.width, height: saved.height };
 

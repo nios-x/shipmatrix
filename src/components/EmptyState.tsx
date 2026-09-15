@@ -18,18 +18,15 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
     // fixed-size logo drawing while the title and subtitle flattened away to
     // nothing. minHeight keeps the block laid out in an unbounded parent; flex-1
     // still centers it when a parent does give it room.
-    <View
-      className="flex-1 items-center justify-center p-8"
-      style={{ minHeight: 320 }}
-    >
-      <View className="w-20 h-20 bg-white rounded-3xl border border-gray-100 items-center justify-center mb-5">
+    <View className="flex-1 items-center justify-center p-8" style={{ minHeight: 320 }}>
+      <View className="mb-5 h-20 w-20 items-center justify-center rounded-3xl border border-gray-100 bg-white">
         <Logo size={44} />
       </View>
-      <Text className="font-raleway-bold text-lg text-gray-900 mb-1.5 text-center tracking-tight">
+      <Text className="mb-1.5 text-center font-raleway-bold text-lg tracking-tight text-gray-900">
         {title}
       </Text>
       {subtitle ? (
-        <Text className="font-raleway text-sm text-gray-500 text-center leading-relaxed max-w-xs">
+        <Text className="max-w-xs text-center font-raleway text-sm leading-relaxed text-gray-500">
           {subtitle}
         </Text>
       ) : null}
@@ -37,10 +34,9 @@ export function EmptyState({ title, subtitle, actionLabel, onAction }: EmptyStat
         <TouchableOpacity
           onPress={onAction}
           activeOpacity={0.8}
-          className="mt-6 bg-violet-700 px-6 py-3 rounded-full shadow-md shadow-purple-900/20"
-          style={{ elevation: 3 }}
-        >
-          <Text className="font-raleway-bold text-white text-sm">{actionLabel}</Text>
+          className="mt-6 rounded-full bg-violet-700 px-6 py-3 shadow-md shadow-purple-900/20"
+          style={{ elevation: 3 }}>
+          <Text className="font-raleway-bold text-sm text-white">{actionLabel}</Text>
         </TouchableOpacity>
       ) : null}
     </View>
