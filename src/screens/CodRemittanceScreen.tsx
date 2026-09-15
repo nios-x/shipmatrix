@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -126,7 +126,7 @@ export default function CodRemittanceScreen() {
 
       <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
         <Text className="text-xs text-gray-500">COD Amount</Text>
-        <Text className="font-black text-gray-900">₹{codValue(item).toFixed(2)}</Text>
+        <Text className="font-black text-gray-900">{formatCurrency(codValue(item))}</Text>
       </View>
 
       {isRemitted(item) && item.remittedAt && (
@@ -156,14 +156,14 @@ export default function CodRemittanceScreen() {
           <Text className="text-[10px] font-bold text-blue-600 uppercase tracking-wider">
             Next Settlement
           </Text>
-          <Text className="text-xl font-black text-blue-900 mt-1">₹{pendingAmount.toFixed(2)}</Text>
+          <Text className="text-xl font-black text-blue-900 mt-1">{formatCurrency(pendingAmount)}</Text>
           <Text className="text-[11px] text-blue-500 mt-0.5">{pending.length} orders pending</Text>
         </View>
         <View className="flex-1 bg-green-50 border border-green-100 rounded-2xl p-3.5">
           <Text className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
             Total Settled
           </Text>
-          <Text className="text-xl font-black text-green-900 mt-1">₹{settledAmount.toFixed(2)}</Text>
+          <Text className="text-xl font-black text-green-900 mt-1">{formatCurrency(settledAmount)}</Text>
           <Text className="text-[11px] text-green-500 mt-0.5">{settled.length} orders paid</Text>
         </View>
       </View>

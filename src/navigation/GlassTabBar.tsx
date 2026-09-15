@@ -1,19 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
-  Text,
   Pressable,
   Animated,
   StyleSheet,
   Platform,
   LayoutChangeEvent,
 } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useBlurTarget } from './BlurTarget';
+import { fontFace } from '../lib/theme';
 
 // ─── Glass tokens ───────────────────────────────────────
 const ACCENT = '#7c3aed';
@@ -188,16 +189,8 @@ function TabItem({
           numberOfLines={1}
           style={[
             styles.label,
-            {
-              color: focused ? ACCENT : INACTIVE,
-              fontFamily:
-                Platform.OS === 'web'
-                  ? 'Raleway'
-                  : focused
-                    ? 'Raleway_700Bold'
-                    : 'Raleway_600SemiBold',
-              fontWeight: focused ? '700' : '600',
-            },
+            { color: focused ? ACCENT : INACTIVE },
+            fontFace(focused ? 'bold' : 'semibold'),
           ]}>
           {TAB_LABEL_MAP[routeName] || routeName}
         </Text>

@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -15,8 +14,12 @@ import { auth, db } from '../lib/firebase';
 import { api, routes } from '../lib/api';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useUser } from '../lib/useUser';
-import { CourierLogo } from '../components/CourierLogo';
+import { RateCard } from '../components/RateCard';
+import { BoxScanner } from '../components/BoxScanner';
+import { ScanButton } from '../components/DimensionCalculator';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { formatCurrency, formatRate, formatWeight } from '../lib/format';
+import { weightBreakdown } from '../lib/weight';
 import { useConfirm } from '../components/useConfirm';
 import { toast } from '../lib/alert';
 import { usePincode } from '../lib/usePincode';
@@ -60,6 +63,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   const [loading, setLoading] = useState(false);
   const [rates, setRates] = useState<RateItem[]>([]);
   const [bookingResult, setBookingResult] = useState<any>(null);
+  const [scanning, setScanning] = useState(false);
 
   // Form fields. Names mirror the `/api/{courier}/create-shipment` contract so
   // the payload can be sent through without a translation layer.
@@ -94,20 +98,23 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       : {}),
   };
 
-  useEffect(() => {
-    if (route.params) {
-      const p = route.params;
-      setForm((prev) => ({
-        ...prev,
-        pincode: p.deliveryPincode || prev.pincode,
-        weight: p.weight ? String(p.weight) : prev.weight,
-        length: p.length ? String(p.length) : prev.length,
-        breadth: (p.breadth || p.width) ? String(p.breadth || p.width) : prev.breadth,
-        height: p.height ? String(p.height) : prev.height,
-        orderId: p.orderId || prev.orderId,
-      }));
-    }
-  }, [route.params]);
+  // Prefill from navigation params (a rate picked in the calculator, a return
+  // of an existing order). Applied while rendering, once per new params object,
+  // rather than from an effect that would paint the empty form first.
+  const [appliedParams, setAppliedParams] = useState<unknown>(null);
+  if (route.params && route.params !== appliedParams) {
+    setAppliedParams(route.params);
+    const p = route.params;
+    setForm((prev) => ({
+      ...prev,
+      pincode: p.deliveryPincode || prev.pincode,
+      weight: p.weight ? String(p.weight) : prev.weight,
+      length: p.length ? String(p.length) : prev.length,
+      breadth: p.breadth || p.width ? String(p.breadth || p.width) : prev.breadth,
+      height: p.height ? String(p.height) : prev.height,
+      orderId: p.orderId || prev.orderId,
+    }));
+  }
 
   // Destination city/state resolve from the pincode, matching the web. Derived
   // rather than copied into the form so a typed value always wins.
@@ -221,7 +228,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     if (rate.estimated) {
       toast.error(
         'Not Bookable Yet',
-        `₹${rate.freight_charge} for ${rate.carrier_name} is an estimate — that courier is not connected on the server yet, so it cannot be booked. Please contact support.`
+        `${formatRate(rate.freight_charge)} for ${rate.carrier_name} is an estimate — that courier is not connected on the server yet, so it cannot be booked. Please contact support.`
       );
       return;
     }
@@ -235,7 +242,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
     if (!isCod && (user?.walletBalance || 0) < rate.freight_charge) {
       toast.error(
         'Insufficient Balance',
-        `You need ₹${rate.freight_charge} but have ₹${(user?.walletBalance || 0).toFixed(2)}. Please recharge your wallet.`
+        `You need ${formatRate(rate.freight_charge)} but have ${formatCurrency(user?.walletBalance || 0)}. Please recharge your wallet.`
       );
       return;
     }
@@ -244,8 +251,8 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       {
         title: 'Confirm Order',
         message: isCod
-          ? `Place this order with ${rate.carrier_name}? Freight is ₹${rate.freight_charge}, and nothing is deducted from your wallet for a COD shipment.`
-          : `Are you sure you want to place this order with ${rate.carrier_name}? ₹${rate.freight_charge} will be deducted from your wallet, and refunded only if you cancel the order while the courier still allows it.`,
+          ? `Place this order with ${rate.carrier_name}? Freight is ${formatRate(rate.freight_charge)}, and nothing is deducted from your wallet for a COD shipment.`
+          : `Are you sure you want to place this order with ${rate.carrier_name}? ${formatRate(rate.freight_charge)} will be deducted from your wallet, and refunded only if you cancel the order while the courier still allows it.`,
         confirmText: 'Yes, Place Order',
       },
       () => bookShipment(rate)
@@ -323,7 +330,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled">
       {/* Customer Details */}
-      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5 mt-3">
+      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5 mt-3">
         Customer Details
       </Text>
       <View
@@ -336,7 +343,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Delivery Address */}
-      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5">
         Delivery Address
       </Text>
       <View
@@ -364,7 +371,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
       {/* Pickup Warehouse */}
       <View className="flex-row items-center justify-between mb-2.5">
-        <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider">
+        <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500">
           Pickup Warehouse
         </Text>
         {!isWarehouseComplete(warehouse) && (
@@ -383,7 +390,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       </View>
 
       {/* Package Details */}
-      <Text className="text-xs font-system font-semibold text-gray-400 uppercase tracking-wider mb-2.5">
+      <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-2.5">
         Package Details
       </Text>
       <View
@@ -411,21 +418,30 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
           </View>
         </View>
 
-        {/* Fills L/W/H from a photo of the parcel. `returnTo` tells the sizer
-            to come back to this form rather than pushing a second copy. */}
-        <TouchableOpacity
-          onPress={() => navigation.navigate('ParcelSizer', { returnTo: 'CreateShipment' })}
-          activeOpacity={0.75}
-          className="flex-row items-center justify-center gap-2 rounded-xl border border-dashed border-violet-200 bg-violet-50/70 py-2.5"
-        >
-          <Feather name="camera" size={14} color="#7C3AED" />
-          <Text className="text-[11px] font-system font-semibold text-violet-700">
-            Measure dimensions with camera
-          </Text>
-        </TouchableOpacity>
+        {/* Fills L/W/H from two photos of the parcel, right here in the form. */}
+        {scanning ? (
+          <BoxScanner
+            onClose={() => setScanning(false)}
+            onMeasured={(size) =>
+              setForm((prev) => ({
+                ...prev,
+                length: size.length,
+                breadth: size.width,
+                ...(size.height ? { height: size.height } : {}),
+              }))
+            }
+          />
+        ) : (
+          <View className="flex-row items-center justify-between">
+            <Text variant="meta" className="flex-1 pr-3">
+              Not sure of the size? Measure it with the camera.
+            </Text>
+            <ScanButton onPress={() => setScanning(true)} />
+          </View>
+        )}
 
         {/* Payment Method */}
-        <Text className="text-xs font-system font-semibold text-gray-700 mb-1">Payment Method</Text>
+        <Text className="text-xs font-semibold text-gray-700 mb-1">Payment Method</Text>
         <View className="flex-row gap-3">
           {(['Prepaid', 'COD'] as const).map((type) => (
             <TouchableOpacity
@@ -449,7 +465,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                   : undefined
               }
             >
-              <Text className={`font-system font-semibold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
+              <Text className={`font-semibold text-xs ${form.paymentMethod === type ? 'text-white' : 'text-gray-700'}`}>
                 {type.toUpperCase()}
               </Text>
             </TouchableOpacity>
@@ -458,8 +474,8 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
 
         {form.paymentMethod === 'COD' && (
           <View className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5">
-            <Text className="text-[11px] font-system text-amber-800 leading-4">
-              ₹{parseFloat(form.orderValue) || 0} will be collected from the customer on delivery,
+            <Text className="text-[11px] font-sans text-amber-800 leading-4">
+              {formatCurrency(parseFloat(form.orderValue) || 0)} will be collected from the customer on delivery,
               based on the order value above.
             </Text>
           </View>
@@ -476,7 +492,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         className={`bg-violet-700 py-4 rounded-full items-center mb-8 shadow-md shadow-purple-900/20 ${loading ? 'opacity-70' : ''}`}
         style={{ elevation: 4 }}
       >
-        <Text className="text-white font-system font-semibold text-sm">
+        <Text className="text-white font-semibold text-sm">
           {loading ? 'Fetching Rates...' : 'Get Shipping Rates'}
         </Text>
       </TouchableOpacity>
@@ -486,36 +502,33 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
   const renderRates = () => {
     const cheapestRate = rates.length > 0 ? Math.min(...rates.map((r) => r.freight_charge)) : 0;
     const fastestDays = rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
+    const parcel = weightBreakdown(form.weight, form.length || 10, form.breadth || 10, form.height || 10);
 
     return (
       <ScrollView
         className="flex-1 px-4"
         contentContainerStyle={{
+          width: '100%',
+          maxWidth: 640,
+          alignSelf: 'center',
           paddingTop: 12,
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Route Summary Pill */}
-        <View className="bg-white rounded-2xl p-3.5 border border-slate-100 shadow-xs mb-3.5 flex-row items-center justify-between">
+        {/* Route + parcel summary: what these quotes were priced on. */}
+        <View className="mb-3 flex-row items-center justify-between rounded-2xl border border-slate-200/80 bg-white px-4 py-3">
           <View className="flex-row items-center gap-2">
-            <View className="flex-row items-center gap-1">
-              <Feather name="map-pin" size={12} color="#10B981" />
-              <Text className="text-xs font-black text-slate-800">
-                {warehouse.pincode}
-              </Text>
-            </View>
-            <Feather name="arrow-right" size={12} color="#94A3B8" />
-            <View className="flex-row items-center gap-1">
-              <Feather name="map-pin" size={12} color="#0284C7" />
-              <Text className="text-xs font-black text-slate-800">
-                {form.pincode}
-              </Text>
-            </View>
+            <Text className="font-semibold text-sm text-slate-900">{warehouse.pincode}</Text>
+            <Feather name="arrow-right" size={13} color="#94A3B8" />
+            <Text className="font-semibold text-sm text-slate-900">{form.pincode}</Text>
           </View>
-          <View className="bg-slate-100 px-2.5 py-1 rounded-lg">
-            <Text className="text-[11px] font-bold text-slate-700">
-              {form.weight} kg
+          <View className="items-end">
+            <Text className="font-semibold text-sm text-slate-900">
+              {formatWeight(parcel.chargeable)}
+            </Text>
+            <Text variant="meta" className="text-[11px]">
+              {parcel.basis === 'volumetric' ? 'Volumetric weight' : 'Chargeable weight'}
             </Text>
           </View>
         </View>
@@ -523,143 +536,16 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
         {rates
           .slice()
           .sort((a, b) => a.freight_charge - b.freight_charge)
-          .map((rate) => {
-            const isAir = rate.carrier_name.toLowerCase().includes('air');
-            const isCheapest = rate.freight_charge === cheapestRate;
-            const isFastest = rate.estimated_days === fastestDays;
-
-            // Two badges max on the row: the mode chip, plus whichever of the
-            // rest matters most. ESTIMATE outranks the superlatives because it
-            // changes whether the rate can be booked at all, not just how it
-            // compares to the others.
-            const secondaryBadge = rate.estimated
-              ? 'estimate'
-              : isCheapest
-                ? 'cheapest'
-                : isFastest
-                  ? 'fastest'
-                  : null;
-
-            return (
-              <View
-                key={rate.carrier_id}
-                className="bg-white rounded-3xl p-5 mb-3.5 border border-slate-100 shadow-xs"
-              >
-                {/* Top Badges */}
-                <View className="flex-row items-start justify-between gap-2 mb-3.5">
-                  <View className="flex-1 flex-row flex-wrap items-center gap-2">
-                    <View
-                      className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
-                        ? 'bg-sky-50 border border-sky-100'
-                        : 'bg-slate-100 border border-slate-200'
-                        }`}
-                    >
-                      <Feather
-                        name={isAir ? 'send' : 'truck'}
-                        size={11}
-                        color={isAir ? '#0284C7' : '#475569'}
-                      />
-                      <Text
-                        className={`text-[10px] font-bold ${isAir ? 'text-sky-700' : 'text-slate-700'
-                          }`}
-                      >
-                        {isAir ? 'Air Express' : 'Surface Logistics'}
-                      </Text>
-                    </View>
-
-                    {secondaryBadge === 'cheapest' && (
-                      <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                        <Text className="text-[9px] font-black text-emerald-700">
-                          ★ CHEAPEST
-                        </Text>
-                      </View>
-                    )}
-
-                    {secondaryBadge === 'fastest' && (
-                      <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
-                        <Text className="text-[9px] font-black text-violet-700">
-                          ⚡ FASTEST
-                        </Text>
-                      </View>
-                    )}
-
-                    {/* Priced from the local list, with no courier account
-                        behind it. Marked on the card as well as blocked on tap:
-                        finding out only after choosing a courier, filling a
-                        form and pressing Ship Now is what made this read as a
-                        courier outage rather than a deployment that has no
-                        courier connected. */}
-                    {secondaryBadge === 'estimate' && (
-                      <View className="bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
-                        <Text className="text-[9px] font-black text-amber-700">
-                          ESTIMATE
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View className="shrink-0 mt-0.5 flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
-                    <Feather name="shield" size={10} color="#10B981" />
-                    <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
-                  </View>
-                </View>
-
-                {/* Main Courier Info */}
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center flex-1 pr-3">
-                    <View className="w-13 h-13 rounded-2xl bg-slate-50 items-center justify-center p-1.5 border border-slate-100">
-                      <CourierLogo name={rate.carrier_name} />
-                    </View>
-
-                    <View className="ml-3.5 flex-1">
-                      <Text
-                        className="text-sm font-black text-slate-900 tracking-tight"
-                        numberOfLines={1}
-                      >
-                        {rate.carrier_name}
-                      </Text>
-
-                      <View className="flex-row items-center mt-1.5">
-                        <Feather name="clock" size={12} color="#64748B" />
-                        <Text className="text-xs text-slate-500 font-semibold ml-1.5">
-                          Est. {rate.estimated_days || 3} business days
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  <View className="items-end">
-                    <Text className="text-[9px] font-black text-slate-400 tracking-wider">
-                      ALL-INCLUSIVE
-                    </Text>
-                    <Text className="text-2xl font-black text-slate-950 mt-0.5">
-                      ₹{rate.freight_charge}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Footer CTA */}
-                <View className="mt-4 pt-3.5 border-t border-slate-100 flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-1.5">
-                    <Feather name="check" size={13} color="#10B981" />
-                    <Text className="text-[11px] font-medium text-slate-500">
-                      Free doorstep pickup included
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => handleBookShipment(rate)}
-                    disabled={loading}
-                    activeOpacity={0.8}
-                    className="bg-violet-600 px-4 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm shadow-violet-500/20"
-                  >
-                    <Text className="text-xs font-black text-white">Ship Now</Text>
-                    <Feather name="arrow-right" size={12} color="#FFFFFF" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })}
+          .map((rate) => (
+            <RateCard
+              key={rate.carrier_id}
+              rate={rate}
+              isCheapest={rate.freight_charge === cheapestRate}
+              isFastest={rate.estimated_days === fastestDays}
+              onPress={() => handleBookShipment(rate)}
+              disabled={loading}
+            />
+          ))}
       </ScrollView>
     );
   };
@@ -669,31 +555,31 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
       <View className="bg-emerald-100 w-20 h-20 rounded-full items-center justify-center mb-6 border border-emerald-200">
         <Feather name="check-circle" size={40} color="#059669" />
       </View>
-      <Text className="text-2xl font-black text-slate-900 mb-2 text-center">
+      <Text className="text-2xl font-bold tracking-tight text-slate-900 mb-2 text-center">
         Shipment Booked!
       </Text>
       <Text className="text-slate-500 text-center mb-2 font-medium text-sm">
-        AWB: <Text className="font-mono font-bold text-slate-800">{bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}</Text>
+        AWB: <Text className="font-semibold text-slate-900" selectable>{bookingResult?.awb || bookingResult?.tracking_id || 'N/A'}</Text>
       </Text>
       <Text className="text-slate-500 text-center mb-1 font-medium text-sm">
-        Courier: <Text className="font-bold text-slate-800">{bookingResult?.courier}</Text>
+        Courier: <Text className="font-semibold text-slate-900">{bookingResult?.courier}</Text>
       </Text>
       <Text className="text-slate-500 text-center mb-6 font-medium text-sm">
-        Charge: <Text className="font-bold text-slate-800">₹{bookingResult?.charge}</Text>
+        Charge: <Text className="font-semibold text-slate-900">{formatRate(bookingResult?.charge)}</Text>
         {/* The freight is shown either way, but on COD nothing left the wallet
             — saying only "Charge: ₹80" next to an unchanged balance reads as a
             deduction that failed to appear. `walletCharged` is the server's own
             figure, so this cannot drift from what was actually taken. */}
         {bookingResult?.walletCharged === 0 && (
-          <Text className="text-emerald-600 font-bold"> · not deducted (COD)</Text>
+          <Text className="text-emerald-700 font-semibold"> · not deducted (COD)</Text>
         )}
       </Text>
       <TouchableOpacity
         onPress={() => navigation.navigate('Orders')}
-        activeOpacity={0.8}
-        className="bg-violet-600 px-8 py-3.5 rounded-xl shadow-sm shadow-violet-500/20"
+        activeOpacity={0.85}
+        className="bg-violet-600 px-8 h-12 justify-center rounded-xl"
       >
-        <Text className="text-white font-black text-sm">Back to Orders</Text>
+        <Text variant="button" className="text-white">Back to Orders</Text>
       </TouchableOpacity>
     </View>
   );
@@ -720,14 +606,14 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
+            <Text variant="title">
               {step === 'form'
                 ? 'Create Shipment'
                 : step === 'rates'
                   ? 'Choose Courier'
                   : 'Shipment Confirmed'}
             </Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">
+            <Text variant="meta" className="mt-0.5">
               {step === 'form'
                 ? 'Enter shipment details'
                 : step === 'rates'
@@ -755,7 +641,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                     <Feather name="check" size={12} color="#FFFFFF" />
                   ) : (
                     <Text
-                      className={`text-[10px] font-black ${item.active ? 'text-white' : 'text-slate-500'
+                      className={`text-[11px] font-bold ${item.active ? 'text-white' : 'text-slate-500'
                         }`}
                     >
                       {index + 1}
@@ -764,7 +650,7 @@ export default function CreateShipmentScreen({ navigation: propNavigation, route
                 </View>
 
                 <Text
-                  className={`ml-2 text-xs font-bold ${item.active ? 'text-slate-900' : 'text-slate-400'
+                  className={`ml-2 text-[13px] font-semibold ${item.active ? 'text-slate-900' : 'text-slate-500'
                     }`}
                 >
                   {item.label}
@@ -822,7 +708,7 @@ function InputField({
 }) {
   return (
     <View>
-      <Text className="text-xs font-system font-semibold text-gray-700 mb-1">{label}</Text>
+      <Text className="text-xs font-semibold text-gray-700 mb-1">{label}</Text>
       <View className="relative">
         {icon && (
           <View className="absolute left-3 top-3.5 z-10">

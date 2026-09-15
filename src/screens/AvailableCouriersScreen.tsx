@@ -1,28 +1,31 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  RefreshControl,
-} from 'react-native';
+import { View, TouchableOpacity, ScrollView, RefreshControl } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { api, routes } from '../lib/api';
-import { CourierLogo } from '../components/CourierLogo';
-import { LoadingSpinner } from '../components/LoadingSpinner';
+import { RateCard, RateCardSkeleton, isAirService } from '../components/RateCard';
 import { toast } from '../lib/alert';
 import { parseRates, type RateResult } from '../lib/rates';
+import { formatDimensions, formatRate, formatWeight } from '../lib/format';
+import { weightBreakdown } from '../lib/weight';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export type { RateResult };
 
-const PRIMARY_GRADIENT = ['#7C3AED', '#4F46E5'] as const;
 const ACCENT_PURPLE = '#7C3AED';
+
+type Filter = 'all' | 'cheapest' | 'fastest' | 'air' | 'surface';
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'cheapest', label: 'Cheapest' },
+  { id: 'fastest', label: 'Fastest' },
+  { id: 'air', label: 'Air Express' },
+  { id: 'surface', label: 'Surface' },
+];
 
 export default function AvailableCouriersScreen() {
   const insets = useSafeAreaInsets();
@@ -43,7 +46,7 @@ export default function AvailableCouriersScreen() {
   const [loading, setLoading] = useState<boolean>(initialRates.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'cheapest' | 'fastest' | 'air' | 'surface'>('all');
+  const [activeFilter, setActiveFilter] = useState<Filter>('all');
 
   const fetchRates = async (isRefresh = false) => {
     if (!pickupPin || !deliveryPin || !weight) return;
@@ -84,44 +87,41 @@ export default function AvailableCouriersScreen() {
     }
   };
 
+  // Quotes normally arrive with the navigation; only a deep link or a restored
+  // screen has to fetch its own. Started on the next tick so the loading state
+  // it sets does not render twice before paint.
   useEffect(() => {
-    if (!initialRates || initialRates.length === 0) {
-      fetchRates();
-    }
+    if (initialRates.length > 0) return;
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) void fetchRates();
+    }, 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+    // Runs once for the params this screen opened with.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Volumetric & Chargeable weight calculation
-  const volumetricWeight = useMemo(() => {
-    const l = parseFloat(length) || 0;
-    const w = parseFloat(width) || 0;
-    const h = parseFloat(height) || 0;
-    if (l > 0 && w > 0 && h > 0) {
-      return Number(((l * w * h) / 5000).toFixed(2));
-    }
-    return 0;
-  }, [length, width, height]);
+  // The same chargeable weight the server priced these quotes on.
+  const parcel = weightBreakdown(weight, length, width, height);
+  const dimensions = formatDimensions(length, width, height);
 
-  const deadWeightNum = parseFloat(weight) || 0;
-  const chargeableWeight = Math.max(deadWeightNum, volumetricWeight);
-
-  // Filtered and Sorted rates
   const filteredRates = useMemo(() => {
     let list = [...rates];
 
-    // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter((r) => r.carrier_name.toLowerCase().includes(q));
     }
 
-    // Category filter
     if (activeFilter === 'air') {
-      list = list.filter((r) => r.carrier_name.toLowerCase().includes('air'));
+      list = list.filter(isAirService);
     } else if (activeFilter === 'surface') {
-      list = list.filter((r) => !r.carrier_name.toLowerCase().includes('air'));
+      list = list.filter((r) => !isAirService(r));
     }
 
-    // Sort
     if (activeFilter === 'fastest') {
       list.sort((a, b) => (a.estimated_days || 99) - (b.estimated_days || 99));
     } else {
@@ -150,44 +150,51 @@ export default function AvailableCouriersScreen() {
     });
   };
 
+  const showList = !loading && filteredRates.length > 0;
+  const showEmpty = !loading && filteredRates.length === 0;
+
   return (
     <View className="flex-1 bg-[#F8FAFC]" style={{ paddingTop: insets.top }}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3 flex-1">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
+        <View className="flex-1 flex-row items-center gap-3">
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             activeOpacity={0.7}
-            className="w-10 h-10 rounded-xl bg-slate-100 items-center justify-center"
-          >
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
             <Feather name="arrow-left" size={20} color="#334155" />
           </TouchableOpacity>
 
           <View className="flex-1">
-            <Text className="text-xl font-black text-slate-900 tracking-tight">
-              Available Couriers
-            </Text>
-            <Text className="text-xs text-slate-500 font-medium mt-0.5">
-              {rates.length > 0
-                ? `${rates.length} courier options for your shipment`
-                : 'Finding best shipping partner...'}
+            <Text variant="title">Available Couriers</Text>
+            <Text variant="meta" className="mt-0.5">
+              {loading
+                ? 'Finding the best shipping partner…'
+                : `${rates.length} courier ${rates.length === 1 ? 'option' : 'options'} for your shipment`}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity
           onPress={() => fetchRates(true)}
+          disabled={refreshing || loading}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
-        >
-          <Feather name="rotate-cw" size={16} color={ACCENT_PURPLE} />
+          accessibilityRole="button"
+          accessibilityLabel="Refresh rates"
+          className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
+          <Feather name="rotate-cw" size={16} color="#334155" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 14,
+          width: '100%',
+          maxWidth: 640,
+          alignSelf: 'center',
+          paddingHorizontal: 16,
           paddingTop: 16,
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
@@ -200,241 +207,172 @@ export default function AvailableCouriersScreen() {
             colors={[ACCENT_PURPLE]}
             tintColor={ACCENT_PURPLE}
           />
-        }
-      >
-        {/* Route Summary Card */}
-        <View className="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs mb-4">
-          <View className="flex-row items-center justify-between pb-3 border-b border-slate-100">
-            <View className="flex-row items-center gap-2 flex-1">
-              {/* Pickup Pin */}
-              <View className="flex-1">
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Pickup
-                </Text>
-                <View className="flex-row items-center gap-1.5 mt-0.5">
-                  <Feather name="map-pin" size={12} color="#10B981" />
-                  <Text className="text-sm font-black text-slate-800">
-                    {pickupPin || '—'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Route Arrow */}
-              <View className="items-center justify-center px-2">
-                <View className="w-8 h-8 rounded-full bg-violet-50 items-center justify-center">
-                  <Feather name="arrow-right" size={14} color={ACCENT_PURPLE} />
-                </View>
-              </View>
-
-              {/* Delivery Pin */}
-              <View className="flex-1 items-end">
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Destination
-                </Text>
-                <View className="flex-row items-center gap-1.5 mt-0.5">
-                  <Text className="text-sm font-black text-slate-800">
-                    {deliveryPin || '—'}
-                  </Text>
-                  <Feather name="map-pin" size={12} color="#0284C7" />
-                </View>
-              </View>
+        }>
+        {/* Shipment summary: the route and the parcel these quotes are for. */}
+        <View className="mb-3 rounded-2xl border border-slate-200/80 bg-white">
+          <View className="flex-row items-center px-4 pb-3 pt-3.5">
+            <View className="flex-1">
+              <Text variant="label">Pickup</Text>
+              <Text variant="value" className="mt-0.5 text-base">
+                {pickupPin || '—'}
+              </Text>
+            </View>
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+              <Feather name="arrow-right" size={14} color="#475569" />
+            </View>
+            <View className="flex-1 items-end">
+              <Text variant="label">Delivery</Text>
+              <Text variant="value" className="mt-0.5 text-base">
+                {deliveryPin || '—'}
+              </Text>
             </View>
           </View>
 
-          {/* Package Weight & Dimensions Specs */}
-          <View className="flex-row items-center justify-between pt-3">
-            <View className="flex-row items-center gap-2 flex-wrap flex-1">
-              <View className="bg-slate-100 px-2.5 py-1 rounded-lg flex-row items-center gap-1">
-                <Feather name="anchor" size={11} color="#64748B" />
-                <Text className="text-[11px] font-bold text-slate-700">
-                  {chargeableWeight} kg chargeable
+          <View className="flex-row items-center justify-between border-t border-slate-100 px-4 py-2.5">
+            <View className="mr-3 flex-1 flex-row flex-wrap items-center gap-x-3 gap-y-1">
+              <Text variant="meta" className="text-slate-700">
+                {formatWeight(parcel.chargeable)}{' '}
+                <Text className="text-slate-500">
+                  {parcel.basis === 'volumetric' ? 'volumetric' : 'chargeable'}
                 </Text>
-              </View>
-
-              {length && width && height && (
-                <View className="bg-slate-100 px-2.5 py-1 rounded-lg flex-row items-center gap-1">
-                  <Feather name="box" size={11} color="#64748B" />
-                  <Text className="text-[11px] font-bold text-slate-700">
-                    {length} × {width} × {height} cm
-                  </Text>
-                </View>
+              </Text>
+              {dimensions && (
+                <Text variant="meta" className="text-slate-700">
+                  {dimensions}
+                </Text>
               )}
             </View>
-
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               activeOpacity={0.7}
-              className="flex-row items-center gap-1 py-1 px-2 rounded-lg bg-violet-50"
-            >
-              <Feather name="edit-2" size={11} color={ACCENT_PURPLE} />
-              <Text className="text-[11px] font-bold text-violet-700">Edit</Text>
+              accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              className="flex-row items-center gap-1">
+              <Feather name="edit-2" size={12} color="#6D28D9" />
+              <Text className="font-semibold text-[13px] text-violet-700">Edit</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Quick Metrics Bar */}
+        {/* Summary strip */}
         {rates.length > 0 && !loading && (
-          <View className="flex-row gap-2.5 mb-4">
-            <View className="flex-1 bg-emerald-50/80 rounded-2xl p-3 border border-emerald-100">
-              <Text className="text-[10px] font-black text-emerald-800 uppercase tracking-wider">
-                Lowest Price
-              </Text>
-              <Text className="text-base font-black text-emerald-950 mt-0.5">
-                ₹{cheapestRate}
-              </Text>
-            </View>
-
-            <View className="flex-1 bg-violet-50/80 rounded-2xl p-3 border border-violet-100">
-              <Text className="text-[10px] font-black text-violet-800 uppercase tracking-wider">
-                Fastest Delivery
-              </Text>
-              <Text className="text-base font-black text-violet-950 mt-0.5">
-                {fastestDays} Business Days
-              </Text>
-            </View>
-
-            <View className="flex-1 bg-sky-50/80 rounded-2xl p-3 border border-sky-100">
-              <Text className="text-[10px] font-black text-sky-800 uppercase tracking-wider">
-                Carriers
-              </Text>
-              <Text className="text-base font-black text-sky-950 mt-0.5">
-                {rates.length} Available
-              </Text>
-            </View>
+          <View className="mb-4 flex-row rounded-2xl border border-slate-200/80 bg-white py-3">
+            <Stat label="From" value={formatRate(cheapestRate)} />
+            <View className="w-px bg-slate-100" />
+            <Stat label="Fastest" value={`${fastestDays} ${fastestDays === 1 ? 'day' : 'days'}`} />
+            <View className="w-px bg-slate-100" />
+            <Stat label="Couriers" value={String(rates.length)} />
           </View>
         )}
 
-        {/* Search Input Bar */}
+        {/* Search */}
         {rates.length > 0 && (
-          <View className="mb-3.5">
-            <View className="flex-row items-center bg-white rounded-2xl border border-slate-200 px-3.5 py-2.5 shadow-xs">
-              <Feather name="search" size={15} color="#94A3B8" />
-              <TextInput
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search courier by name (e.g. Delhivery, Blue Dart)..."
-                placeholderTextColor="#94A3B8"
-                className="flex-1 ml-2 text-xs font-semibold text-slate-800 py-0"
-              />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Feather name="x-circle" size={15} color="#94A3B8" />
-                </TouchableOpacity>
-              )}
-            </View>
-          </View>
-        )}
-
-        {/* Filter Pills */}
-        {rates.length > 0 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="mb-4 -mx-1 px-1 flex-row gap-2"
-          >
-            <FilterTab
-              label="All Couriers"
-              count={rates.length}
-              active={activeFilter === 'all'}
-              onPress={() => setActiveFilter('all')}
+          <View className="mb-3 h-11 flex-row items-center rounded-xl border border-slate-200 bg-white px-3.5">
+            <Feather name="search" size={16} color="#64748B" />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search couriers"
+              placeholderTextColor="#94A3B8"
+              returnKeyType="search"
+              className="ml-2 min-w-0 flex-1 py-0 text-sm text-slate-900"
             />
-            <FilterTab
-              label="Cheapest"
-              active={activeFilter === 'cheapest'}
-              onPress={() => setActiveFilter('cheapest')}
-            />
-            <FilterTab
-              label="Fastest"
-              active={activeFilter === 'fastest'}
-              onPress={() => setActiveFilter('fastest')}
-            />
-            <FilterTab
-              label="Air Express"
-              active={activeFilter === 'air'}
-              onPress={() => setActiveFilter('air')}
-            />
-            <FilterTab
-              label="Surface Logistics"
-              active={activeFilter === 'surface'}
-              onPress={() => setActiveFilter('surface')}
-            />
-          </ScrollView>
-        )}
-
-        {/* Loading Spinner */}
-        {loading && (
-          <View className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm items-center my-4">
-            <LoadingSpinner message="Scanning 20+ partner courier APIs..." />
-            <Text className="text-xs text-slate-400 text-center mt-3 font-medium">
-              Fetching real-time rates from Delhivery, Blue Dart, Ekart, Shadowfax & Xpressbees...
-            </Text>
-          </View>
-        )}
-
-        {/* Courier Cards List */}
-        {!loading && filteredRates.length > 0 && (
-          <View>
-            {filteredRates.map((rate) => (
-              <EnhancedRateCard
-                key={rate.carrier_id}
-                rate={rate}
-                isCheapest={rate.freight_charge === cheapestRate}
-                isFastest={rate.estimated_days === fastestDays}
-                onBook={() => handleBookCourier(rate)}
-              />
-            ))}
-          </View>
-        )}
-
-        {/* Empty State */}
-        {!loading && filteredRates.length === 0 && (
-          <View className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs items-center my-4">
-            <View className="w-14 h-14 rounded-2xl bg-violet-50 items-center justify-center mb-3.5">
-              <Feather name="package" size={26} color={ACCENT_PURPLE} />
-            </View>
-            <Text className="text-base font-black text-slate-900 text-center">
-              No Couriers Found
-            </Text>
-            <Text className="text-xs text-slate-500 text-center font-medium mt-1 mb-5 max-w-[260px]">
-              {searchQuery
-                ? `No courier match for "${searchQuery}". Try clearing your search.`
-                : 'No courier partners available for the selected route and filters.'}
-            </Text>
-            {searchQuery ? (
+            {searchQuery.length > 0 && (
               <TouchableOpacity
                 onPress={() => setSearchQuery('')}
-                className="px-4 py-2 bg-slate-900 rounded-xl"
-              >
-                <Text className="text-xs font-bold text-white">Clear Search</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => navigation.goBack()}
-                className="px-4 py-2 bg-violet-600 rounded-xl"
-              >
-                <Text className="text-xs font-bold text-white">Change Pincodes</Text>
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <Feather name="x-circle" size={16} color="#94A3B8" />
               </TouchableOpacity>
             )}
           </View>
         )}
 
-        {/* Trust Badges */}
-        <View className="mt-2 bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex-row items-center justify-around">
-          <View className="items-center">
-            <Feather name="shield" size={16} color="#10B981" />
-            <Text className="text-[10px] font-bold text-slate-700 mt-1">Insured Goods</Text>
+        {/* Filters */}
+        {rates.length > 0 && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="-mx-4 mb-4"
+            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+            {FILTERS.map((f) => (
+              <FilterChip
+                key={f.id}
+                label={f.label}
+                count={f.id === 'all' ? rates.length : undefined}
+                active={activeFilter === f.id}
+                onPress={() => setActiveFilter(f.id)}
+              />
+            ))}
+          </ScrollView>
+        )}
+
+        {loading && <RateCardSkeleton />}
+
+        {showList &&
+          filteredRates.map((rate) => (
+            <RateCard
+              key={rate.carrier_id}
+              rate={rate}
+              isCheapest={rate.freight_charge === cheapestRate}
+              isFastest={rate.estimated_days === fastestDays}
+              onPress={() => handleBookCourier(rate)}
+            />
+          ))}
+
+        {showEmpty && (
+          <View className="my-2 items-center rounded-2xl border border-slate-200/80 bg-white px-6 py-8">
+            <View className="mb-3 h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <Feather name={searchQuery ? 'search' : 'package'} size={22} color="#475569" />
+            </View>
+            <Text variant="heading" className="text-center">
+              No couriers found
+            </Text>
+            <Text variant="body" className="mb-5 mt-1 max-w-[280px] text-center text-slate-500">
+              {searchQuery
+                ? `Nothing matches “${searchQuery}”. Try a different name or clear the search.`
+                : 'No courier partner serves this route with the selected filter.'}
+            </Text>
+            {searchQuery ? (
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                activeOpacity={0.85}
+                className="h-10 justify-center rounded-xl border border-slate-200 bg-white px-4">
+                <Text variant="button" className="text-slate-800">
+                  Clear search
+                </Text>
+              </TouchableOpacity>
+            ) : activeFilter !== 'all' ? (
+              <TouchableOpacity
+                onPress={() => setActiveFilter('all')}
+                activeOpacity={0.85}
+                className="h-10 justify-center rounded-xl border border-slate-200 bg-white px-4">
+                <Text variant="button" className="text-slate-800">
+                  Show all couriers
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                activeOpacity={0.85}
+                className="h-10 justify-center rounded-xl bg-violet-600 px-4">
+                <Text variant="button" className="text-white">
+                  Change pincodes
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
-          <View className="h-6 w-px bg-slate-200" />
-          <View className="items-center">
-            <Feather name="truck" size={16} color="#7C3AED" />
-            <Text className="text-[10px] font-bold text-slate-700 mt-1">Doorstep Pickup</Text>
+        )}
+
+        {/* Service promises */}
+        {showList && (
+          <View className="mt-2 flex-row items-center justify-center gap-5 px-2">
+            <ServicePromise icon="shield" label="Insured goods" />
+            <ServicePromise icon="truck" label="Doorstep pickup" />
+            <ServicePromise icon="activity" label="Live tracking" />
           </View>
-          <View className="h-6 w-px bg-slate-200" />
-          <View className="items-center">
-            <Feather name="activity" size={16} color="#0284C7" />
-            <Text className="text-[10px] font-bold text-slate-700 mt-1">Live Tracking</Text>
-          </View>
-        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -444,7 +382,27 @@ export default function AvailableCouriersScreen() {
    SUBCOMPONENTS
 ───────────────────────────────────────────── */
 
-function FilterTab({
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-1 items-center px-2">
+      <Text variant="label">{label}</Text>
+      <Text variant="value" className="mt-0.5" numberOfLines={1}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function ServicePromise({ icon, label }: { icon: keyof typeof Feather.glyphMap; label: string }) {
+  return (
+    <View className="flex-row items-center gap-1.5">
+      <Feather name={icon} size={12} color="#64748B" />
+      <Text variant="meta">{label}</Text>
+    </View>
+  );
+}
+
+function FilterChip({
   label,
   count,
   active,
@@ -458,153 +416,21 @@ function FilterTab({
   return (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.7}
-      className={`px-3.5 py-2 mr-1 rounded-xl border flex-row items-center gap-1.5 ${active ? 'bg-slate-900 border-slate-900' : 'bg-white border-slate-200'
-        }`}
-    >
-      <Text
-        className={`text-xs font-bold ${active ? 'text-white' : 'text-slate-600'
-          }`}
-      >
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      className={`h-9 flex-row items-center gap-1.5 rounded-full border px-3.5 ${
+        active ? 'border-slate-900 bg-slate-900' : 'border-slate-200 bg-white'
+      }`}>
+      <Text className={`font-semibold text-[13px] ${active ? 'text-white' : 'text-slate-700'}`}>
         {label}
       </Text>
       {typeof count === 'number' && (
-        <View
-          className={`px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20' : 'bg-slate-100'
-            }`}
-        >
-          <Text
-            className={`text-[9px] font-black ${active ? 'text-white' : 'text-slate-600'
-              }`}
-          >
-            {count}
-          </Text>
-        </View>
+        <Text
+          className={`font-semibold text-[12px] ${active ? 'text-white/70' : 'text-slate-500'}`}>
+          {count}
+        </Text>
       )}
     </TouchableOpacity>
-  );
-}
-
-function EnhancedRateCard({
-  rate,
-  isCheapest,
-  isFastest,
-  onBook,
-}: {
-  rate: RateResult;
-  isCheapest: boolean;
-  isFastest: boolean;
-  onBook: () => void;
-}) {
-  const isAir = rate.carrier_name.toLowerCase().includes('air');
-
-  return (
-    <View
-      className="bg-white rounded-3xl p-5 mb-4 border border-slate-100"
-      style={{
-        shadowColor: '#0F172A',
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        shadowOffset: { width: 0, height: 2 },
-      }}
-    >
-      {/* Top Badges */}
-      <View className="flex-row items-start justify-between gap-2 mb-3.5">
-        <View className="flex-1 flex-row flex-wrap items-center gap-2">
-          <View
-            className={`px-2.5 py-1 rounded-lg flex-row items-center gap-1.5 ${isAir
-              ? 'bg-sky-50 border border-sky-100'
-              : 'bg-slate-100 border border-slate-200'
-              }`}
-          >
-            <Feather
-              name={isAir ? 'send' : 'truck'}
-              size={11}
-              color={isAir ? '#0284C7' : '#475569'}
-            />
-            <Text
-              className={`text-[10px] font-bold ${isAir ? 'text-sky-700' : 'text-slate-700'
-                }`}
-            >
-              {isAir ? 'Air Express' : 'Surface Logistics'}
-            </Text>
-          </View>
-
-          {isCheapest && (
-            <View className="bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-              <Text className="text-[9px] font-black text-emerald-700">
-                ★ CHEAPEST
-              </Text>
-            </View>
-          )}
-
-          {isFastest && !isCheapest && (
-            <View className="bg-violet-50 px-2.5 py-1 rounded-lg border border-violet-200">
-              <Text className="text-[9px] font-black text-violet-700">
-                ⚡ FASTEST
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View className="shrink-0 mt-0.5 flex-row items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md">
-          <Feather name="shield" size={10} color="#10B981" />
-          <Text className="text-[9px] font-bold text-emerald-700">Insured</Text>
-        </View>
-      </View>
-
-      {/* Main Courier Info */}
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center flex-1 pr-3">
-          <View className="w-13 h-13 rounded-2xl bg-slate-50 items-center justify-center p-1.5 border border-slate-100">
-            <CourierLogo name={rate.carrier_name} />
-          </View>
-
-          <View className="ml-3.5 flex-1">
-            <Text
-              className="text-sm font-black text-slate-900 tracking-tight"
-              numberOfLines={1}
-            >
-              {rate.carrier_name}
-            </Text>
-
-            <View className="flex-row items-center mt-1.5">
-              <Feather name="clock" size={12} color="#64748B" />
-              <Text className="text-xs text-slate-500 font-semibold ml-1.5">
-                Est. {rate.estimated_days || 3} business days
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        <View className="items-end">
-          <Text className="text-[9px] font-black text-slate-400 tracking-wider">
-            ALL-INCLUSIVE
-          </Text>
-          <Text className="text-2xl font-black text-slate-950 mt-0.5">
-            ₹{rate.freight_charge}
-          </Text>
-        </View>
-      </View>
-
-      {/* Footer CTA */}
-      <View className="mt-4 pt-3.5 border-t border-slate-100 flex-row items-center justify-between">
-        <View className="flex-row items-center gap-1.5">
-          <Feather name="check" size={13} color="#10B981" />
-          <Text className="text-[11px] font-medium text-slate-500">
-            Free doorstep pickup included
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={onBook}
-          activeOpacity={0.8}
-          className="bg-violet-600 px-4 py-2 rounded-xl flex-row items-center gap-1.5 shadow-sm shadow-violet-500/20"
-        >
-          <Text className="text-xs font-black text-white">Ship Now</Text>
-          <Feather name="arrow-right" size={12} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
-    </View>
   );
 }

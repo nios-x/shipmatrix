@@ -31,12 +31,6 @@ export type HomeStackParamList = {
   Channels: undefined;
   Ndr: undefined;
   WeightDiscrepancy: undefined;
-  /**
-   * Measures a parcel from a photo. `returnTo` marks the entry point that
-   * expects the result back, so the screen knows whether to pop to the booking
-   * form already in the stack or jump across to the Orders tab.
-   */
-  ParcelSizer: { returnTo?: 'CreateShipment' } | undefined;
   AvailableCouriers: {
     pickupPin: string;
     deliveryPin: string;
@@ -68,12 +62,12 @@ export type OrdersStackParamList = {
     selectedCarrier?: string;
   };
   CreateReverseShipment: { shipmentId?: string };
-  ParcelSizer: { returnTo?: 'CreateShipment' } | undefined;
 };
 
 // Rates stack
 export type RatesStackParamList = {
-  RateCalculator: undefined;
+  /** `scan` (a timestamp) opens the camera scanner on arrival — the dashboard's "Parcel size" shortcut. */
+  RateCalculator: { scan?: number } | undefined;
   AvailableCouriers: {
     pickupPin: string;
     deliveryPin: string;

@@ -73,70 +73,70 @@ button,
 select,
 * {
   font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+  /* Raleway defaults to old-style figures; prices, AWBs and weights need lining ones. */
+  font-variant-numeric: lining-nums;
 }
 
-/* Ensure Raleway font weights on web work seamlessly for all utility classes */
+/* Code samples keep a real monospace face. */
+.font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+}
+
+/*
+ * Weight utilities. On native each maps to its own Raleway file (see the
+ * fontFamily comment in tailwind.config.js); on web they all resolve to the one
+ * Raleway web font, so the weight is set here.
+ */
 .font-thin,
 .font-raleway-thin,
 .font-geist-thin {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 100 !important;
 }
 
-.font-extralight,
-.font-raleway-extralight {
-  font-family: 'Raleway', sans-serif !important;
+.font-extralight {
   font-weight: 200 !important;
 }
 
 .font-light,
 .font-raleway-light,
 .font-geist-light {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 300 !important;
 }
 
-.font-normal,
+.font-sans,
+.font-regular,
 .font-raleway,
 .font-raleway-regular,
 .font-geist,
-.font-geist-regular,
-.font-regular,
-.font-sans {
-  font-family: 'Raleway', sans-serif !important;
+.font-geist-regular {
   font-weight: 400 !important;
 }
 
 .font-medium,
-.font-raleway,
+.font-raleway-medium,
 .font-geist-medium {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 500 !important;
 }
 
 .font-semibold,
 .font-raleway-semibold,
 .font-geist-semibold {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 600 !important;
 }
 
 .font-bold,
 .font-raleway-bold,
 .font-geist-bold {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 700 !important;
 }
 
 .font-extrabold,
 .font-raleway-extrabold {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 800 !important;
 }
 
 .font-black,
 .font-raleway-black,
 .font-geist-black {
-  font-family: 'Raleway', sans-serif !important;
   font-weight: 900 !important;
 }

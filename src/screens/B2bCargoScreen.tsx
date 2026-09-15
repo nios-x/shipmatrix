@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -91,7 +91,7 @@ export default function B2bCargoScreen() {
     confirm(
       {
         title: 'Confirm Cargo Booking',
-        message: `Are you sure you want to book this ${routeMode === 'air' ? 'air' : 'surface'} cargo manifest for ${consigneeName} (₹${invoiceValue} invoice value)? A manifest cannot be edited once generated.`,
+        message: `Are you sure you want to book this ${routeMode === 'air' ? 'air' : 'surface'} cargo manifest for ${consigneeName} (${formatCurrency(Number(invoiceValue) || 0)} invoice value)? A manifest cannot be edited once generated.`,
         confirmText: 'Yes, Book Cargo',
       },
       () => createManifest()

@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
   Modal,
   Linking,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';

@@ -3,7 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
-import { View, ActivityIndicator, Text, TextInput, Platform } from 'react-native';
+import { View, ActivityIndicator, Platform } from 'react-native';
 import * as Sentry from '@sentry/react-native';
 import {
   useFonts,
@@ -65,16 +65,10 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   }
 }
 
-// Enforce Raleway as default font on native components
-// @ts-ignore
-if (Text.defaultProps == null) Text.defaultProps = {};
-// @ts-ignore
-Text.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Raleway' : 'Raleway_400Regular' };
-
-// @ts-ignore
-if (TextInput.defaultProps == null) TextInput.defaultProps = {};
-// @ts-ignore
-TextInput.defaultProps.style = { fontFamily: Platform.OS === 'web' ? 'Raleway' : 'Raleway_400Regular' };
+// Native text gets Raleway and lining figures from src/components/ui/Text,
+// which every screen imports instead of react-native's Text. (A
+// `Text.defaultProps` override used to live here; React 19 ignores
+// defaultProps on function components, so it had stopped doing anything.)
 
 function App() {
   const [fontsLoaded] = useFonts({

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -100,7 +101,17 @@ export default function TrackingScreen() {
   // already seeded from the param, so only the fetch needs triggering here.
   const initialAwb = route.params?.awb;
   useEffect(() => {
-    if (initialAwb) handleTrack(initialAwb);
+    if (!initialAwb) return;
+    // Started on the next tick so the tracking state it sets does not render
+    // twice before the screen first paints.
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) handleTrack(initialAwb);
+    }, 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
     // Keyed on the param alone — depending on `handleTrack` would re-fetch on
     // every keystroke, since it closes over the editable `awb` field.
     // eslint-disable-next-line react-hooks/exhaustive-deps

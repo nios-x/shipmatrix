@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { View, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -22,9 +23,10 @@ import {
   isCancellable,
   refundableAmount,
 } from '../lib/shipments';
+import { formatCurrency, formatDimensions, formatRate, formatWeight } from '../lib/format';
+import { weightBreakdown } from '../lib/weight';
 import { cancelOrder, CancelError } from '../lib/cancelOrder';
 import { CancelOrderModal } from '../components/CancelOrderModal';
-import type { Shipment } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 type Nav = NativeStackNavigationProp<OrdersStackParamList, 'OrderDetails'>;
@@ -40,15 +42,12 @@ function Field({
   value?: string | number | null;
   wide?: boolean;
 }) {
-  const text =
-    value === null || value === undefined || value === '' ? '—' : String(value);
+  const text = value === null || value === undefined || value === '' ? '—' : String(value);
 
   return (
-    <View className={wide ? 'w-full mb-4' : 'w-1/2 mb-4 pr-3'}>
-      <Text className="text-[10px] text-slate-400 font-raleway-bold uppercase tracking-wider">
-        {label}
-      </Text>
-      <Text className="text-sm font-raleway-semibold text-slate-800 mt-1" selectable>
+    <View className={wide ? 'mb-4 w-full' : 'mb-4 w-1/2 pr-3'}>
+      <Text variant="label">{label}</Text>
+      <Text className="mt-1 font-medium text-[15px] leading-5 text-slate-900" selectable>
         {text}
       </Text>
     </View>
@@ -65,16 +64,28 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <View className="bg-white rounded-2xl p-4 mb-3 border border-slate-100">
-      <View className="flex-row items-center gap-2 mb-3.5">
-        <View className="w-7 h-7 rounded-lg bg-slate-50 items-center justify-center">
-          <Feather name={icon} size={14} color="#64748B" />
-        </View>
-        <Text className="text-xs font-raleway-bold text-slate-900 uppercase tracking-wider">
+    <View className="mb-3 rounded-2xl border border-slate-200/80 bg-white px-4 pt-4">
+      <View className="mb-3.5 flex-row items-center gap-2">
+        <Feather name={icon} size={15} color="#64748B" />
+        <Text variant="heading" className="text-[15px]">
           {title}
         </Text>
       </View>
       <View className="flex-row flex-wrap">{children}</View>
+    </View>
+  );
+}
+
+/** One of the headline figures under the courier: freight, value, weight. */
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-1 px-1">
+      <Text variant="label" numberOfLines={1}>
+        {label}
+      </Text>
+      <Text variant="value" className="mt-1 text-base" numberOfLines={1}>
+        {value}
+      </Text>
     </View>
   );
 }
@@ -132,7 +143,7 @@ export default function OrderDetailsScreen() {
       toast.success(
         'Order Cancelled',
         refunded > 0
-          ? `₹${refunded} has been refunded to your wallet.`
+          ? `${formatCurrency(refunded)} has been refunded to your wallet.`
           : 'The courier has released this AWB.'
       );
     } catch (e: any) {
@@ -147,22 +158,20 @@ export default function OrderDetailsScreen() {
 
   const header = (
     <View
-      className="px-5 pb-3.5 bg-white border-b border-slate-100 flex-row items-center gap-3"
-      style={{ paddingTop: insets.top + 16 }}
-    >
+      className="flex-row items-center gap-3 border-b border-slate-100 bg-white px-5 pb-3.5"
+      style={{ paddingTop: insets.top + 16 }}>
       <TouchableOpacity
         onPress={() => navigation.goBack()}
         activeOpacity={0.7}
-        className="w-10 h-10 rounded-xl bg-white border border-slate-100 items-center justify-center"
-      >
-        <Feather name="arrow-left" size={20} color="#1F2937" />
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
+        <Feather name="arrow-left" size={20} color="#334155" />
       </TouchableOpacity>
       <View className="flex-1">
-        <Text className="text-xl font-raleway-bold text-slate-900 tracking-tight">
-          Order Details
-        </Text>
+        <Text variant="title">Order Details</Text>
         {!!shipment?.orderId && (
-          <Text className="text-xs text-slate-500 font-raleway-medium mt-0.5">
+          <Text variant="meta" className="mt-0.5" numberOfLines={1} selectable>
             {shipment.orderId}
           </Text>
         )}
@@ -188,10 +197,14 @@ export default function OrderDetailsScreen() {
 
   const [statusBg, statusText] = statusPillClasses(shipment);
   const days = deliveryDays(shipment);
-  const dimensions =
-    shipment.length && shipment.breadth && shipment.height
-      ? `${shipment.length} × ${shipment.breadth} × ${shipment.height} cm`
-      : null;
+  const dimensions = formatDimensions(shipment.length, shipment.breadth, shipment.height);
+  const parcel = weightBreakdown(
+    shipment.weight,
+    shipment.length,
+    shipment.breadth,
+    shipment.height
+  );
+  const hasAwb = !!shipment.awb;
 
   return (
     <View className="flex-1 bg-[#F8FAFC]">
@@ -199,63 +212,74 @@ export default function OrderDetailsScreen() {
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + BAR_HEIGHT + 24 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Courier + status */}
-        <View className="bg-white rounded-2xl p-4 mb-3 border border-slate-100">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-3 flex-1">
-              <CourierLogo name={shipment.courier || 'Unknown'} />
-              <View className="flex-1">
-                <Text className="font-raleway-bold text-slate-900 text-sm">
-                  {shipment.courier || 'Unknown Courier'}
-                </Text>
-                <Text className="text-xs text-slate-400 font-raleway-medium mt-0.5" selectable>
-                  AWB: {shipment.awb || 'N/A'}
-                </Text>
-              </View>
+        contentContainerStyle={{
+          width: '100%',
+          maxWidth: 640,
+          alignSelf: 'center',
+          padding: 16,
+          paddingBottom: insets.bottom + BAR_HEIGHT + 24,
+        }}
+        showsVerticalScrollIndicator={false}>
+        {/* Courier, status and the figures a seller checks first */}
+        <View className="mb-3 rounded-2xl border border-slate-200/80 bg-white p-4">
+          <View className="flex-row items-start">
+            <CourierLogo name={shipment.courier || 'Unknown'} />
+            <View className="ml-3 mr-2 flex-1">
+              <Text variant="cardTitle" numberOfLines={2}>
+                {shipment.courier || 'Unknown Courier'}
+              </Text>
+              <Text variant="meta" className="mt-1" selectable numberOfLines={1}>
+                AWB {shipment.awb || '—'}
+              </Text>
             </View>
-            <View className={`px-2.5 py-1 rounded-full ${statusBg}`}>
+            <View className={`h-6 justify-center rounded-md px-2 ${statusBg}`}>
               <Text
-                className={`text-[10px] font-raleway-black uppercase tracking-wider ${statusText}`}
-              >
+                className={`font-semibold text-[11px] uppercase tracking-wide ${statusText}`}
+                numberOfLines={1}>
                 {shipment.status || 'Unknown'}
               </Text>
             </View>
           </View>
 
-          <View className="flex-row gap-2.5 mt-4">
+          <View className="mt-4 flex-row border-t border-slate-100 pt-3.5">
+            <Figure
+              label="Freight"
+              value={shipment.freightCharge != null ? formatRate(shipment.freightCharge) : '—'}
+            />
+            <Figure
+              label="Order value"
+              value={shipment.orderValue != null ? formatCurrency(shipment.orderValue) : '—'}
+            />
+            <Figure label="Chargeable" value={formatWeight(parcel.chargeable)} />
+          </View>
+
+          <View className="mt-4 flex-row gap-2.5">
             <TouchableOpacity
               onPress={() => navigation.navigate('Tracking', { awb: shipment.awb })}
-              activeOpacity={0.8}
-              disabled={!shipment.awb}
-              className={`flex-1 h-11 rounded-xl flex-row items-center justify-center gap-2 ${
-                shipment.awb ? 'bg-violet-600' : 'bg-slate-200'
-              }`}
-            >
-              <Feather name="map-pin" size={15} color="#FFFFFF" />
-              <Text className="text-xs font-raleway-bold text-white">Track</Text>
+              activeOpacity={0.85}
+              disabled={!hasAwb}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !hasAwb }}
+              className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl ${
+                hasAwb ? 'bg-violet-600' : 'bg-slate-100'
+              }`}>
+              <Feather name="map-pin" size={15} color={hasAwb ? '#FFFFFF' : '#94A3B8'} />
+              <Text variant="button" className={hasAwb ? 'text-white' : 'text-slate-400'}>
+                Track
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={openLabel}
-              activeOpacity={0.8}
-              disabled={!shipment.awb || labelLoading}
-              className={`flex-1 h-11 rounded-xl flex-row items-center justify-center gap-2 border ${
-                shipment.awb ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-100'
-              }`}
-            >
-              <Feather
-                name="download"
-                size={15}
-                color={shipment.awb ? '#334155' : '#94A3B8'}
-              />
-              <Text
-                className={`text-xs font-raleway-bold ${
-                  shipment.awb ? 'text-slate-700' : 'text-slate-400'
-                }`}
-              >
+              activeOpacity={0.85}
+              disabled={!hasAwb || labelLoading}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !hasAwb, busy: labelLoading }}
+              className={`h-11 flex-1 flex-row items-center justify-center gap-2 rounded-xl border ${
+                hasAwb ? 'border-slate-200 bg-white' : 'border-slate-100 bg-slate-50'
+              }`}>
+              <Feather name="download" size={15} color={hasAwb ? '#334155' : '#94A3B8'} />
+              <Text variant="button" className={hasAwb ? 'text-slate-800' : 'text-slate-400'}>
                 {labelLoading ? 'Opening…' : 'Label'}
               </Text>
             </TouchableOpacity>
@@ -264,12 +288,12 @@ export default function OrderDetailsScreen() {
           {isCancellable(shipment) && (
             <TouchableOpacity
               onPress={() => setCancelOpen(true)}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               disabled={cancelling}
-              className="h-11 mt-2.5 rounded-xl bg-rose-50 border border-rose-100 flex-row items-center justify-center gap-2"
-            >
+              accessibilityRole="button"
+              className="mt-2.5 h-11 flex-row items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50">
               <Feather name="x-circle" size={15} color="#E11D48" />
-              <Text className="text-xs font-raleway-bold text-rose-600">
+              <Text variant="button" className="text-rose-700">
                 {cancelling ? 'Cancelling…' : 'Cancel Order'}
               </Text>
             </TouchableOpacity>
@@ -278,18 +302,18 @@ export default function OrderDetailsScreen() {
 
         <Section icon="file-text" title="Order">
           <Field label="Order ID" value={shipment.orderId} />
-          <Field label="Payment" value={isCod(shipment) ? `COD ₹${codValue(shipment)}` : 'Prepaid'} />
-          <Field label="Order Value" value={shipment.orderValue != null ? `₹${shipment.orderValue}` : null} />
           <Field
-            label="Freight Charge"
-            value={shipment.freightCharge != null ? `₹${shipment.freightCharge}` : null}
+            label="Payment"
+            value={isCod(shipment) ? `COD · ${formatCurrency(codValue(shipment))}` : 'Prepaid'}
           />
           <Field label="Created" value={formatDateTime(shipment.createdAt)} />
           <Field
             label="Delivered"
             value={
               shipment.deliveredAt
-                ? `${formatDateTime(shipment.deliveredAt)}${days != null ? ` (${days}d)` : ''}`
+                ? `${formatDateTime(shipment.deliveredAt)}${
+                    days != null ? ` · ${Math.max(1, Math.round(days))}d` : ''
+                  }`
                 : null
             }
           />
@@ -303,8 +327,12 @@ export default function OrderDetailsScreen() {
 
         <Section icon="package" title="Package">
           <Field label="Product" value={shipment.productName} />
-          <Field label="Weight" value={shipment.weight != null ? `${shipment.weight} kg` : null} />
-          <Field label="Dimensions" value={dimensions} wide />
+          <Field label="Actual weight" value={formatWeight(shipment.weight, '')} />
+          <Field label="Dimensions" value={dimensions} />
+          <Field
+            label="Volumetric weight"
+            value={parcel.volumetric > 0 ? formatWeight(parcel.volumetric) : null}
+          />
         </Section>
 
         <Section icon="user" title="Customer">
@@ -333,7 +361,10 @@ export default function OrderDetailsScreen() {
         {isCod(shipment) && (
           <Section icon="credit-card" title="COD Remittance">
             <Field label="Status" value={shipment.remittanceStatus || 'Pending'} />
-            <Field label="Remitted On" value={shipment.remittedAt ? formatDateTime(shipment.remittedAt) : null} />
+            <Field
+              label="Remitted On"
+              value={shipment.remittedAt ? formatDateTime(shipment.remittedAt) : null}
+            />
           </Section>
         )}
       </ScrollView>

@@ -12,7 +12,7 @@ export const safeGetItem = async (
 ): Promise<string | null> => {
   try {
     return await AsyncStorage.getItem(key);
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -24,7 +24,7 @@ export const safeSetItem = async (
 ): Promise<void> => {
   try {
     await AsyncStorage.setItem(key, value);
-  } catch (e) {
+  } catch {
     // Silently fail, matching web behavior
   }
 };
@@ -35,7 +35,7 @@ export const safeRemoveItem = async (
 ): Promise<void> => {
   try {
     await AsyncStorage.removeItem(key);
-  } catch (e) {
+  } catch {
     // Silently fail, matching web behavior
   }
 };

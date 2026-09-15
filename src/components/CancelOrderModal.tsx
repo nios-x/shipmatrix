@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Modal, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { Text } from './ui/Text';
+import { formatCurrency } from '../lib/format';
 import { Feather } from '@expo/vector-icons';
 import { CANCEL_REASONS } from '../lib/cancelOrder';
 
@@ -103,7 +105,7 @@ export function CancelOrderModal({
             <View className="flex-row items-center gap-2 p-3 mb-4 rounded-2xl bg-emerald-50 border border-emerald-100">
               <Feather name="corner-down-left" size={14} color="#059669" />
               <Text className="text-xs font-raleway-semibold text-emerald-700 flex-1">
-                ₹{refund} returns to your wallet.
+                {formatCurrency(refund)} returns to your wallet.
               </Text>
             </View>
           )}

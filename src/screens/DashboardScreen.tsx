@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
@@ -10,13 +9,13 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { HomeStackParamList } from '../navigation/types';
 import { Feather } from '@expo/vector-icons';
-import { useUser } from '../lib/useUser';
 import { useShipments } from '../lib/useShipments';
 import { Logo } from '../components/Logo';
 import { api, routes } from '../lib/api';
@@ -342,7 +341,6 @@ function QuickAction({
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<Nav>();
-  const { user } = useUser();
   const { shipments } = useShipments();
   const { unreadCount } = useNotifications();
   const [refreshing, setRefreshing] = useState(false);
@@ -572,7 +570,12 @@ export default function DashboardScreen() {
               iconName="camera"
               bgColor="bg-cyan-50"
               iconColor="#0891B2"
-              onPress={() => navigation.navigate('ParcelSizer')}
+              onPress={() =>
+                (navigation as any).getParent()?.navigate('RatesTab', {
+                  screen: 'RateCalculator',
+                  params: { scan: Date.now() },
+                })
+              }
             />
           </View>
         </View>

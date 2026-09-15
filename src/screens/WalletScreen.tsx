@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   FlatList,
-  TextInput,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCount, formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { useUser } from '../lib/useUser';
@@ -31,8 +31,10 @@ export default function WalletScreen() {
   const [processing, setProcessing] = useState(false);
   const { confirm, confirmDialog } = useConfirm();
 
-  const balanceStr = (user?.walletBalance || 0).toFixed(2);
-  const [balanceMain, balanceDec] = balanceStr.split('.');
+  // Exact to the paisa: a balance is never rounded up the way a rate is.
+  const balance = user?.walletBalance || 0;
+  const balanceMain = formatCount(Math.trunc(balance));
+  const balanceDec = Math.abs(balance).toFixed(2).split('.')[1];
 
   /**
    * Confirms a payment server-side. The server asks Cashfree directly and
@@ -50,7 +52,7 @@ export default function WalletScreen() {
       });
 
       if (verifyRes.success) {
-        const credited = verifyRes.amount != null ? `₹${verifyRes.amount}` : 'Your payment';
+        const credited = verifyRes.amount != null ? `${formatCurrency(verifyRes.amount)}` : 'Your payment';
         toast.success('Recharge Successful!', `${credited} has been added to your wallet.`);
         setShowRecharge(false);
         return;
@@ -79,8 +81,8 @@ export default function WalletScreen() {
     confirm(
       {
         title: 'Confirm Recharge',
-        message: `Are you sure you want to add ₹${amount} to your wallet? You will be taken to the payment page to complete this transaction.`,
-        confirmText: `Yes, Pay ₹${amount}`,
+        message: `Are you sure you want to add ${formatCurrency(amount)} to your wallet? You will be taken to the payment page to complete this transaction.`,
+        confirmText: `Yes, Pay ${formatCurrency(amount)}`,
       },
       () => startRecharge(amount)
     );
@@ -135,7 +137,7 @@ export default function WalletScreen() {
           </View>
         </View>
         <Text className={`text-sm font-raleway-bold ${isCredit ? 'text-emerald-600' : 'text-rose-600'}`}>
-          {isCredit ? '+' : '-'}₹{item.amount?.toFixed(2)}
+          {isCredit ? '+' : '-'}{formatCurrency(item.amount ?? 0)}
         </Text>
       </View>
     );
@@ -222,7 +224,7 @@ export default function WalletScreen() {
                     className={`text-xs font-bold ${rechargeAmount === amt ? 'text-violet-700' : 'text-slate-600'
                       }`}
                   >
-                    ₹{amt}
+                    {formatCurrency(Number(amt))}
                   </Text>
                 </TouchableOpacity>
               ))}

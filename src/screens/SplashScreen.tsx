@@ -1,10 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Easing, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Animated, Easing } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
 import { Logo } from '../components/Logo';
 import { safeGetItem } from '../lib/storage';
+import { fontFace } from '../lib/theme';
 
 type Nav = NativeStackNavigationProp<AuthStackParamList, 'Splash'>;
 
@@ -28,20 +30,16 @@ const CYAN = '#22D3EE';
 const INK = '#1E293B';
 const MUTED = '#64748B';
 
-// Numeric fontWeight does not synthesise against a custom family on Android —
-// the weight has to come from the family name itself.
-const face = (native: string) => ({ fontFamily: Platform.OS === 'web' ? 'Raleway' : native });
-
 export default function SplashScreen() {
   const navigation = useNavigation<Nav>();
 
-  const logoScale = useRef(new Animated.Value(0.8)).current;
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const textOpacity = useRef(new Animated.Value(0)).current;
-  const taglineOpacity = useRef(new Animated.Value(0)).current;
-  const dot1Scale = useRef(new Animated.Value(1)).current;
-  const dot2Scale = useRef(new Animated.Value(1)).current;
-  const dot3Scale = useRef(new Animated.Value(1)).current;
+  const [logoScale] = useState(() => new Animated.Value(0.8));
+  const [logoOpacity] = useState(() => new Animated.Value(0));
+  const [textOpacity] = useState(() => new Animated.Value(0));
+  const [taglineOpacity] = useState(() => new Animated.Value(0));
+  const [dot1Scale] = useState(() => new Animated.Value(1));
+  const [dot2Scale] = useState(() => new Animated.Value(1));
+  const [dot3Scale] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     // Logo animation
@@ -114,7 +112,7 @@ export default function SplashScreen() {
     }, 3000);
 
     return () => clearTimeout(timer);
-  }, [navigation]);
+  }, [navigation, logoScale, logoOpacity, textOpacity, taglineOpacity, dot1Scale, dot2Scale, dot3Scale]);
 
   return (
     <View className="flex-1 items-center justify-center bg-[#FAFAFA]">
@@ -126,7 +124,7 @@ export default function SplashScreen() {
           marginBottom: 32,
         }}
       >
-        <Logo size={128} />
+        <Logo size={128} animated />
       </Animated.View>
 
       {/* Brand name */}
@@ -148,9 +146,8 @@ export default function SplashScreen() {
       >
         <Text
           style={{
-            ...face('Raleway_900Black'),
+            ...fontFace('black'),
             fontSize: 40,
-            fontWeight: '900',
             color: INK,
             letterSpacing: -1.2,
           }}
@@ -159,9 +156,8 @@ export default function SplashScreen() {
         </Text>
         <Text
           style={{
-            ...face('Raleway_900Black'),
+            ...fontFace('black'),
             fontSize: 40,
-            fontWeight: '900',
             color: VIOLET,
             letterSpacing: -1.2,
           }}
@@ -173,20 +169,19 @@ export default function SplashScreen() {
       {/* Tagline */}
       <Animated.Text
         style={{
-          ...face('Raleway_500Medium'),
+          ...fontFace('medium'),
           opacity: taglineOpacity,
           position: 'absolute',
           bottom: 100,
           textAlign: 'center',
           color: MUTED,
           fontSize: 13,
-          fontWeight: '500',
           paddingHorizontal: 32,
           lineHeight: 20,
           letterSpacing: 0.3,
         }}
       >
-        It's time to escape the matrix of logistics.
+        It’s time to escape the matrix of logistics.
       </Animated.Text>
 
       {/* Loading dots */}

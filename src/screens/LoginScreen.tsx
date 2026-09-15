@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
@@ -418,7 +416,7 @@ export default function LoginScreen() {
         {/* Sign up link */}
         <View className="flex-row items-center justify-center mt-5">
           <Text className="text-xs font-raleway text-gray-500">
-            Don't have an account?{' '}
+            Don’t have an account?{' '}
           </Text>
           <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
             <Text className="font-raleway-bold text-xs text-purple-600">Sign up</Text>

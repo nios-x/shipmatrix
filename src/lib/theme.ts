@@ -66,13 +66,24 @@ export const NAV_THEME = {
   },
 };
 
-export const FONTFAMILY = {
-  sans: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Regular' },
-  regular: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Regular' },
-  medium: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Medium' },
-  semibold: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-SemiBold' },
-  bold: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Bold' },
-  black: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Black' },
-  light: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Light' },
-  thin: { fontFamily: Platform.OS === 'web' ? 'Geist' : 'Geist-Thin' },
-};
+const RALEWAY_FACES = {
+  regular: ['Raleway_400Regular', '400'],
+  medium: ['Raleway_500Medium', '500'],
+  semibold: ['Raleway_600SemiBold', '600'],
+  bold: ['Raleway_700Bold', '700'],
+  extrabold: ['Raleway_800ExtraBold', '800'],
+  black: ['Raleway_900Black', '900'],
+} as const;
+
+/**
+ * Font style for text styled through `style` rather than `className` (animated
+ * text, the tab bar). On native the weight must come from the family name
+ * alone — pairing a custom family with a bold `fontWeight` makes Android fall
+ * back to Roboto — while web has one Raleway font and needs the real weight.
+ */
+export function fontFace(weight: keyof typeof RALEWAY_FACES) {
+  const [family, numeric] = RALEWAY_FACES[weight];
+  return Platform.OS === 'web'
+    ? { fontFamily: 'Raleway', fontWeight: numeric }
+    : { fontFamily: family };
+}

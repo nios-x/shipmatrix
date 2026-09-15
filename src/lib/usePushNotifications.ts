@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
-import * as Notifications from 'expo-notifications';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import { navigationRef } from '../navigation/navigationRef';
 import { resolveNotificationTarget } from './notificationRouting';
 import { registerForPushNotificationsAsync, unregisterPushToken } from './pushNotifications';
+import { getNotifications } from './notifications';
 
 function navigateToTarget(actionLink: unknown) {
   if (typeof actionLink !== 'string') return;
@@ -45,6 +45,9 @@ export function usePushNotifications() {
   }, [isAuthenticated, uid, pushEnabled]);
 
   useEffect(() => {
+    const Notifications = getNotifications();
+    if (!Notifications) return; // Android Expo Go: no push, so nothing to route.
+
     // A tap that launched the app from a killed state has already happened by
     // the time the listener below attaches, so it has to be read separately.
     const last = Notifications.getLastNotificationResponse();

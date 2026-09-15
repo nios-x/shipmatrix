@@ -1,4 +1,3 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import * as Crypto from 'expo-crypto';
@@ -7,13 +6,15 @@ import { doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { handleFirestoreError, OperationType } from './firebase-utils';
 import { safeGetItem, safeSetItem } from './storage';
+import { getNotifications } from './notifications';
 
 const DEVICE_ID_KEY = 'pushDeviceId';
 
 // Foreground behaviour: a push that arrives while the app is open still shows
 // as a banner/list entry, matching what the user would see if it arrived
-// while the app was backgrounded.
-Notifications.setNotificationHandler({
+// while the app was backgrounded. Skipped where the module cannot load
+// (Android Expo Go) — see `getNotifications`.
+getNotifications()?.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowBanner: true,
     shouldShowList: true,
@@ -36,7 +37,7 @@ async function getDeviceId(): Promise<string> {
   return id;
 }
 
-async function ensureAndroidChannel() {
+async function ensureAndroidChannel(Notifications: NonNullable<ReturnType<typeof getNotifications>>) {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync('default', {
     name: 'Default',
@@ -58,9 +59,11 @@ async function ensureAndroidChannel() {
  */
 export async function registerForPushNotificationsAsync(uid: string): Promise<string | null> {
   if (!Device.isDevice) return null; // Simulators/emulators have no push service.
+  const Notifications = getNotifications();
+  if (!Notifications) return null; // Android Expo Go has no push service either.
 
   try {
-    await ensureAndroidChannel();
+    await ensureAndroidChannel(Notifications);
 
     const existing = await Notifications.getPermissionsAsync();
     let status = existing.status;

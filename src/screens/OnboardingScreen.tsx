@@ -1,12 +1,11 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   FlatList,
   Dimensions,
-  Animated,
 } from 'react-native';
+import { Text } from '../components/ui/Text';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../navigation/types';
@@ -68,7 +67,7 @@ export default function OnboardingScreen() {
         className="w-48 h-48 rounded-full items-center justify-center mb-8"
       >
         {currentStep === 0 ? (
-          <Logo size={96} />
+          <Logo size={96} animated />
         ) : (
           <Feather name={item.icon as any} size={96} color={item.iconColor} />
         )}

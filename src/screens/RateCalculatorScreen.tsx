@@ -1,110 +1,83 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { api, routes } from '../lib/api';
-import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { parseRates, type RateResult } from '../lib/rates';
+import { PINCODE_RE, onlyDigits } from '../lib/inputs';
+import { dimensionError, weightError } from '../lib/weight';
+import { DimensionCalculator, type PackageValues } from '../components/DimensionCalculator';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
 export type { RateResult };
 
-const PRIMARY_GRADIENT = ['#7C3AED', '#4F46E5'] as const;
-const ACCENT_PURPLE = '#7C3AED';
-
 const SAMPLE_ROUTES = [
-  { label: 'DEL ⇄ BOM', pickup: '110001', delivery: '400001', name: 'Delhi to Mumbai' },
-  { label: 'BLR ⇄ DEL', pickup: '560001', delivery: '110001', name: 'Bangalore to Delhi' },
-  { label: 'HYD ⇄ MAA', pickup: '500001', delivery: '600001', name: 'Hyderabad to Chennai' },
-  { label: 'CCU ⇄ BOM', pickup: '700001', delivery: '400001', name: 'Kolkata to Mumbai' },
+  { label: 'DEL → BOM', pickup: '110001', delivery: '400001' },
+  { label: 'BLR → DEL', pickup: '560001', delivery: '110001' },
+  { label: 'HYD → MAA', pickup: '500001', delivery: '600001' },
+  { label: 'CCU → BOM', pickup: '700001', delivery: '400001' },
 ];
 
-const WEIGHT_PRESETS = ['0.5', '1.0', '2.0', '5.0', '10.0'];
-
-const BOX_PRESETS = [
-  { label: 'Flyer / Doc', l: '25', w: '20', h: '2' },
-  { label: 'Small Box', l: '15', w: '10', h: '8' },
-  { label: 'Shoe Box', l: '30', w: '20', h: '12' },
-  { label: 'Medium Box', l: '35', w: '25', h: '18' },
-];
+const EMPTY_PACKAGE: PackageValues = { weight: '', length: '', width: '', height: '' };
 
 export default function RateCalculatorScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   const [calculating, setCalculating] = useState(false);
   const [pickupPin, setPickupPin] = useState('');
   const [deliveryPin, setDeliveryPin] = useState('');
-  const [weight, setWeight] = useState('');
-  const [length, setLength] = useState('');
-  const [width, setWidth] = useState('');
-  const [height, setHeight] = useState('');
+  const [pkg, setPkg] = useState<PackageValues>(EMPTY_PACKAGE);
 
-  // Volumetric weight calculation: (L * W * H) / 5000 in kg
-  const volumetricWeight = useMemo(() => {
-    const l = parseFloat(length) || 0;
-    const w = parseFloat(width) || 0;
-    const h = parseFloat(height) || 0;
-    if (l > 0 && w > 0 && h > 0) {
-      return Number(((l * w * h) / 5000).toFixed(2));
-    }
-    return 0;
-  }, [length, width, height]);
-
-  const deadWeightNum = parseFloat(weight) || 0;
-  const chargeableWeight = Math.max(deadWeightNum, volumetricWeight);
-  const isVolumetricHigher = volumetricWeight > deadWeightNum && deadWeightNum > 0;
+  // The dashboard's "Parcel size" shortcut lands here with a fresh `scan` stamp.
+  // Keying the calculator on it reopens the scanner on every tap, while the
+  // package values themselves live here and survive the remount.
+  const scanRequest: number | undefined = route.params?.scan;
 
   const handleSwapPincodes = () => {
-    const temp = pickupPin;
     setPickupPin(deliveryPin);
-    setDeliveryPin(temp);
-  };
-
-  const handleApplyPresetRoute = (route: typeof SAMPLE_ROUTES[0]) => {
-    setPickupPin(route.pickup);
-    setDeliveryPin(route.delivery);
-  };
-
-  const handleApplyBoxPreset = (box: typeof BOX_PRESETS[0]) => {
-    setLength(box.l);
-    setWidth(box.w);
-    setHeight(box.h);
+    setDeliveryPin(pickupPin);
   };
 
   const handleReset = () => {
     setPickupPin('');
     setDeliveryPin('');
-    setWeight('');
-    setLength('');
-    setWidth('');
-    setHeight('');
+    setPkg(EMPTY_PACKAGE);
     toast.info('Calculator Reset', 'All input fields have been cleared.');
   };
 
   const handleCalculate = async () => {
-    if (!pickupPin || pickupPin.length !== 6) {
+    if (!PINCODE_RE.test(pickupPin)) {
       toast.warning('Invalid Pickup Pincode', 'Please enter a valid 6-digit pickup pincode.');
       return;
     }
-    if (!deliveryPin || deliveryPin.length !== 6) {
+    if (!PINCODE_RE.test(deliveryPin)) {
       toast.warning('Invalid Delivery Pincode', 'Please enter a valid 6-digit delivery pincode.');
       return;
     }
-    if (!weight || Number(weight) <= 0) {
+    if (!pkg.weight || Number(pkg.weight) <= 0) {
       toast.warning('Invalid Weight', 'Please enter a shipment weight greater than 0.');
+      return;
+    }
+    const sizeProblem =
+      weightError(pkg.weight) ||
+      dimensionError(pkg.length, 'Length') ||
+      dimensionError(pkg.width, 'Width') ||
+      dimensionError(pkg.height, 'Height');
+    if (sizeProblem) {
+      toast.warning('Check the package', `${sizeProblem}.`);
       return;
     }
 
@@ -114,10 +87,10 @@ export default function RateCalculatorScreen() {
       const data = await api.post(routes.rates, {
         pickupPincode: pickupPin,
         deliveryPincode: deliveryPin,
-        weight,
-        length: length || '10',
-        breadth: width || '10',
-        height: height || '10',
+        weight: pkg.weight,
+        length: pkg.length || '10',
+        breadth: pkg.width || '10',
+        height: pkg.height || '10',
         paymentType: 'prepaid',
         codAmount: '0',
       });
@@ -128,92 +101,127 @@ export default function RateCalculatorScreen() {
         navigation.navigate('AvailableCouriers', {
           pickupPin,
           deliveryPin,
-          weight,
-          length: length || '10',
-          width: width || '10',
-          height: height || '10',
+          weight: pkg.weight,
+          length: pkg.length || '10',
+          width: pkg.width || '10',
+          height: pkg.height || '10',
           rates: parsedRates,
         });
       } else {
-        toast.error('Calculation Failed', data.message || 'Unable to fetch rates for these pincodes.');
+        toast.error(
+          'Calculation Failed',
+          data.message || 'Unable to fetch rates for these pincodes.'
+        );
       }
     } catch (error: any) {
       console.error(error);
-      toast.error('Network Error', error?.message || 'Could not connect to rate calculator service.');
+      toast.error(
+        'Network Error',
+        error?.message || 'Could not connect to rate calculator service.'
+      );
     } finally {
       setCalculating(false);
     }
   };
 
   const canCalculate =
-    pickupPin.length === 6 &&
-    deliveryPin.length === 6 &&
-    Number(weight) > 0;
+    PINCODE_RE.test(pickupPin) && PINCODE_RE.test(deliveryPin) && Number(pkg.weight) > 0;
 
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-[#F8FAFC]"
       style={{ paddingTop: insets.top }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       {/* Top App Bar */}
-      <View className="px-5 pt-4 pb-3.5 bg-white border-b border-slate-100 flex-row items-center justify-between">
+      <View className="flex-row items-center justify-between border-b border-slate-100 bg-white px-5 pb-3.5 pt-4">
         <View className="flex-1">
-          <Text className="text-xl font-black  text-slate-900 tracking-tight ">
-            Rate Calculator
-          </Text>
-          <Text className="text-xs text-slate-500 font-medium  mt-0.5">
-            Real-time multi-courier shipping estimates
+          <Text variant="title">Rate Calculator</Text>
+          <Text variant="meta" className="mt-0.5">
+            Compare live prices across couriers
           </Text>
         </View>
 
         <TouchableOpacity
           onPress={handleReset}
           activeOpacity={0.7}
-          className="w-10 h-10 rounded-xl bg-violet-50 items-center justify-center border border-violet-100"
-        >
-          <Feather name="rotate-ccw" size={16} color={ACCENT_PURPLE} />
+          accessibilityRole="button"
+          accessibilityLabel="Reset calculator"
+          className="h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
+          <Feather name="rotate-ccw" size={16} color="#334155" />
         </TouchableOpacity>
       </View>
 
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingHorizontal: 14,
-          paddingTop: 20,
+          width: '100%',
+          maxWidth: 640,
+          alignSelf: 'center',
+          paddingHorizontal: 16,
+          paddingTop: 16,
           paddingBottom: insets.bottom + BAR_HEIGHT + 24,
         }}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Quick Route Presets */}
-        <View className="mb-5">
-          <Text className="text-xs font-bold text-slate-500 mb-2.5 uppercase tracking-wider">
-            Popular Routes
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-            {SAMPLE_ROUTES.map((route) => {
-              const isSelected = pickupPin === route.pickup && deliveryPin === route.delivery;
+        keyboardShouldPersistTaps="handled">
+        {/* Route */}
+        <View className="mb-3 rounded-2xl border border-slate-200/80 bg-white p-4">
+          <Text variant="heading">Route</Text>
+
+          <View className="mt-3 flex-row items-end">
+            <PincodeField
+              label="Pickup"
+              icon="arrow-up-right"
+              iconColor="#059669"
+              value={pickupPin}
+              onChangeText={(t) => setPickupPin(onlyDigits(t, 6))}
+              placeholder="e.g. 110001"
+            />
+
+            <TouchableOpacity
+              onPress={handleSwapPincodes}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Swap pickup and delivery pincodes"
+              className="mx-1 h-12 w-10 items-center justify-center">
+              <Feather name="repeat" size={16} color="#475569" />
+            </TouchableOpacity>
+
+            <PincodeField
+              label="Delivery"
+              icon="arrow-down-left"
+              iconColor="#0369A1"
+              value={deliveryPin}
+              onChangeText={(t) => setDeliveryPin(onlyDigits(t, 6))}
+              placeholder="e.g. 400001"
+            />
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            className="mt-3"
+            contentContainerStyle={{ gap: 8 }}>
+            {SAMPLE_ROUTES.map((r) => {
+              const selected = pickupPin === r.pickup && deliveryPin === r.delivery;
               return (
                 <TouchableOpacity
-                  key={route.label}
-                  onPress={() => handleApplyPresetRoute(route)}
-                  activeOpacity={0.7}
-                  className={`px-3.5 py-2 mr-1 rounded-xl border flex-row items-center gap-1.5 ${isSelected
-                    ? 'bg-violet-600 border-violet-600 shadow-xs'
-                    : 'bg-white border-slate-200'
-                    }`}
-                >
-                  <Feather
-                    name="map-pin"
-                    size={12}
-                    color={isSelected ? '#FFFFFF' : '#7C3AED'}
-                  />
+                  key={r.label}
+                  onPress={() => {
+                    setPickupPin(r.pickup);
+                    setDeliveryPin(r.delivery);
+                  }}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  className={`h-9 justify-center rounded-full border px-3 ${
+                    selected ? 'border-violet-600 bg-violet-50' : 'border-slate-200 bg-white'
+                  }`}>
                   <Text
-                    className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-700'
-                      }`}
-                  >
-                    {route.label}
+                    className={`font-semibold text-[13px] ${
+                      selected ? 'text-violet-800' : 'text-slate-700'
+                    }`}>
+                    {r.label}
                   </Text>
                 </TouchableOpacity>
               );
@@ -221,227 +229,57 @@ export default function RateCalculatorScreen() {
           </ScrollView>
         </View>
 
-        {/* Form Card */}
-        <View className="bg-white rounded-3xl p-4 border border-slate-100 shadow-xs mb-6">
-          <SectionHeader
-            icon="map-pin"
-            title="Pickup & Delivery Pincodes"
-            subtitle="Enter valid 6-digit Indian pincodes"
+        {/* Package */}
+        <View className="mb-4 rounded-2xl border border-slate-200/80 bg-white p-4">
+          <Text variant="heading">Package</Text>
+          <Text variant="meta" className="mb-4 mt-0.5">
+            Couriers bill the higher of actual and volumetric weight.
+          </Text>
+
+          <DimensionCalculator
+            key={scanRequest ?? 'calculator'}
+            value={pkg}
+            onChange={setPkg}
+            startScanning={scanRequest != null}
           />
-
-          {/* Pincodes Input Row */}
-          <View className="flex-row items-center gap-2 mb-6">
-            <View className="flex-1">
-              <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Pickup Pincode</Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
-                <Feather name="arrow-up-right" size={14} color="#10B981" />
-                <TextInput
-                  value={pickupPin}
-                  onChangeText={(t) => setPickupPin(t.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="e.g. 110001"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="numeric"
-                  maxLength={6}
-                  className="flex-1 py-3 px-2 text-xs font-bold text-slate-900"
-                />
-              </View>
-            </View>
-
-            <TouchableOpacity
-              onPress={handleSwapPincodes}
-              activeOpacity={0.7}
-              className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 items-center justify-center self-end mb-0.5"
-            >
-              <Feather name="repeat" size={14} color={ACCENT_PURPLE} />
-            </TouchableOpacity>
-
-            <View className="flex-1">
-              <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Delivery Pincode</Text>
-              <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
-                <Feather name="arrow-down-left" size={14} color="#0284C7" />
-                <TextInput
-                  value={deliveryPin}
-                  onChangeText={(t) => setDeliveryPin(t.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="e.g. 400001"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="numeric"
-                  maxLength={6}
-                  className="flex-1 py-3 px-2 text-xs font-bold text-slate-900"
-                />
-              </View>
-            </View>
-          </View>
-
-          <View className="h-[1px] bg-slate-100 w-full mb-6" />
-
-          {/* Weight Section */}
-          <SectionHeader
-            icon="anchor"
-            title="Dead Weight"
-            subtitle="Actual shipment weight in Kilograms"
-          />
-
-          <View className="mb-4">
-            <Text className="text-[11px] text-slate-600 font-bold mb-1.5">Dead Weight (kg)</Text>
-            <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
-              <TextInput
-                value={weight}
-                onChangeText={setWeight}
-                placeholder="e.g. 0.5"
-                placeholderTextColor="#94A3B8"
-                keyboardType="numeric"
-                className="flex-1 py-3 text-xs font-bold text-slate-900"
-              />
-              <Text className="text-[11px] font-bold text-slate-400">KG</Text>
-            </View>
-          </View>
-
-          {/* Weight Quick Presets */}
-          <View className="flex-row items-center gap-2 mb-6">
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Presets:
-            </Text>
-            {WEIGHT_PRESETS.map((preset) => (
-              <TouchableOpacity
-                key={preset}
-                onPress={() => setWeight(preset)}
-                activeOpacity={0.7}
-                className={`px-2.5 py-1 rounded-lg border ${weight === preset
-                  ? 'bg-violet-600 border-violet-600'
-                  : 'bg-slate-50 border-slate-200'
-                  }`}
-              >
-                <Text
-                  className={`text-[10px] font-bold ${weight === preset ? 'text-white' : 'text-slate-600'
-                    }`}
-                >
-                  {preset} kg
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View className="h-[1px] bg-slate-100 w-full mb-6" />
-
-          {/* Dimensions Section */}
-          <SectionHeader
-            icon="box"
-            title="Package Dimensions"
-            subtitle="Calculates volumetric weight (L × W × H / 5000)"
-          />
-
-          {/* Box Presets */}
-          <View className="mb-4">
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
-              Standard Box Sizes:
-            </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
-
-              {BOX_PRESETS.map((box) => (
-                <TouchableOpacity
-                  key={box.label}
-                  onPress={() => handleApplyBoxPreset(box)}
-                  activeOpacity={0.7}
-                  className="bg-slate-50 border border-slate-200 px-3 m-1 py-1 rounded-xl"
-                >
-                  <Text className="text-[11px] font-bold text-slate-700">{box.label}</Text>
-                  <Text className="text-[9px] text-slate-400 font-medium">
-                    {box.l}×{box.w}×{box.h} cm
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-          </View>
-
-          {/* Dimensions Inputs */}
-          <View className="mb-4">
-            <View className="flex-row gap-2.5">
-              <DimensionInput
-                label="Length (cm)"
-                value={length}
-                onChangeText={setLength}
-                placeholder="10"
-              />
-              <DimensionInput
-                label="Width (cm)"
-                value={width}
-                onChangeText={setWidth}
-                placeholder="10"
-              />
-              <DimensionInput
-                label="Height (cm)"
-                value={height}
-                onChangeText={setHeight}
-                placeholder="10"
-              />
-            </View>
-          </View>
-
-          {volumetricWeight > 0 && (
-            <View className="mt-1 p-3 bg-violet-50/60 rounded-2xl border border-violet-100 flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2 flex-1">
-                <View className="w-7 h-7 rounded-lg bg-violet-100 items-center justify-center">
-                  <Feather name="box" size={13} color={ACCENT_PURPLE} />
-                </View>
-                <View className="flex-1">
-                  <Text className="text-xs font-bold text-slate-800">
-                    Volumetric Weight: {volumetricWeight} kg
-                  </Text>
-                  <Text className="text-[10px] text-slate-500 font-medium">
-                    Chargeable: {chargeableWeight} kg ({isVolumetricHigher ? 'Volumetric applied' : 'Dead weight applied'})
-                  </Text>
-                </View>
-              </View>
-            </View>
-          )}
-
-          {/* Calculate Button */}
-          <TouchableOpacity
-            onPress={handleCalculate}
-            className="mt-5 overflow-hidden rounded-full bg-violet-600 shadow-lg shadow-violet-500/25"
-          >
-            <View
-              className="py-2 px-6 flex-row items-center justify-center gap-2.5"
-            >
-              {calculating ? (
-                <Text className="text-white font-black text-sm tracking-wide px-5 py-1">
-                  Scanning Partner Couriers...
-                </Text>
-              ) : (
-                <>
-                  <Text className="text-white font-black   text-sm tracking-wide py-1">
-                    Find Available Couriers
-                  </Text>
-                </>
-              )}
-            </View>
-          </TouchableOpacity>
         </View>
 
-        {/* Loading Card */}
-        {calculating && (
-          <View className="mt-2 bg-white rounded-3xl p-7 border border-slate-100 items-center mb-6">
-            <LoadingSpinner message="Scanning 20+ partner courier APIs..." />
-            <Text className="text-xs text-slate-400 text-center mt-3 font-medium">
-              Checking Delhivery, Blue Dart, Ekart, Shadowfax & Xpressbees...
-            </Text>
-          </View>
-        )}
+        <TouchableOpacity
+          onPress={handleCalculate}
+          disabled={calculating}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityState={{ busy: calculating }}
+          className={`h-12 flex-row items-center justify-center gap-2 rounded-xl ${
+            canCalculate ? 'bg-violet-600' : 'bg-violet-600/50'
+          }`}>
+          {calculating ? (
+            <>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text variant="button" className="text-white">
+                Checking couriers…
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text variant="button" className="text-white">
+                Find Available Couriers
+              </Text>
+              <Feather name="arrow-right" size={16} color="#FFFFFF" />
+            </>
+          )}
+        </TouchableOpacity>
 
-        {/* Feature Cards */}
-        <View className="gap-3 mb-6">
-          <FeatureCard
+        <View className="mt-5 gap-3 px-1">
+          <Assurance
             icon="shield"
-            title="Transparent Multi-Courier Pricing"
+            title="Transparent multi-courier pricing"
             description="Compare real-time negotiated B2B & B2C rates across 20+ top national carriers with zero hidden markups."
-            color="#7C3AED"
           />
-          <FeatureCard
+          <Assurance
             icon="truck"
-            title="Automated Courier Allocation"
+            title="Automated courier allocation"
             description="Pick the cheapest or fastest courier and create shipment directly with 1-click generation of AWB shipping labels."
-            color="#0284C7"
           />
         </View>
       </ScrollView>
@@ -453,79 +291,66 @@ export default function RateCalculatorScreen() {
    SUBCOMPONENTS
 ───────────────────────────────────────────── */
 
-function SectionHeader({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: keyof typeof Feather.glyphMap;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <View className="flex-row items-center mb-4">
-      <View className="w-9 h-9 rounded-xl bg-violet-50 items-center justify-center border border-violet-100">
-        <Feather name={icon} size={16} color={ACCENT_PURPLE} />
-      </View>
-      <View className="ml-3 flex-1">
-        <Text className="text-sm font-black text-slate-900 tracking-tight">{title}</Text>
-        <Text className="text-[11px] text-slate-400 font-medium mt-0.5">{subtitle}</Text>
-      </View>
-    </View>
-  );
-}
-
-function DimensionInput({
+function PincodeField({
   label,
+  icon,
+  iconColor,
   value,
   onChangeText,
   placeholder,
 }: {
   label: string;
+  icon: keyof typeof Feather.glyphMap;
+  iconColor: string;
   value: string;
   onChangeText: (text: string) => void;
-  placeholder?: string;
+  placeholder: string;
 }) {
+  const [focused, setFocused] = useState(false);
+  const invalid = value.length === 6 && !PINCODE_RE.test(value);
+
   return (
     <View className="flex-1">
-      <Text className="text-[11px] text-slate-600 font-bold mb-1.5">{label}</Text>
-      <View className="flex-row items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus:border-violet-500">
+      <Text variant="meta" className="text-slate-600">
+        {label}
+      </Text>
+      <View
+        className={`mt-1.5 h-12 flex-row items-center rounded-xl border px-3 ${
+          invalid ? 'border-rose-400' : focused ? 'border-violet-500' : 'border-slate-200'
+        } ${focused ? 'bg-white' : 'bg-slate-50'}`}>
+        <Feather name={icon} size={14} color={iconColor} />
         <TextInput
           value={value}
           onChangeText={onChangeText}
-          placeholder={placeholder || '0'}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder}
           placeholderTextColor="#94A3B8"
-          keyboardType="numeric"
-          className="flex-1 py-3 text-xs font-bold text-slate-900 text-center"
+          keyboardType="number-pad"
+          maxLength={6}
+          accessibilityLabel={`${label} pincode`}
+          className="ml-2 min-w-0 flex-1 py-0 font-semibold text-base text-slate-900"
         />
-        <Text className="text-[10px] font-bold text-slate-400">cm</Text>
       </View>
     </View>
   );
 }
 
-function FeatureCard({
+function Assurance({
   icon,
   title,
   description,
-  color,
 }: {
   icon: keyof typeof Feather.glyphMap;
   title: string;
   description: string;
-  color: string;
 }) {
   return (
-    <View className="bg-white rounded-3xl p-5 border border-slate-100 flex-row items-center shadow-xs">
-      <View
-        className="w-11 h-11 rounded-2xl items-center justify-center mr-3.5"
-        style={{ backgroundColor: `${color}15` }}
-      >
-        <Feather name={icon} size={20} color={color} />
-      </View>
+    <View className="flex-row items-start gap-3">
+      <Feather name={icon} size={15} color="#64748B" style={{ marginTop: 2 }} />
       <View className="flex-1">
-        <Text className="text-xs font-black text-slate-900 tracking-tight">{title}</Text>
-        <Text className="text-[11px] text-slate-500 font-medium mt-1 leading-4">
+        <Text className="font-semibold text-[13px] leading-5 text-slate-700">{title}</Text>
+        <Text variant="meta" className="mt-0.5 leading-[18px]">
           {description}
         </Text>
       </View>

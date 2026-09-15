@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { View, TouchableOpacity } from 'react-native';
+import { Text } from './ui/Text';
 import { Logo } from './Logo';
 
 interface EmptyStateProps {

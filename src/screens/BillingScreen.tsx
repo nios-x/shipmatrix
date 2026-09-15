@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, SectionList } from 'react-native';
+import { View, TouchableOpacity, SectionList } from 'react-native';
+import { Text } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -108,7 +110,7 @@ export default function BillingScreen() {
                   {inv.id} • {inv.shipments} shipment{inv.shipments === 1 ? '' : 's'}
                 </Text>
                 <Text className="text-sm font-black text-gray-900 mt-1.5">
-                  ₹{inv.spend.toFixed(2)}
+                  {formatCurrency(inv.spend)}
                 </Text>
               </View>
             </View>
@@ -159,7 +161,7 @@ export default function BillingScreen() {
               item.type === 'credit' ? 'text-green-600' : 'text-gray-900'
             }`}
           >
-            {item.type === 'credit' ? '+' : '−'}₹{(Number(item.amount) || 0).toFixed(2)}
+            {item.type === 'credit' ? '+' : '−'}{formatCurrency(Number(item.amount) || 0)}
           </Text>
         </View>
       )}

@@ -1,14 +1,22 @@
 const { platformSelect, hairlineWidth } = require('nativewind/theme');
 
+/** One Raleway face: the expo-google-fonts name on native, the web font elsewhere. */
+const raleway = (face) => [
+  platformSelect({
+    ios: `Raleway_${face}`,
+    android: `Raleway_${face}`,
+    default: 'Raleway, sans-serif',
+  }),
+];
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    './App.{js,ts,tsx}',
-    './src/**/*.{js,ts,tsx}',
-    './components/**/*.{js,ts,tsx}',
-  ],
+  content: ['./App.{js,ts,tsx}', './src/**/*.{js,ts,tsx}', './components/**/*.{js,ts,tsx}'],
   darkMode: 'class',
   presets: [require('nativewind/preset')],
+  corePlugins: {
+    fontWeight: false,
+  },
   theme: {
     extend: {
       colors: {
@@ -85,193 +93,48 @@ module.exports = {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      // Raleway ships one file per weight, so a weight is a family name. Every
+      // weight utility (font-semibold, font-bold, …) maps to its own face, and
+      // the fontWeight core plugin is off (see corePlugins): a custom family with
+      // fontWeight >= 700 makes Android look for a bold style the font does not
+      // register, and it falls back to Roboto. Web keeps real weights through
+      // global.css, where every family resolves to the Raleway web font.
       fontFamily: {
-        // Plain platform UI font (Roboto / San Francisco). Used by the create
-        // shipment form, which reads better in the device's own font than in
-        // Raleway.
-        system: [
+        sans: raleway('400Regular'),
+        mono: [
           platformSelect({
-            ios: 'System',
-            android: 'sans-serif',
-            default: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
+            ios: 'Menlo',
+            android: 'monospace',
+            default: 'ui-monospace, SFMono-Regular, Menlo, monospace',
           }),
         ],
-        sans: [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        raleway: [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-regular': [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-medium': [
-          platformSelect({
-            ios: 'Raleway_500Medium',
-            android: 'Raleway_500Medium',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-semibold': [
-          platformSelect({
-            ios: 'Raleway_600SemiBold',
-            android: 'Raleway_600SemiBold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-bold': [
-          platformSelect({
-            ios: 'Raleway_700Bold',
-            android: 'Raleway_700Bold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-extrabold': [
-          platformSelect({
-            ios: 'Raleway_800ExtraBold',
-            android: 'Raleway_800ExtraBold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-black': [
-          platformSelect({
-            ios: 'Raleway_900Black',
-            android: 'Raleway_900Black',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-light': [
-          platformSelect({
-            ios: 'Raleway_300Light',
-            android: 'Raleway_300Light',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'raleway-thin': [
-          platformSelect({
-            ios: 'Raleway_100Thin',
-            android: 'Raleway_100Thin',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        // Map geist aliases to Raleway for complete coverage
-        geist: [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-regular': [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-medium': [
-          platformSelect({
-            ios: 'Raleway_500Medium',
-            android: 'Raleway_500Medium',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-semibold': [
-          platformSelect({
-            ios: 'Raleway_600SemiBold',
-            android: 'Raleway_600SemiBold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-bold': [
-          platformSelect({
-            ios: 'Raleway_700Bold',
-            android: 'Raleway_700Bold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-black': [
-          platformSelect({
-            ios: 'Raleway_900Black',
-            android: 'Raleway_900Black',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-light': [
-          platformSelect({
-            ios: 'Raleway_300Light',
-            android: 'Raleway_300Light',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        'geist-thin': [
-          platformSelect({
-            ios: 'Raleway_100Thin',
-            android: 'Raleway_100Thin',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        regular: [
-          platformSelect({
-            ios: 'Raleway_400Regular',
-            android: 'Raleway_400Regular',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        medium: [
-          platformSelect({
-            ios: 'Raleway_500Medium',
-            android: 'Raleway_500Medium',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        semibold: [
-          platformSelect({
-            ios: 'Raleway_600SemiBold',
-            android: 'Raleway_600SemiBold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        bold: [
-          platformSelect({
-            ios: 'Raleway_700Bold',
-            android: 'Raleway_700Bold',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        black: [
-          platformSelect({
-            ios: 'Raleway_900Black',
-            android: 'Raleway_900Black',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        light: [
-          platformSelect({
-            ios: 'Raleway_300Light',
-            android: 'Raleway_300Light',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
-        thin: [
-          platformSelect({
-            ios: 'Raleway_100Thin',
-            android: 'Raleway_100Thin',
-            default: 'Raleway, sans-serif',
-          }),
-        ],
+        thin: raleway('100Thin'),
+        extralight: raleway('200ExtraLight'),
+        light: raleway('300Light'),
+        regular: raleway('400Regular'),
+        medium: raleway('500Medium'),
+        semibold: raleway('600SemiBold'),
+        bold: raleway('700Bold'),
+        extrabold: raleway('800ExtraBold'),
+        black: raleway('900Black'),
+        raleway: raleway('400Regular'),
+        'raleway-thin': raleway('100Thin'),
+        'raleway-light': raleway('300Light'),
+        'raleway-regular': raleway('400Regular'),
+        'raleway-medium': raleway('500Medium'),
+        'raleway-semibold': raleway('600SemiBold'),
+        'raleway-bold': raleway('700Bold'),
+        'raleway-extrabold': raleway('800ExtraBold'),
+        'raleway-black': raleway('900Black'),
+        // Legacy aliases from when the app shipped Geist.
+        geist: raleway('400Regular'),
+        'geist-thin': raleway('100Thin'),
+        'geist-light': raleway('300Light'),
+        'geist-regular': raleway('400Regular'),
+        'geist-medium': raleway('500Medium'),
+        'geist-semibold': raleway('600SemiBold'),
+        'geist-bold': raleway('700Bold'),
+        'geist-black': raleway('900Black'),
       },
     },
   },

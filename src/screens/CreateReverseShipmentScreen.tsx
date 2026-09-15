@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { auth } from '../lib/firebase';
 import { api, routes } from '../lib/api';
 import { useUser } from '../lib/useUser';
-import { CourierLogo } from '../components/CourierLogo';
+import { RateCard } from '../components/RateCard';
+import { formatCurrency, formatRate } from '../lib/format';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { toast } from '../lib/alert';
 import { useConfirm } from '../components/useConfirm';
@@ -50,6 +50,8 @@ export default function CreateReverseShipmentScreen() {
   const [step, setStep] = useState<Step>('form');
   const [loading, setLoading] = useState(false);
   const [rates, setRates] = useState<RateItem[]>([]);
+  const cheapestRate = rates.length > 0 ? Math.min(...rates.map((r) => r.freight_charge)) : 0;
+  const fastestDays = rates.length > 0 ? Math.min(...rates.map((r) => r.estimated_days || 99)) : 0;
   const [result, setResult] = useState<any>(null);
 
   // On a reverse shipment the roles invert: the *customer* is the pickup point
@@ -143,7 +145,7 @@ export default function CreateReverseShipmentScreen() {
   const handleBook = (rate: RateItem) => {
     if (!auth.currentUser) return;
     if ((user?.walletBalance || 0) < rate.freight_charge) {
-      toast.error('Insufficient Balance', `Need ₹${rate.freight_charge}, have ₹${(user?.walletBalance || 0).toFixed(2)}`);
+      toast.error('Insufficient Balance', `Need ${formatRate(rate.freight_charge)}, have ${formatCurrency(user?.walletBalance || 0)}`);
       return;
     }
     if (!isWarehouseComplete(warehouse)) {
@@ -157,7 +159,7 @@ export default function CreateReverseShipmentScreen() {
     confirm(
       {
         title: 'Confirm Return',
-        message: `Are you sure you want to return this order? ${rate.carrier_name} will collect it from the customer and ₹${rate.freight_charge} will be deducted from your wallet.`,
+        message: `Are you sure you want to return this order? ${rate.carrier_name} will collect it from the customer and ${formatRate(rate.freight_charge)} will be deducted from your wallet.`,
         confirmText: 'Yes, Return Order',
       },
       () => bookReturn(rate)
@@ -233,7 +235,7 @@ export default function CreateReverseShipmentScreen() {
         <TouchableOpacity onPress={() => step === 'form' ? navigation.goBack() : setStep('form')}>
           <Feather name="arrow-left" size={24} color="#1f2937" />
         </TouchableOpacity>
-        <Text className="text-xl font-black text-gray-900 flex-1">
+        <Text variant="title" className="flex-1">
           {step === 'form' ? 'Create Return' : step === 'rates' ? 'Select Courier' : 'Booked!'}
         </Text>
       </View>
@@ -242,7 +244,7 @@ export default function CreateReverseShipmentScreen() {
         <LoadingSpinner fullScreen message="Processing..." />
       ) : step === 'form' ? (
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3 mt-2">
+          <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-3 mt-2">
             Collect From Customer
           </Text>
           <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
@@ -257,7 +259,7 @@ export default function CreateReverseShipmentScreen() {
           </View>
 
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-sm font-black text-gray-400 uppercase tracking-wider">
+            <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500">
               Return To Warehouse
             </Text>
             {!isWarehouseComplete(warehouse) && (
@@ -270,7 +272,7 @@ export default function CreateReverseShipmentScreen() {
             <WarehouseForm value={warehouse} onChange={setWarehouseEdit} />
           </View>
 
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-wider mb-3">Package</Text>
+          <Text className="font-semibold text-[11px] uppercase tracking-wider text-slate-500 mb-3">Package</Text>
           <View className="bg-white rounded-2xl p-4 border border-gray-100 mb-4 gap-3" style={{ elevation: 1 }}>
             <Field label="Product" value={form.productName} onChange={(v) => update('productName', v)} placeholder="Product name" icon="package" />
             <View className="flex-row gap-3">
@@ -291,22 +293,20 @@ export default function CreateReverseShipmentScreen() {
         </ScrollView>
       ) : step === 'rates' ? (
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + BAR_HEIGHT + 24 }} className="flex-1 px-5" showsVerticalScrollIndicator={false}>
-          <Text className="text-xs font-raleway-bold text-gray-400 uppercase tracking-wider mb-4 mt-2">Available ({rates.length})</Text>
-          {rates.sort((a, b) => a.freight_charge - b.freight_charge).map((rate) => (
-            <TouchableOpacity key={rate.carrier_id} onPress={() => handleBook(rate)} disabled={loading} activeOpacity={0.7} className="bg-white rounded-2xl p-4 mb-3 border border-gray-100/90 flex-row items-center justify-between shadow-sm" style={{ elevation: 2 }}>
-              <View className="flex-row items-center gap-3 flex-1">
-                <CourierLogo name={rate.carrier_name} />
-                <View className="flex-1">
-                  <Text className="font-raleway-bold text-gray-900 text-sm">{rate.carrier_name}</Text>
-                  {rate.estimated_days && <Text className="text-xs font-raleway text-gray-400 mt-0.5">Est. {rate.estimated_days} days</Text>}
-                </View>
-              </View>
-              <View className="items-end">
-                <Text className="text-lg font-raleway-bold text-gray-900">₹{rate.freight_charge}</Text>
-                <Text className="text-[10px] font-raleway-bold text-purple-600 uppercase">Book</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+          <Text variant="label" className="mb-3 mt-2">{rates.length} couriers available</Text>
+          {rates
+            .slice()
+            .sort((a, b) => a.freight_charge - b.freight_charge)
+            .map((rate) => (
+              <RateCard
+                key={rate.carrier_id}
+                rate={rate}
+                isCheapest={rate.freight_charge === cheapestRate}
+                isFastest={rate.estimated_days === fastestDays}
+                onPress={() => handleBook(rate)}
+                disabled={loading}
+              />
+            ))}
         </ScrollView>
       ) : (
         <View className="flex-1 items-center justify-center px-8">
@@ -316,7 +316,7 @@ export default function CreateReverseShipmentScreen() {
           <Text className="text-2xl font-raleway-bold text-gray-900 mb-2 tracking-tight">Return Booked!</Text>
           <Text className="text-gray-500 font-raleway text-sm text-center mb-1">AWB: {result?.awb}</Text>
           <Text className="text-gray-500 font-raleway text-sm text-center mb-1">Courier: {result?.courier}</Text>
-          <Text className="text-gray-500 font-raleway text-sm text-center mb-6">Charge: ₹{result?.charge}</Text>
+          <Text className="text-gray-500 font-raleway text-sm text-center mb-6">Charge: {formatRate(result?.charge)}</Text>
           <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.8} className="bg-violet-700 px-8 py-3.5 rounded-xl shadow-md shadow-purple-900/20" style={{ elevation: 3 }}>
             <Text className="text-white font-raleway-bold text-sm">Done</Text>
           </TouchableOpacity>
@@ -339,7 +339,7 @@ function Field({ label, value, onChange, placeholder, icon, keyboardType, maxLen
       <View className="relative">
         {icon && <View className="absolute left-3 top-3.5 z-10"><Feather name={icon as any} size={16} color="#9ca3af" /></View>}
         <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor="#9ca3af" keyboardType={keyboardType} maxLength={maxLength} multiline={multiline} autoCapitalize={autoCapitalize} autoComplete={autoComplete}
-          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-system  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
+          className={`bg-gray-50/90 border border-gray-200 rounded-xl ${icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2.5 text-sm font-sans  text-gray-900 ${multiline ? 'min-h-[60px]' : ''}`} />
       </View>
     </View>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Dimensions } from 'react-native';
+import { View, TouchableOpacity, Modal } from 'react-native';
+import { Text } from './ui/Text';
 import { Feather } from '@expo/vector-icons';
 
 export interface AlertButton {

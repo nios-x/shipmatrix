@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
   RefreshControl,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -220,7 +220,7 @@ export default function OrdersScreen() {
       toast.success(
         'Order Cancelled',
         refunded > 0
-          ? `₹${refunded} has been refunded to your wallet.`
+          ? `${formatCurrency(refunded)} has been refunded to your wallet.`
           : 'The courier has released this AWB.'
       );
     } catch (e: any) {
@@ -283,7 +283,7 @@ export default function OrdersScreen() {
               Payment
             </Text>
             <Text className="text-sm font-semibold text-slate-800 mt-0.5">
-              {isCod(item) ? `COD ₹${codValue(item)}` : 'PREPAID'}
+              {isCod(item) ? `COD ${formatCurrency(codValue(item))}` : 'PREPAID'}
             </Text>
           </View>
         </View>

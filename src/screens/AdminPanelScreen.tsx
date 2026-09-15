@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
-  ScrollView,
   FlatList,
-  TextInput,
-  Alert,
   RefreshControl,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -66,8 +64,16 @@ export default function AdminPanelScreen() {
     // Waits for the profile, otherwise the first pass always looks unprivileged.
     // Non-admins never fetch at all: the rules would refuse them anyway.
     if (userLoading || !isAdmin) return;
-    void fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Started on the next tick: the fetch reports progress through state, and
+    // state set synchronously inside an effect renders twice before paint.
+    let active = true;
+    const timer = setTimeout(() => {
+      if (active) void fetchData();
+    }, 0);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
   }, [userLoading, isAdmin]);
 
   const onRefresh = () => {
@@ -183,7 +189,7 @@ export default function AdminPanelScreen() {
               {item.companyName && <Text className="text-xs text-gray-400 mt-0.5">{item.companyName}</Text>}
               <View className="flex-row items-center justify-between mt-3 pt-2 border-t border-gray-50">
                 <Text className="text-xs text-gray-400">Balance</Text>
-                <Text className="text-sm font-black text-gray-900">₹{(item.walletBalance || 0).toFixed(2)}</Text>
+                <Text className="text-sm font-black text-gray-900">{formatCurrency(item.walletBalance || 0)}</Text>
               </View>
             </View>
           )}

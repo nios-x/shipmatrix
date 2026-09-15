@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
   Modal,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatRate } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
@@ -52,7 +52,7 @@ export default function WeightDiscrepancyScreen() {
     confirm(
       {
         title: 'Accept Extra Weight Charge',
-        message: `Are you sure you want to accept the ₹${item?.discrepancy_amount || 45} deduction for AWB ${item?.awb}? Once accepted the charge cannot be disputed.`,
+        message: `Are you sure you want to accept the ${formatRate(item?.discrepancy_amount || 45)} deduction for AWB ${item?.awb}? Once accepted the charge cannot be disputed.`,
         confirmText: 'Accept & Pay',
         destructive: true,
       },
@@ -162,7 +162,7 @@ export default function WeightDiscrepancyScreen() {
 
                 <View className="border-l border-slate-200 pl-3">
                   <Text className="text-[10px] font-bold text-slate-400">EXTRA CHARGE</Text>
-                  <Text className="text-sm font-black text-slate-950 mt-0.5">₹{extraCharge}</Text>
+                  <Text className="text-sm font-black text-slate-950 mt-0.5">{formatRate(extraCharge)}</Text>
                 </View>
               </View>
 

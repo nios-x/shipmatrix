@@ -1,20 +1,19 @@
 import React, { useState, useCallback } from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Text, TextInput } from '../components/ui/Text';
+import { formatCurrency } from '../lib/format';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import {
   doc,
-  updateDoc,
   collection,
   query,
   where,
@@ -569,7 +568,7 @@ export default function ChannelsScreen() {
                         <View className="flex-row items-center justify-between">
                           <Text className="font-bold text-gray-900 text-sm">#{mapped.orderId}</Text>
                           <Text className="font-black text-gray-900 text-sm">
-                            ₹{mapped.orderValue.toFixed(0)}
+                            {formatCurrency(Math.round(mapped.orderValue))}
                           </Text>
                         </View>
                         <Text className="text-xs text-gray-500 mt-0.5" numberOfLines={1}>
