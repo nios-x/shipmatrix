@@ -1,5 +1,5 @@
 import { API_BASE_URL, api } from './api';
-import { toDate } from './shipments';
+import { isHeavyLoadCourier, toDate } from './shipments';
 import type { Shipment } from '../types';
 
 /**
@@ -18,7 +18,7 @@ import type { Shipment } from '../types';
 /** Absolute URL for a route on the API host — `Linking` cannot open a bare path. */
 const apiUrl = (path: string) => `${API_BASE_URL}${path}`;
 
-/** Couriers arrive as display names ('Shadowfax 360', 'Blue Dart Surface'). */
+/** Couriers arrive as display names ('ShipMatrix Heavy Load', 'Blue Dart Surface'). */
 const carrier = (s: Shipment) => (s.courier || s.courierName || '').toLowerCase();
 
 export class LabelError extends Error {}
@@ -72,9 +72,10 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
 
   if (name.includes('ekart')) return apiUrl(`/api/ekart/label/${enc}`);
 
-  // Shadowfax 360 is a separate integration from plain Shadowfax, so it has to
-  // be matched before the general case swallows it.
-  if (name === 'shadowfax 360' || name === 'shadowfax_360') {
+  // Shadowfax 360 (sold as ShipMatrix Heavy Load) is a separate integration
+  // from plain Shadowfax, so it has to be matched before the general case
+  // swallows it.
+  if (isHeavyLoadCourier(name)) {
     return apiUrl(`/api/shadowfax_360/label/${enc}`);
   }
   if (name.includes('shadowfax')) return apiUrl(`/api/shadowfax/label/${enc}`);

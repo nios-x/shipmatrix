@@ -146,6 +146,24 @@ export function destinationLabel(s: Shipment): string {
 }
 
 /**
+ * Whether a courier name (or id) is ShipMatrix Heavy Load.
+ *
+ * Shadowfax 360 is sold under ShipMatrix's own name, so its label carries no
+ * carrier name to match on, and orders booked before the rename still say
+ * "Shadowfax 360". Mirrors `isHeavyLoadCourier` in the website's
+ * lib/slabRates.ts — keep the two in step.
+ */
+export function isHeavyLoadCourier(courier: string): boolean {
+  const c = (courier || '').toLowerCase();
+  return (
+    c.includes('shadowfax 360') ||
+    c.includes('shadowfax360') ||
+    c.includes('shadowfax_360') ||
+    c.includes('shipmatrix heavy load')
+  );
+}
+
+/**
  * Maps a rate carrier id to the `/api/{path}/create-shipment` route that books
  * it. Mirrors the branch order used by the web app: the `_360` variant must be
  * matched before the generic `shadowfax` prefix.
@@ -196,7 +214,10 @@ function normalise(value: string): string {
  */
 export function cancellableCourier(s: Shipment): string | null {
   const id = normalise(String(s.carrierId ?? ''));
-  const name = normalise(String(s.courier ?? s.courierName ?? ''));
+  const rawName = String(s.courier ?? s.courierName ?? '');
+  // Heavy Load's label names no carrier; it is Shadowfax underneath.
+  if (!id && isHeavyLoadCourier(rawName)) return 'shadowfax';
+  const name = normalise(rawName);
 
   return (
     CANCELLABLE_COURIERS.find((c) => (id ? id.startsWith(c) : false) || name.includes(c)) ?? null

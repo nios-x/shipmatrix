@@ -16,6 +16,9 @@ import { Text } from './ui/Text';
  * label does not otherwise mention Blue Dart.
  */
 const BRAND_LOGOS: [pattern: RegExp, domain: string][] = [
+  // Shadowfax 360 is sold as ShipMatrix Heavy Load and wears our own logo; it
+  // has to come before the general `shadowfax` entry.
+  [/shipmatrix heavy load|shadowfax 360/, 'shipmatrix.in'],
   [/delhivery/, 'delhivery.com'],
   [/ekart/, 'ekartlogistics.com'],
   [/xpressbees/, 'xpressbees.com'],

@@ -8,7 +8,7 @@
 
 export interface RateResult {
   carrier_id: string;
-  /** Human-readable label, e.g. "Shadowfax 360". Never a raw slug. */
+  /** Human-readable label, e.g. "ShipMatrix Heavy Load". Never a raw slug. */
   carrier_name: string;
   freight_charge: number;
   estimated_days?: number;
