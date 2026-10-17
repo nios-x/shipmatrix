@@ -33,8 +33,12 @@ WebBrowser.maybeCompleteAuthSession();
 //   curl -s -o /dev/null -w '%{redirect_url}' \
 //     "https://accounts.google.com/o/oauth2/v2/auth?client_id=$ID\
 // &redirect_uri=com.shipmatrix.app%3A%2Foauthredirect&response_type=code\
-// &scope=openid&code_challenge=x&code_challenge_method=S256"
-// and base64-decode the `authError` parameter it comes back with.
+// &scope=openid&code_challenge=E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM\
+// &code_challenge_method=S256"
+// and base64-decode the `authError` parameter it comes back with. A healthy
+// client redirects to the sign-in page with no `authError` at all. The challenge
+// has to be a real S256 value (that one is RFC 7636's example); a placeholder
+// like `x` fails first with "Code Challenge must be base64 encoded".
 //
 // The native clients also cannot be exercised from Expo Go: Expo Go owns the
 // `exp://` scheme, so `useAuthRequest` builds an `exp://<lan-ip>:8081` redirect
@@ -46,14 +50,18 @@ WebBrowser.maybeCompleteAuthSession();
 // gates the button below instead of letting it fail that way. Native Google
 // sign-in requires a development build (`npx expo run:android`).
 //
-// Find these under Google Cloud Console > project-191165632248 > APIs & Services
-// > Credentials. Enabling the Google provider in Firebase Auth auto-creates the
-// web client; the Android and iOS ones you add yourself.
+// Find these under Google Cloud Console > gen-lang-client-0372703048 (project
+// number 563260211850) > APIs & Services > Credentials. That must be the same
+// project as firebase-config.ts: `signInWithCredential` rejects an ID token whose
+// audience is another project's client. Enabling the Google provider in Firebase
+// Auth auto-creates the web client; the Android and iOS ones you add yourself.
 //
-// Debug builds are signed with android/app/debug.keystore, so the Android client
-// must carry that keystore's SHA-1:
-//   5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25
-// A release build signed with a different keystore needs its own SHA-1 added too.
+// An Android client is registered against one signing SHA-1:
+//   42:26:B3:8A:5B:55:7D:CC:90:03:5B:EA:D1:EA:F9:58:B8:A6:70:0B  EAS release keystore
+//   5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25  android/app/debug.keystore
+// This flow goes through the browser, though, which cannot vouch for the app's
+// signature, so Google only matches the package name in the redirect. One client
+// id therefore serves debug and release builds alike.
 //
 // OAuth client ids are public values, so they live in .env rather than here.
 // Note that `EXPO_PUBLIC_*` values are inlined into the bundle at build time:
@@ -61,7 +69,7 @@ WebBrowser.maybeCompleteAuthSession();
 // value stays baked into the running bundle.
 const GOOGLE_WEB_CLIENT_ID =
   process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ||
-  '191165632248-7r60afl92omlfo8gogn4s4bq0v72o8ri.apps.googleusercontent.com';
+  '563260211850-ac692ie2i9kblvr03vhah0mmo41lku2l.apps.googleusercontent.com';
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 
