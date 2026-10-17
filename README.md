@@ -14,14 +14,13 @@
 ## 📱 Features & Highlights
 
 ### 📦 1. Forward & Reverse Logistics
-* **Multi-Carrier Rate Calculator**: Real-time freight quote comparisons across top Indian couriers (**Delhivery, Xpressbees, BlueDart, Shadowfax, DTDC, Amazon Shipping, Smartr**).
+* **Multi-Carrier Rate Calculator**: Real-time freight quote comparisons across top Indian couriers (**Delhivery, KW Delhivery, BlueDart, Shadowfax, Shree Maruti, Ekart, Amazon Shipping, Smartship**).
 * **Live Courier Selection**: Filter by **Air Express vs. Surface**, **Cheapest vs. Fastest**, Doorstep pickup, and transit insurance.
 * **1-Click Forward Booking**: Address autofill, pincode serviceability check, dead vs. volumetric weight calculation, and automatic AWB generation.
 * **Reverse Logistics & Returns**: Book customer return pickups, track reverse transit stages, and inspect return-to-origin (RTO) statuses.
 * **Bulk Shipment Upload**: Document picker integration for CSV-based bulk order imports.
 
 ### 🚛 2. B2B Heavy Cargo & Freight Manifestation
-* **XpressBees Cargo Integration**: Direct integration with the `AddCargoManifestDetails` API endpoint.
 * **Multi-Modal Route Routing**:
   * **Surface Cargo** (Parent AWB series `9169...`)
   * **Air Cargo** (Parent AWB series `7167...`)

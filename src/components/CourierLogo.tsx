@@ -21,7 +21,6 @@ const BRAND_LOGOS: [pattern: RegExp, domain: string][] = [
   [/shipmatrix heavy load|shadowfax 360/, 'shipmatrix.in'],
   [/delhivery/, 'delhivery.com'],
   [/ekart/, 'ekartlogistics.com'],
-  [/xpressbees/, 'xpressbees.com'],
   [/shadowfax/, 'shadowfax.in'],
   [/shree ?maruti/, 'shreemaruticourier.com'],
   [/amazon/, 'amazon.in'],

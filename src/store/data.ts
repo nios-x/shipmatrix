@@ -29,15 +29,6 @@ export const mockCouriers: CourierRate[] = [
     features: ['Tracking'],
   },
   {
-    id: 'c4',
-    name: 'Xpressbees',
-    rating: 4.1,
-    expectedDelivery: '3-4 Days',
-    rate: 60,
-    logoText: 'X',
-    features: ['Tracking', 'Pickup'],
-  },
-  {
     id: 'c5',
     name: 'DTDC Lite',
     rating: 3.9,

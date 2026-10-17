@@ -1,5 +1,5 @@
 import { API_BASE_URL, api } from './api';
-import { isHeavyLoadCourier, toDate } from './shipments';
+import { isHeavyLoadCourier } from './shipments';
 import type { Shipment } from '../types';
 
 /**
@@ -49,27 +49,6 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
       : apiUrl(stored.startsWith('/') ? stored : `/${stored}`);
   }
 
-  // Xpressbees renders the label from the address passed in the query string
-  // rather than from its own record, so it needs the full shipment.
-  if (name.includes('xpressbees')) {
-    const params = new URLSearchParams({
-      name: shipment.customerName || '',
-      address: shipment.address || '',
-      cityPin: `${shipment.city || ''}, ${shipment.state || ''}, ${shipment.pincode || ''}`,
-      orderId: shipment.orderId || shipment.id || '',
-      orderDate: (toDate(shipment.createdAt) ?? new Date()).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-      product: shipment.productName || 'Shipment Item',
-      pickupName: shipment.pickupLocationName || 'Warehouse',
-      pickupAddress: shipment.pickupAddress || 'Warehouse Address, India',
-      pickupPhone: shipment.pickupPhone || shipment.customerPhone || '',
-    }).toString();
-    return apiUrl(`/api/xpressbees/label/${enc}?${params}`);
-  }
-
   if (name.includes('ekart')) return apiUrl(`/api/ekart/label/${enc}`);
 
   // Shadowfax 360 (sold as ShipMatrix Heavy Load) is a separate integration
@@ -99,6 +78,13 @@ export async function resolveLabelUrl(shipment: Shipment): Promise<string> {
   // Smartship addresses labels by its own order id, not the AWB. The route
   // resolves one from the other, so the AWB is still what gets passed here.
   if (name.includes('smartship')) return apiUrl(`/api/smartship/label/${enc}`);
+
+  // KW Delhivery Surface is booked through Kourierwale, so its AWB means
+  // nothing to Delhivery's label API. Kourierwale hands the label over at
+  // booking (stored above); this route redirects to that same stored copy.
+  if (name.includes('kw delhivery') || name.includes('delhivery_kw')) {
+    return apiUrl(`/api/kourierwale/label/${enc}`);
+  }
 
   // Delhivery answers with JSON describing the packages, not the PDF itself.
   if (name.includes('delhivery')) {

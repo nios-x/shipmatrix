@@ -173,7 +173,6 @@ export function courierEndpoint(carrierId: string): string {
   if (id === 'shadowfax_360') return 'shadowfax_360';
   if (id.startsWith('delhivery')) return 'delhivery';
   if (id.startsWith('amazon')) return 'amazon';
-  if (id.startsWith('xpressbees')) return 'xpressbees';
   if (id.startsWith('shadowfax')) return 'shadowfax';
   if (id.startsWith('bluedart')) return 'bluedart';
   if (id.startsWith('shreemaruti')) return 'shreemaruti';
@@ -191,7 +190,6 @@ const CANCELLABLE_COURIERS = [
   'delhivery',
   'bluedart',
   'ekart',
-  'xpressbees',
   'shadowfax',
   'shreemaruti',
   'amazon',

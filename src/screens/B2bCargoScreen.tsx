@@ -25,8 +25,8 @@ type BookingMode = 'credit' | 'topay';
  *
  * The form below never showed a price or checked a balance before booking,
  * and the server route it calls had no auth in front of it either — every
- * booking through here was a real, free XpressBees cargo manifest. The server
- * side is closed now (`/api/v1/xpressbees/b2b-cargo` refuses every request),
+ * booking through here was a real, free cargo manifest. The server side is
+ * closed now (`/api/v1/b2b-cargo` refuses every request),
  * so this flag is UI-only: it stops sellers from filling out a form that can
  * only ever fail, rather than leaving the fact that it's disabled to a
  * generic error after they've typed in two addresses.
@@ -109,7 +109,7 @@ export default function B2bCargoScreen() {
     setManifestResult(null);
 
     const payload = {
-      routeMode: routeMode === 'air' ? 'Air Cargo (7167...)' : 'Surface Cargo (9169...)',
+      routeMode: routeMode === 'air' ? 'Air Cargo' : 'Surface Cargo',
       bookingMode: bookingMode.toUpperCase(),
       invoiceValue: parseFloat(invoiceValue),
       shipper: {
@@ -247,7 +247,7 @@ export default function B2bCargoScreen() {
               B2B Cargo Shipping
             </Text>
             <Text className="mt-0.5 font-medium text-xs text-slate-500">
-              Create a bulk/cargo shipment via XpressBees
+              Create a bulk/cargo shipment
             </Text>
           </View>
         </View>
@@ -336,7 +336,6 @@ export default function B2bCargoScreen() {
                     }`}>
                     Surface Cargo
                   </Text>
-                  <Text className="font-mono text-[10px] text-slate-400">(9169...)</Text>
                 </View>
               </TouchableOpacity>
 
@@ -360,7 +359,6 @@ export default function B2bCargoScreen() {
                     }`}>
                     Air Cargo
                   </Text>
-                  <Text className="font-mono text-[10px] text-slate-400">(7167...)</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -651,41 +649,6 @@ export default function B2bCargoScreen() {
           )}
         </TouchableOpacity>
 
-        {/* ─── 6. XpressBees API Integration Info Box ─── */}
-        <View className="mb-6 rounded-3xl border border-slate-800 bg-slate-900 p-5">
-          <View className="mb-2 flex-row items-center gap-2">
-            <Feather name="zap" size={16} color="#A78BFA" />
-            <Text className="font-black text-xs uppercase tracking-wider text-white">
-              XpressBees API Integration
-            </Text>
-          </View>
-
-          <Text className="mb-3 font-medium text-xs leading-5 text-slate-400">
-            This form integrates directly with the XpressBees POSTShipmentService
-            AddCargoManifestDetails API endpoint.
-          </Text>
-
-          <View className="gap-2 border-t border-slate-800 pt-3">
-            <View className="flex-row items-start gap-2">
-              <Text className="text-xs text-violet-400">•</Text>
-              <Text className="flex-1 text-xs leading-4 text-slate-300">
-                Automatic Parent AWB allocation based on mode (Air: 7167..., Surface: 9169...)
-              </Text>
-            </View>
-            <View className="flex-row items-start gap-2">
-              <Text className="text-xs text-violet-400">•</Text>
-              <Text className="flex-1 text-xs leading-4 text-slate-300">
-                MPS (Multi-Piece Shipment) support up to 10 boxes
-              </Text>
-            </View>
-            <View className="flex-row items-start gap-2">
-              <Text className="text-xs text-violet-400">•</Text>
-              <Text className="flex-1 text-xs leading-4 text-slate-300">
-                Credit and ToPay booking modes
-              </Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
 
       {confirmDialog}

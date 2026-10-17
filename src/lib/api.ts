@@ -86,7 +86,7 @@ export const routes = {
   // ── Core host (relative — `apiRequest` prefixes API_BASE_URL) ──
   syncTracking: (awb: string) => `/api/v1/shipments/sync/${encodeURIComponent(awb)}`,
   markRto: '/api/v1/shipments/mark-rto',
-  b2bCargo: '/api/v1/xpressbees/b2b-cargo',
+  b2bCargo: '/api/v1/b2b-cargo',
   publicTrack: (awb: string) => `/api/public/track/${encodeURIComponent(awb)}`,
   pincode: (pin: string) => `/api/pincode/${encodeURIComponent(pin)}`,
   supportChat: '/api/support/chat',

@@ -55,7 +55,7 @@ const CAROUSEL_SLIDES: CarouselSlide[] = [
     tag: 'RATE ENGINE',
     tagIcon: 'zap',
     title: 'Save up to 40% on Shipping',
-    description: 'Compare live freight rates from Delhivery, Ekart, Shadowfax & Xpressbees.',
+    description: 'Compare live freight rates from Delhivery, Ekart, Shadowfax & Shree Maruti.',
     ctaText: 'Calculate Rates',
     gradientColors: ['#4F46E5', '#7C3AED', '#9333EA'] as const,
     badgeBg: 'rgba(255, 255, 255, 0.2)',
@@ -400,7 +400,7 @@ export default function DashboardScreen() {
         {/* Courier Partners Strip */}
         <View className="shadow-xs mb-6 rounded-2xl border border-slate-100 bg-white px-4 py-2.5">
           <View className="flex-row items-center justify-between">
-            {['DELHIVERY', 'BLUEDART', 'XPRESSBEES', 'SHADOWFAX', 'EKART'].map((name, i) => (
+            {['DELHIVERY', 'BLUEDART', 'SHREE MARUTI', 'SHADOWFAX', 'EKART'].map((name, i) => (
               <React.Fragment key={name}>
                 <Text className="font-black text-[10px] tracking-wider text-slate-800">{name}</Text>
                 {i < 4 && <View className="h-1 w-1 rounded-full bg-slate-300" />}

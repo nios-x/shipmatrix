@@ -29,7 +29,7 @@ const slides = [
   },
   {
     title: 'Ship with Top Couriers',
-    subtitle: 'Delhivery, XpressBees, Shadowfax & more.',
+    subtitle: 'Delhivery, Shadowfax, Shree Maruti & more.',
     icon: 'package',
     color: '#f3e8ff',
     iconColor: '#8b5cf6',
