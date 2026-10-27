@@ -34,11 +34,25 @@ function fields(w: WarehouseData): Omit<WarehouseData, 'id'> {
 }
 
 /**
+ * Id for a warehouse copied into the list from a pre-list profile. Derived
+ * from the warehouse, so two screens copying it at once write one document.
+ */
+function profileCopyId(w: WarehouseData): string {
+  const slug = w.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .slice(0, 40);
+  return `profile-${w.pincode}-${slug}`;
+}
+
+/**
  * The user's saved pickup warehouses, live, plus the default one.
  *
  * A profile set up before the list existed has its warehouse only in
- * `warehouseData`. That entry is shown first, without an id, until it is saved
- * into the list — dropping it would leave the account with nowhere to ship from.
+ * `warehouseData`. That copy is the sole record of it, and choosing another
+ * default — here or on the website — overwrites it, so the warehouse is copied
+ * into the list the first time it is seen and the profile copy is stamped with
+ * its id. It is shown first in the meantime.
  */
 export function useWarehouses() {
   const { user } = useUser();
@@ -68,10 +82,20 @@ export function useWarehouses() {
   }, [uid]);
 
   const profileCopy = user?.warehouseData?.name ? user.warehouseData : null;
-  const warehouses =
-    profileCopy && !saved.some((w) => sameWarehouse(w, profileCopy))
-      ? [profileCopy, ...saved]
-      : saved;
+  const unlisted = !!profileCopy && !saved.some((w) => sameWarehouse(w, profileCopy));
+  const warehouses = unlisted ? [profileCopy, ...saved] : saved;
+
+  // Only once the list has loaded, or a warehouse already in it would be
+  // copied again. A copy with an id was in the list and has been deleted
+  // since; that one is left alone.
+  const toCopy = current && unlisted && !profileCopy.id ? profileCopy : null;
+  useEffect(() => {
+    if (!uid || !toCopy) return;
+    const id = profileCopyId(toCopy);
+    setDoc(doc(db, path(uid), id), fields(toCopy), { merge: true })
+      .then(() => updateDoc(doc(db, 'users', uid), { warehouseData: { ...fields(toCopy), id } }))
+      .catch((error) => handleFirestoreError(error, OperationType.WRITE, path(uid)));
+  }, [uid, toCopy]);
   const defaultWarehouse =
     warehouses.find((w) => sameWarehouse(w, profileCopy)) ?? warehouses[0] ?? null;
 
