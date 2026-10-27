@@ -4,9 +4,8 @@ import { Text, TextInput } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
-import { auth, db } from '../lib/firebase';
+import { auth } from '../lib/firebase';
 import { api, routes } from '../lib/api';
-import { doc, updateDoc } from 'firebase/firestore';
 import { useUser } from '../lib/useUser';
 import { RateCard } from '../components/RateCard';
 import { BoxScanner } from '../components/BoxScanner';
@@ -24,7 +23,8 @@ import {
   generateOrderId,
   EMPTY_WAREHOUSE,
 } from '../lib/shipments';
-import { WarehouseForm } from '../components/WarehouseForm';
+import { WarehousePicker } from '../components/WarehousePicker';
+import { useWarehouseSelection } from '../lib/useWarehouses';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 import { parseRates, type RateResult } from '../lib/rates';
@@ -82,17 +82,17 @@ export default function CreateShipmentScreen({
     orderId: '',
   });
 
-  // Pickup warehouse — the courier APIs require a registered pickup location,
-  // so it defaults to the one saved on the profile. Held as an optional
-  // override rather than mirrored into state, so the saved warehouse shows up
-  // as soon as the profile loads without an effect racing the user's edits.
-  const [warehouseEdit, setWarehouseEdit] = useState<WarehouseData | null>(null);
-  const warehouse: WarehouseData = warehouseEdit ?? {
+  // Pickup warehouse — the courier APIs require a registered pickup location.
+  // Starts on the default and the user can pick any other saved one. Until one
+  // exists, a pincode carried over from the rate calculator still prices the
+  // shipment; booking waits for a complete warehouse.
+  const warehouseSelection = useWarehouseSelection();
+  const pickupPincodeParam = route.params?.pickupPincode
+    ? String(route.params.pickupPincode)
+    : undefined;
+  const warehouse: WarehouseData = warehouseSelection.selected ?? {
     ...EMPTY_WAREHOUSE,
-    ...(user?.warehouseData || {}),
-    ...(route.params?.pickupPincode && !user?.warehouseData?.pincode
-      ? { pincode: String(route.params.pickupPincode) }
-      : {}),
+    pincode: pickupPincodeParam || '',
   };
 
   // Prefill from navigation params (a rate picked in the calculator, a return
@@ -123,29 +123,15 @@ export default function CreateShipmentScreen({
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  const [savingWarehouse, setSavingWarehouse] = useState(false);
-
-  /** Persists the pickup warehouse so future bookings prefill it. */
-  const handleSaveWarehouse = async () => {
-    if (!auth.currentUser || !isWarehouseComplete(warehouse)) return;
-    setSavingWarehouse(true);
-    try {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), { warehouseData: warehouse });
-      toast.success('Saved', 'This pickup address will be used for future shipments.');
-    } catch {
-      toast.error('Error', 'Could not save the pickup address.');
-    } finally {
-      setSavingWarehouse(false);
-    }
-  };
-
   const handleGetRates = async () => {
     // Everything is validated here rather than at booking: the user picks a
     // courier off the rates list, and being sent back to fix a phone number
     // after choosing one loses that choice. These bounds mirror the server's
     // schema, so anything accepted here is accepted by /api/shipments/book.
     const problem = firstError([
-      checkPincode(warehouse.pincode, 'Pickup pincode'),
+      warehouse.pincode
+        ? checkPincode(warehouse.pincode, 'Pickup pincode')
+        : 'Add a pickup warehouse first.',
       checkPincode(form.pincode, 'Delivery pincode'),
       form.customerName.trim() ? null : 'Customer name is required.',
       checkMobile(form.customerPhone, 'Customer phone'),
@@ -423,11 +409,10 @@ export default function CreateShipmentScreen({
         )}
       </View>
       <View className="mb-4 rounded-2xl border border-gray-100/90 bg-white p-4">
-        <WarehouseForm
-          value={warehouse}
-          onChange={setWarehouseEdit}
-          onSave={handleSaveWarehouse}
-          saving={savingWarehouse}
+        <WarehousePicker
+          {...warehouseSelection}
+          onSelect={warehouseSelection.select}
+          newPincode={pickupPincodeParam}
         />
       </View>
 

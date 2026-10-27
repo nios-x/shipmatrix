@@ -157,8 +157,14 @@ export interface Shipment {
   amazonShipmentId?: string;
 }
 
-/** Pickup warehouse stored on the user document as `warehouseData`. */
+/**
+ * A pickup warehouse. Every saved one lives in `users/{uid}/warehouses`, the
+ * collection the web app also reads and writes; the user document's
+ * `warehouseData` holds a copy of the default one.
+ */
 export interface WarehouseData {
+  /** Document id in `users/{uid}/warehouses`. Absent on a pre-list profile copy. */
+  id?: string;
   name: string;
   email?: string;
   phone: string;

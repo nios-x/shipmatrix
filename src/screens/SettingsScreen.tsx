@@ -15,8 +15,9 @@ import { useUser } from '../lib/useUser';
 import { auth, db } from '../lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { toast } from '../lib/alert';
-import { WarehouseForm } from '../components/WarehouseForm';
-import { isWarehouseComplete, EMPTY_WAREHOUSE } from '../lib/shipments';
+import { WarehousePicker } from '../components/WarehousePicker';
+import { isWarehouseComplete } from '../lib/shipments';
+import { sameWarehouse, setDefaultWarehouse, useWarehouses } from '../lib/useWarehouses';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 
@@ -78,27 +79,19 @@ export default function SettingsScreen() {
     },
   ];
 
-  // Pickup warehouse — defaults to the saved value, an edit takes over.
-  const [warehouseEdit, setWarehouseEdit] = useState<WarehouseData | null>(null);
-  const [savingWarehouse, setSavingWarehouse] = useState(false);
+  // Pickup warehouses. Here a tap on one makes it the default that new
+  // bookings start from; each booking can still pick any other.
+  const { warehouses, defaultWarehouse, loading: loadingWarehouses } = useWarehouses();
   const [warehouseOpen, setWarehouseOpen] = useState(false);
-  const warehouse: WarehouseData = warehouseEdit ?? {
-    ...EMPTY_WAREHOUSE,
-    ...(user?.warehouseData || {}),
-  };
-  const warehouseReady = isWarehouseComplete(warehouse);
+  const warehouseReady = isWarehouseComplete(defaultWarehouse);
 
-  const handleSaveWarehouse = async () => {
-    if (!auth.currentUser || !warehouseReady) return;
-    setSavingWarehouse(true);
+  const handleSetDefault = async (w: WarehouseData | null) => {
+    if (!w || sameWarehouse(w, defaultWarehouse)) return;
     try {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), { warehouseData: warehouse });
-      setWarehouseEdit(null);
-      toast.success('Saved', 'This pickup address will be used for new shipments.');
+      await setDefaultWarehouse(w);
+      toast.success('Default updated', `New shipments will be picked up from ${w.name}.`);
     } catch {
-      toast.error('Error', 'Could not save the pickup address.');
-    } finally {
-      setSavingWarehouse(false);
+      toast.error('Error', 'Could not change the default pickup address.');
     }
   };
 
@@ -141,10 +134,10 @@ export default function SettingsScreen() {
               <Feather name="home" size={17} color="#64748B" />
             </View>
             <View className="flex-1">
-              <Text className="font-bold text-sm text-slate-900">Pickup Address</Text>
+              <Text className="font-bold text-sm text-slate-900">Pickup Addresses</Text>
               <Text className="mt-0.5 font-medium text-xs text-slate-400" numberOfLines={1}>
                 {warehouseReady
-                  ? `${warehouse.name} · ${warehouse.city} ${warehouse.pincode}`
+                  ? `${warehouses.length} saved · Default: ${defaultWarehouse.name}`
                   : 'Required before booking shipments'}
               </Text>
             </View>
@@ -161,12 +154,19 @@ export default function SettingsScreen() {
           </TouchableOpacity>
 
           {warehouseOpen && (
-            <View className="border-t border-slate-100 px-4 pb-4 pt-1">
-              <WarehouseForm
-                value={warehouse}
-                onChange={setWarehouseEdit}
-                onSave={handleSaveWarehouse}
-                saving={savingWarehouse}
+            <View className="border-t border-slate-100 px-4 pb-4 pt-3">
+              {warehouses.length > 1 && (
+                <Text className="mb-3 text-[11px] text-slate-400">
+                  Tap a warehouse to make it the default for new shipments.
+                </Text>
+              )}
+              <WarehousePicker
+                warehouses={warehouses}
+                defaultWarehouse={defaultWarehouse}
+                loading={loadingWarehouses}
+                selected={defaultWarehouse}
+                onSelect={handleSetDefault}
+                selectOnSave={false}
               />
             </View>
           )}

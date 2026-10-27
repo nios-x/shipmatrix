@@ -20,7 +20,8 @@ import {
   generateOrderId,
   EMPTY_WAREHOUSE,
 } from '../lib/shipments';
-import { WarehouseForm } from '../components/WarehouseForm';
+import { WarehousePicker } from '../components/WarehousePicker';
+import { useWarehouseSelection } from '../lib/useWarehouses';
 import type { WarehouseData } from '../types';
 import { BAR_HEIGHT } from '../navigation/GlassTabBar';
 import {
@@ -71,13 +72,9 @@ export default function CreateReverseShipmentScreen() {
     reason: 'Customer Return',
   });
 
-  // Defaults to the saved warehouse; an edit takes over as an override so the
-  // profile value can load in without an effect racing the user's typing.
-  const [warehouseEdit, setWarehouseEdit] = useState<WarehouseData | null>(null);
-  const warehouse: WarehouseData = warehouseEdit ?? {
-    ...EMPTY_WAREHOUSE,
-    ...(user?.warehouseData || {}),
-  };
+  // Defaults to the default warehouse; the user can pick any other saved one.
+  const warehouseSelection = useWarehouseSelection();
+  const warehouse: WarehouseData = warehouseSelection.selected ?? EMPTY_WAREHOUSE;
 
   // The customer's city/state resolve from their pincode; derived so a typed
   // value always takes precedence.
@@ -326,7 +323,7 @@ export default function CreateReverseShipmentScreen() {
           <View
             className="mb-4 rounded-2xl border border-gray-100 bg-white p-4"
             style={{ elevation: 1 }}>
-            <WarehouseForm value={warehouse} onChange={setWarehouseEdit} />
+            <WarehousePicker {...warehouseSelection} onSelect={warehouseSelection.select} />
           </View>
 
           <Text className="mb-3 font-semibold text-[11px] uppercase tracking-wider text-slate-500">

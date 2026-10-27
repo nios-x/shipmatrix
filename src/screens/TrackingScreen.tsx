@@ -97,8 +97,9 @@ export default function TrackingScreen() {
   );
 
   // Track straight away when opened from an order row, so the user doesn't
-  // have to tap search on an AWB that was already chosen for them. `awb` is
-  // already seeded from the param, so only the fetch needs triggering here.
+  // have to tap search on an AWB that was already chosen for them. The field
+  // is set here too: opening another order's tracking reuses this screen with
+  // new params, and `useState` only seeded it from the first.
   const initialAwb = route.params?.awb;
   useEffect(() => {
     if (!initialAwb) return;
@@ -106,7 +107,9 @@ export default function TrackingScreen() {
     // twice before the screen first paints.
     let active = true;
     const timer = setTimeout(() => {
-      if (active) handleTrack(initialAwb);
+      if (!active) return;
+      setAwb(initialAwb);
+      handleTrack(initialAwb);
     }, 0);
     return () => {
       active = false;
